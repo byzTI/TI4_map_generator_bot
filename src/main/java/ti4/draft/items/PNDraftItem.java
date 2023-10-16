@@ -1,10 +1,9 @@
 package ti4.draft.items;
 
+import net.dv8tion.jda.api.entities.MessageEmbed;
 import ti4.draft.DraftItem;
 import ti4.generator.Mapper;
 import ti4.helpers.Emojis;
-import ti4.helpers.Helper;
-import ti4.model.FactionModel;
 import ti4.model.PromissoryNoteModel;
 
 public class PNDraftItem extends DraftItem {
@@ -12,31 +11,19 @@ public class PNDraftItem extends DraftItem {
         super(Category.PN, itemId);
     }
 
-    private FactionModel getFaction() {
-        if (ItemId.equals("keleres")) {
-            return Mapper.getFactionSetup("keleresa");
-        }
-        return Mapper.getFactionSetup(ItemId);
+    private PromissoryNoteModel getPn() {
+        return Mapper.getPromissoryNoteByID(ItemId);
     }
 
-    private PromissoryNoteModel getPn() {
-        var pn = Mapper.getPromissoryNoteByID(ItemId);
-        if (pn == null) {
-            FactionModel faction = getFaction();
-            return Mapper.getPromissoryNoteByID(faction.getPromissoryNotes().get(0));
-        }
-        return pn;
-    }
     @Override
-    public String getShortDescription() {
+    public MessageEmbed getItemCard() {
+        return getPn().getRepresentationEmbed(false, false, true);
+    }
+
+    @Override
+    public String getItemName() {
         PromissoryNoteModel pn = getPn();
         return "Promissory Note - " + pn.getName();
-    }
-
-    @Override
-    public String getLongDescriptionImpl() {
-        PromissoryNoteModel pn = getPn();
-        return pn.getText();
     }
 
     @Override

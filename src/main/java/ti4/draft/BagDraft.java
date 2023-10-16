@@ -16,7 +16,7 @@ import ti4.message.MessageHelper;
 import java.util.List;
 
 public abstract class BagDraft {
-    protected Game owner;
+    protected Game ownerGame;
     public static BagDraft GenerateDraft(String draftType, Game game) {
         if (draftType.equals("franken")) {
             return new FrankenDraft(game);
@@ -29,16 +29,16 @@ public abstract class BagDraft {
     }
 
     public BagDraft(Game owner) {
-        this.owner = owner;
+        this.ownerGame = owner;
     }
 
     public abstract int getItemLimitForCategory(DraftItem.Category category);
     public abstract String getSaveString();
-    public abstract List<DraftBag> generateBags(Game game);
+    public abstract List<DraftBag> generateBags();
     public abstract int getBagSize();
 
     public boolean isDraftStageComplete() {
-        List<Player> players = owner.getRealPlayers();
+        List<Player> players = ownerGame.getRealPlayers();
         for (Player p:players) {
             if (!p.getCurrentDraftBag().Contents.isEmpty() || !p.getDraftQueue().Contents.isEmpty()) {
                 return false;
@@ -48,7 +48,7 @@ public abstract class BagDraft {
     }
 
     public void passBags() {
-        List<Player> players = owner.getRealPlayers();
+        List<Player> players = ownerGame.getRealPlayers();
         DraftBag firstPlayerBag = players.get(0).getCurrentDraftBag();
         for (int i = 0; i < players.size()-1; i++) {
             giveBagToPlayer(players.get(i+1).getCurrentDraftBag(), players.get(i));
@@ -66,16 +66,16 @@ public abstract class BagDraft {
             }
         }
         player.setReadyToPassBag(!newBagCanBeDraftedFrom);
-        MessageHelper.sendMessageToChannelWithButtons(player.getCardsInfoThread(), ButtonHelper.getTrueIdentity(player, owner) + " you have been passed a new draft bag!", Button.secondary(FrankenDraftHelper.ActionName + "show_bag", "Click here to show your current bag"));
+        MessageHelper.sendMessageToChannelWithButtons(player.getCardsInfoThread(), ButtonHelper.getTrueIdentity(player, ownerGame) + " you have been passed a new draft bag!", Button.secondary(FrankenDraftHelper.ActionName + "show_bag", "Click here to show your current bag"));
     }
 
     public boolean allPlayersReadyToPass() {
-        for (Player p: owner.getRealPlayers()) {
+        for (Player p: ownerGame.getRealPlayers()) {
             if (!playerHasDraftableItemInBag(p) && !playerHasItemInQueue(p)) {
                 setPlayerReadyToPass(p, true);
             }
         }
-        return owner.getRealPlayers().stream().allMatch(Player::isReadyToPassBag);
+        return ownerGame.getRealPlayers().stream().allMatch(Player::isReadyToPassBag);
     }
 
     public boolean playerHasDraftableItemInBag(Player player) {
@@ -84,7 +84,7 @@ public abstract class BagDraft {
 
     public void setPlayerReadyToPass(Player player, boolean ready) {
         if (ready && !player.isReadyToPassBag()) {
-            MessageHelper.sendMessageToChannel(owner.getActionsChannel(), player.getUserName() + " is ready to pass draft bags.");
+            MessageHelper.sendMessageToChannel(ownerGame.getActionsChannel(), player.getUserName() + " is ready to pass draft bags.");
         }
         player.setReadyToPassBag(ready);
     }
@@ -99,25 +99,7 @@ public abstract class BagDraft {
                 if (item.ItemCategory != cat) {
                     continue;
                 }
-                sb.append(" - ").append(item.getItemEmoji()).append(item.getShortDescription()).append("\n");
-            }
-        }
-        sb.append("**Total Cards: ").append(bag.Contents.size()).append("**\n");
-        return sb.toString();
-    }
-
-    public String getLongBagRepresentation(DraftBag bag) {
-        StringBuilder sb = new StringBuilder();
-        for (DraftItem.Category cat: DraftItem.Category.values()) {
-            sb.append("### ").append(cat.toString()).append(" (");
-            sb.append(bag.getCategoryCount(cat)).append("/").append(getItemLimitForCategory(cat));
-            sb.append("):\n");
-            for (DraftItem item : bag.Contents){
-                if (item.ItemCategory != cat) {
-                    continue;
-                }
-                sb.append("- ").append(item.getShortDescription()).append("\n");
-                sb.append(" - ").append(item.getLongDescription()).append("\n");
+                sb.append(" - ").append(item.getItemEmoji()).append(item.getItemName()).append("\n");
             }
         }
         sb.append("**Total Cards: ").append(bag.Contents.size()).append("**\n");
@@ -125,15 +107,15 @@ public abstract class BagDraft {
     }
 
     public ThreadChannel regenerateBagChannel(Player player) {
-        TextChannel actionsChannel = owner.getMainGameChannel();
+        TextChannel actionsChannel = ownerGame.getMainGameChannel();
         if (actionsChannel == null) {
-            BotLogger.log("`Helper.getBagChannel`: actionsChannel is null for game, or community game private channel not set: " + owner.getName());
+            BotLogger.log("`Helper.getBagChannel`: actionsChannel is null for game, or community game private channel not set: " + ownerGame.getName());
             return null;
         }
 
-        String threadName = Constants.BAG_INFO_THREAD_PREFIX + owner.getName() + "-" + player.getUserName().replaceAll("/", "");
-        if (owner.isFoWMode()) {
-            threadName = owner.getName() + "-" + "bag-info-" + player.getUserName().replaceAll("/", "") + "-private";
+        String threadName = Constants.BAG_INFO_THREAD_PREFIX + ownerGame.getName() + "-" + player.getUserName().replaceAll("/", "");
+        if (ownerGame.isFoWMode()) {
+            threadName = ownerGame.getName() + "-" + "bag-info-" + player.getUserName().replaceAll("/", "") + "-private";
         }
 
         ThreadChannel existingChannel = findExistingBagChannel(player, threadName);
@@ -144,8 +126,8 @@ public abstract class BagDraft {
 
         // CREATE NEW THREAD
         //Make card info thread a public thread in community mode
-        boolean isPrivateChannel = (!owner.isCommunityMode() && !owner.isFoWMode());
-        if (owner.getName().contains("pbd100") || owner.getName().contains("pbd500")) {
+        boolean isPrivateChannel = (!ownerGame.isCommunityMode() && !ownerGame.isFoWMode());
+        if (ownerGame.getName().contains("pbd100") || ownerGame.getName().contains("pbd500")) {
             isPrivateChannel = true;
         }
         ThreadChannelAction threadAction = actionsChannel.createThreadChannel(threadName, isPrivateChannel);
@@ -160,15 +142,15 @@ public abstract class BagDraft {
 
     public ThreadChannel findExistingBagChannel(Player player) {
 
-        String threadName = Constants.BAG_INFO_THREAD_PREFIX + owner.getName() + "-" + player.getUserName().replaceAll("/", "");
-        if (owner.isFoWMode()) {
-            threadName = owner.getName() + "-" + "bag-info-" + player.getUserName().replaceAll("/", "") + "-private";
+        String threadName = Constants.BAG_INFO_THREAD_PREFIX + ownerGame.getName() + "-" + player.getUserName().replaceAll("/", "");
+        if (ownerGame.isFoWMode()) {
+            threadName = ownerGame.getName() + "-" + "bag-info-" + player.getUserName().replaceAll("/", "") + "-private";
         }
         return findExistingBagChannel(player, threadName);
     }
 
     private ThreadChannel findExistingBagChannel(Player player, String threadName) {
-        TextChannel actionsChannel = owner.getActionsChannel();
+        TextChannel actionsChannel = ownerGame.getActionsChannel();
         //ATTEMPT TO FIND BY ID
         String bagInfoThread = player.getBagInfoThreadID();
         try {

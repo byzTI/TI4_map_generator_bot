@@ -1,9 +1,12 @@
 package ti4.draft.items;
 
+import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.entities.emoji.CustomEmoji;
+import net.dv8tion.jda.api.entities.emoji.Emoji;
 import org.apache.commons.lang3.StringUtils;
 import ti4.draft.DraftItem;
 import ti4.generator.Mapper;
-import ti4.helpers.AliasHandler;
 import ti4.helpers.Emojis;
 import ti4.helpers.Helper;
 import ti4.model.FactionModel;
@@ -13,7 +16,6 @@ public class StartingFleetDraftItem extends DraftItem {
         super(Category.STARTINGFLEET, itemId);
     }
 
-
     private FactionModel getFaction() {
         if (ItemId.equals("keleres")) {
             return Mapper.getFactionSetup("keleresa");
@@ -22,14 +24,20 @@ public class StartingFleetDraftItem extends DraftItem {
     }
 
     @Override
-    public String getShortDescription() {
+    public String getItemName() {
         return getFaction().getFactionName() + " Starting Fleet";
     }
 
     @Override
-    public String getLongDescriptionImpl() {
+    public MessageEmbed getItemCard() {
+        EmbedBuilder eb = new EmbedBuilder();
         String[] fleetDesc = getFaction().getStartingFleet().split(",");
-        StringBuilder sb = new StringBuilder();
+
+        Emoji emoji = Emoji.fromFormatted(Helper.getFactionIconFromDiscord(getFaction().getAlias()));
+        CustomEmoji customEmoji = (CustomEmoji) emoji;
+        eb.setThumbnail(customEmoji.getImageUrl());
+
+        eb.setTitle(getItemEmoji() + getItemName());
         for (String desc: fleetDesc) {
             String[] split = desc.trim().split(" ");
             String alias;
@@ -41,12 +49,10 @@ public class StartingFleetDraftItem extends DraftItem {
                 count = 1;
                 alias = split[0];
             }
-
-            for (int i = 1; i <= count; i++) {
-                sb.append(Helper.getEmojiFromDiscord(Mapper.getUnitBaseTypeFromAsyncID(AliasHandler.resolveUnit(alias))));
-            }
+            eb.addField(Mapper.getUnit(alias).getName() + ":", String.valueOf(count), false);
         }
-        return sb.toString();
+
+        return eb.build();
     }
 
     @Override

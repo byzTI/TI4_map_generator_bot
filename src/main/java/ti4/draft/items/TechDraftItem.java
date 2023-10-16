@@ -1,5 +1,6 @@
 package ti4.draft.items;
 
+import net.dv8tion.jda.api.entities.MessageEmbed;
 import ti4.draft.DraftItem;
 import ti4.generator.Mapper;
 import ti4.helpers.Helper;
@@ -11,17 +12,17 @@ public class TechDraftItem extends DraftItem {
     }
 
     @Override
-    public String getShortDescription() {
+    public String getItemName() {
         return getTech().getName();
+    }
+
+    @Override
+    public MessageEmbed getItemCard() {
+        return getTech().getRepresentationEmbed(false, true);
     }
 
     private TechnologyModel getTech() {
         return Mapper.getTech(ItemId);
-    }
-
-    @Override
-    public String getLongDescriptionImpl() {
-        return getTech().getText() + " " + getTech().getRequirementsEmoji();
     }
 
     @Override

@@ -1,5 +1,6 @@
 package ti4.draft;
 
+import net.dv8tion.jda.api.entities.MessageEmbed;
 import ti4.draft.items.*;
 import ti4.generator.Mapper;
 import ti4.map.Player;
@@ -124,34 +125,9 @@ public abstract class DraftItem implements ModelInterface {
         ItemId = itemId;
     }
 
-    public abstract String getShortDescription();
+    public abstract String getItemName();
 
-    public String getLongDescription() {
-        StringBuilder sb = new StringBuilder(getLongDescriptionImpl());
-        if (Errata != null) {
-            if (Errata.AdditionalComponents != null) {
-                sb.append(" *Also adds: ");
-                for (DraftErrataModel i: Errata.AdditionalComponents) {
-                    DraftItem item = Generate(i.ItemCategory, i.ItemId);
-                    sb.append(item.getItemEmoji()).append(item.getShortDescription());
-                    sb.append(", ");
-                }
-                sb.append("*");
-            }
-            if (Errata.OptionalSwaps != null) {
-                sb.append(" *Includes optional swaps: ");
-                for (DraftErrataModel i: Errata.OptionalSwaps) {
-                    DraftItem item = Generate(i.ItemCategory, i.ItemId);
-                    sb.append(item.getItemEmoji()).append(item.getShortDescription());
-                    sb.append(", ");
-                }
-                sb.append("*");
-            }
-        }
-        return sb.toString();
-    }
-
-    protected abstract String getLongDescriptionImpl();
+    public abstract MessageEmbed getItemCard();
 
     public abstract String getItemEmoji();
 

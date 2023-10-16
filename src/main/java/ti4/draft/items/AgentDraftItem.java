@@ -1,9 +1,9 @@
 package ti4.draft.items;
 
+import net.dv8tion.jda.api.entities.MessageEmbed;
 import ti4.draft.DraftItem;
 import ti4.generator.Mapper;
 import ti4.helpers.Helper;
-import ti4.model.FactionModel;
 import ti4.model.LeaderModel;
 
 public class AgentDraftItem extends DraftItem {
@@ -11,38 +11,24 @@ public class AgentDraftItem extends DraftItem {
         super(Category.AGENT, itemId);
     }
 
-    private FactionModel getFaction() {
-        if (ItemId.equals("keleres")) {
-            return Mapper.getFactionSetup("keleresa");
-        }
-        return Mapper.getFactionSetup(ItemId);
+    private LeaderModel getLeader() {
+        return Mapper.getLeader(ItemId);
     }
 
-    private LeaderModel getLeader() {
-        FactionModel faction = getFaction();
-        if (faction != null) {
-            return Mapper.getLeader(faction.getLeaders().get(0));
-        }
-        return null;
+
+    @Override
+    public MessageEmbed getItemCard() {
+        return getLeader().getRepresentationEmbed(false, false, true, false);
     }
 
     @Override
-    public String getShortDescription() {
+    public String getItemName() {
         LeaderModel leader = getLeader();
         if (leader == null)
         {
             return getAlias();
         }
         return "Agent - " + leader.getName();
-    }
-
-    @Override
-    public String getLongDescriptionImpl() {
-        LeaderModel leader = getLeader();
-        if (leader != null) {
-            return "*" + leader.getAbilityWindow() + "* " + leader.getAbilityText();
-        }
-        return "";
     }
 
     @Override

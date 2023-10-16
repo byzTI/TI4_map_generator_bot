@@ -37,7 +37,7 @@ public class FrankenDraftHelper {
                 case 2 -> ButtonStyle.SECONDARY;
                 default -> ButtonStyle.SUCCESS;
             };
-            buttons.add(Button.of(style, ActionName + item.getAlias(), item.getShortDescription()).withEmoji(Emoji.fromFormatted(item.getItemEmoji())));
+            buttons.add(Button.of(style, ActionName + item.getAlias(), item.getItemName()).withEmoji(Emoji.fromFormatted(item.getItemEmoji())));
         }
         return buttons;
     }
@@ -93,7 +93,7 @@ public class FrankenDraftHelper {
         DraftItem selectedItem = DraftItem.GenerateFromAlias(selectedAlias);
 
         if (!selectedItem.isDraftable(player)) {
-            MessageHelper.sendMessageToChannel(event.getMessageChannel(), "Something went wrong. You are not allowed to draft " + selectedItem.getShortDescription() + " right now. Please select another item.");
+            MessageHelper.sendMessageToChannel(event.getMessageChannel(), "Something went wrong. You are not allowed to draft " + selectedItem.getItemName() + " right now. Please select another item.");
             return;
         }
         currentBag.Contents.removeIf((DraftItem bagItem) -> bagItem.getAlias().equals(selectedAlias));
@@ -120,6 +120,7 @@ public class FrankenDraftHelper {
 
         List<DraftItem> draftables = new ArrayList<>(player.getCurrentDraftBag().Contents);
         List<DraftItem> undraftables = new ArrayList<>(player.getCurrentDraftBag().Contents);
+
         draftables.removeIf(draftItem -> !draftItem.isDraftable(player));
         undraftables.removeIf(draftItem -> draftItem.isDraftable(player));
 
@@ -143,7 +144,7 @@ public class FrankenDraftHelper {
             }
             queueButtons.add(Button.danger("frankenDraftAction;reset_queue", "I want to draft different cards."));
             MessageHelper.sendMessageToChannelWithButtons(bagChannel,
-                    "## Queued:\n - You are drafting the following from this bag:\n" + getDraftQueueRepresentation(activeGame, player), queueButtons);
+                    "## Queued:\n - You are drafting the following from this bag:\n",  queueButtons);
 
             if (isQueueFull || draftables.isEmpty()) {
                 MessageHelper.sendMessageToChannel(bagChannel,
@@ -165,7 +166,7 @@ public class FrankenDraftHelper {
     public static String getBagReceipt(DraftBag bag) {
         StringBuilder sb = new StringBuilder();
         for (DraftItem item: bag.Contents) {
-            sb.append("**").append(item.getShortDescription()).append("**\n");
+            sb.append("**").append(item.getItemName()).append("**\n");
         }
         return sb.toString();
     }
@@ -175,7 +176,7 @@ public class FrankenDraftHelper {
         sb.append("# Draftable:\n");
         draftables.sort(Comparator.comparing(draftItem -> draftItem.ItemCategory));
         for(DraftItem item : draftables) {
-            buildItemDescription(item, sb);
+            //buildItemDescription(item, sb);
             sb.append("\n");
         }
 
@@ -187,7 +188,7 @@ public class FrankenDraftHelper {
             undraftables.sort(Comparator.comparing(draftItem -> draftItem.ItemCategory));
             for (DraftItem item : undraftables) {
                 sb.append(item.getItemEmoji()).append(" ");
-                sb.append("**").append(item.getShortDescription()).append("**\n");
+                sb.append("**").append(item.getItemName()).append("**\n");
                 sb.append("\n");
             }
         }
@@ -197,29 +198,7 @@ public class FrankenDraftHelper {
     }
 
     public static String getCurrentHandRepresentation(Game activeGame, Player player){
-        return activeGame.getActiveBagDraft().getLongBagRepresentation(player.getDraftHand());
-    }
-
-    public static String getDraftQueueRepresentation(Game activeGame, Player player){
-        StringBuilder sb = new StringBuilder();
-        DraftBag currentBag = player.getDraftQueue();
-        for(DraftItem item : currentBag.Contents) {
-            buildItemDescription(item, sb);
-            sb.append("\n");
-        }
-
-        return sb.toString();
-    }
-
-    private static void buildItemDescription(DraftItem item, StringBuilder sb) {
-        try {
-            sb.append("### ").append(item.getItemEmoji()).append(" ");
-            sb.append(item.getShortDescription()).append("\n - ");
-            sb.append(item.getLongDescription());
-        }
-        catch (Exception e) {
-            sb.append("ERROR BUILDING DESCRIPTION FOR " + item.getAlias());
-        }
+        return activeGame.getActiveBagDraft().getShortBagRepresentation(player.getDraftHand());
     }
 
     public static void clearPlayerHands(Game activeGame) {
@@ -229,7 +208,7 @@ public class FrankenDraftHelper {
     }
 
     public static void startDraft(Game activeGame) {
-        List<DraftBag> bags = activeGame.getActiveBagDraft().generateBags(activeGame);
+        List<DraftBag> bags = activeGame.getActiveBagDraft().generateBags();
         Collections.shuffle(bags);
         List<Player> realPlayers = activeGame.getRealPlayers();
         for (int i = 0; i < realPlayers.size(); i++) {

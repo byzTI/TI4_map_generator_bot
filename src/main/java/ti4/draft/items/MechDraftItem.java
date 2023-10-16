@@ -1,5 +1,6 @@
 package ti4.draft.items;
 
+import net.dv8tion.jda.api.entities.MessageEmbed;
 import ti4.draft.DraftItem;
 import ti4.generator.Mapper;
 import ti4.helpers.Emojis;
@@ -11,40 +12,17 @@ public class MechDraftItem extends DraftItem {
     }
 
     private UnitModel getUnit() {
-        if (ItemId.contains("mech")) {
-            return Mapper.getUnit(ItemId);
-        }
-        return Mapper.getUnit(ItemId + "_mech");
+        return Mapper.getUnit(ItemId);
     }
 
     @Override
-    public String getShortDescription() {
+    public String getItemName() {
         return "Mech - " + getUnit().getName();
     }
 
     @Override
-    public String getLongDescriptionImpl() {
-        UnitModel unit = getUnit();
-        StringBuilder sb = new StringBuilder();
-        sb.append("Cost: ");
-        sb.append(unit.getCost());
-        sb.append(" Combat: ");
-        sb.append(unit.getCombatHitsOn());
-        if (unit.getCombatDieCount() > 1) {
-            sb.append("x").append(unit.getCombatDieCount());
-        }
-        sb.append(" ");
-        if (unit.getSustainDamage()) {
-            sb.append("SUSTAIN DAMAGE ");
-        }
-        if (unit.getAfbDieCount() > 0) {
-            sb.append("ANTI-FIGHTER BARRAGE ")
-                    .append(unit.getAfbHitsOn())
-                    .append("x").append(unit.getAfbDieCount())
-                    .append(" ");
-        }
-        sb.append(unit.getAbility());
-        return sb.toString();
+    public MessageEmbed getItemCard() {
+        return getUnit().getRepresentationEmbed(false);
     }
 
     @Override

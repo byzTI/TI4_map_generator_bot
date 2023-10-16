@@ -1,5 +1,10 @@
 package ti4.draft.items;
 
+import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.entities.emoji.CustomEmoji;
+import net.dv8tion.jda.api.entities.emoji.Emoji;
+import org.jetbrains.annotations.NotNull;
 import ti4.draft.DraftItem;
 import ti4.generator.Mapper;
 import ti4.helpers.Emojis;
@@ -7,7 +12,6 @@ import ti4.helpers.Helper;
 import ti4.model.FactionModel;
 import ti4.model.TechnologyModel;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class StartingTechDraftItem extends DraftItem {
@@ -21,14 +25,26 @@ public class StartingTechDraftItem extends DraftItem {
         }
         return Mapper.getFactionSetup(ItemId);
     }
-
     @Override
-    public String getShortDescription() {
-        return getFaction().getFactionName() + " Starting Tech";
+    public MessageEmbed getItemCard() {
+        EmbedBuilder eb = new EmbedBuilder();
+
+        Emoji emoji = Emoji.fromFormatted(Helper.getFactionIconFromDiscord(getFaction().getAlias()));
+        CustomEmoji customEmoji = (CustomEmoji) emoji;
+        eb.setThumbnail(customEmoji.getImageUrl());
+
+        eb.setTitle(getItemEmoji() + getItemName());
+        eb.addField("Starting tech:", getTechString(), true);
+        return eb.build();
     }
 
     @Override
-    public String getLongDescriptionImpl() {
+    public String getItemName() {
+        return getFaction().getFactionName() + " Starting Tech";
+    }
+
+    @NotNull
+    private String getTechString() {
         if (ItemId.equals("winnu")) {
             return "Choose any 1 technology that has no prerequisites.";
         } else if (ItemId.equals("argent")) {

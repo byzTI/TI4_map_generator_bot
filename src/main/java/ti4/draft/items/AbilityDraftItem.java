@@ -1,5 +1,7 @@
 package ti4.draft.items;
 
+import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.MessageEmbed;
 import ti4.draft.DraftItem;
 import ti4.generator.Mapper;
 import ti4.helpers.Helper;
@@ -10,20 +12,30 @@ public class AbilityDraftItem extends DraftItem {
     }
 
     @Override
-    public String getShortDescription() {
+    public String getItemName() {
         String[] split = getAbilityStringSplit();
         return split[0];
     }
 
     @Override
-    public String getLongDescriptionImpl() {
+    public MessageEmbed getItemCard() {
+        EmbedBuilder eb = new EmbedBuilder();
+        eb.setTitle(getItemEmoji() + getItemName());
+
+
         String[] split = getAbilityStringSplit();
         if (!split[2].equals(" ")) {
-            return split[2];
+            eb.addField("Additional Text:", split[2], true);
         }
-        else {
-            return "*" + split[3] + ":* " + split[4];
+        if (!split[3].equals(" ")) {
+            eb.addField("Window:", split[3], true);
         }
+        if (!split[4].equals(" ")) {
+            eb.addField("Ability:", split[4], true);
+        }
+
+
+        return eb.build();
     }
 
     @Override
@@ -31,6 +43,7 @@ public class AbilityDraftItem extends DraftItem {
         return Helper.getFactionIconFromDiscord(getAbilityStringSplit()[1]);
     }
 
+    // #Columns: ID = Ability Name | Faction | Raw Modifier | AbilityWindow | AbilityText
     private String[] getAbilityStringSplit() {
         return Mapper.getAbility(ItemId).split("\\|");
     }

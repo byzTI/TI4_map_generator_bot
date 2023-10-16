@@ -1,5 +1,7 @@
 package ti4.draft.items;
 
+import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.MessageEmbed;
 import ti4.draft.DraftItem;
 import ti4.generator.Mapper;
 import ti4.helpers.Emojis;
@@ -16,15 +18,20 @@ public class CommoditiesDraftItem extends DraftItem {
         }
         return Mapper.getFactionSetup(ItemId);
     }
+
     @Override
-    public String getShortDescription() {
-        return getFaction().getFactionName() + " Commodities";
+    public MessageEmbed getItemCard() {
+        EmbedBuilder eb = new EmbedBuilder();
+        eb.setTitle(getItemEmoji() + getItemName());
+
+        eb.addField("Commodities:", String.valueOf(getFaction().getCommodities()), true);
+
+        return eb.build();
     }
 
     @Override
-    public String getLongDescriptionImpl() {
-        int comms = getFaction().getCommodities();
-        return comms + " Commodities";
+    public String getItemName() {
+        return getFaction().getFactionName() + " Commodities";
     }
 
     @Override
