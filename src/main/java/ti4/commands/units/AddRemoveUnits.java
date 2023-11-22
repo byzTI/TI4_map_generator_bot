@@ -11,20 +11,23 @@ import ti4.commands.planet.PlanetAdd;
 import ti4.commands.uncategorized.ShowGame;
 import ti4.generator.Mapper;
 import ti4.helpers.AliasHandler;
+import ti4.helpers.ButtonHelper;
 import ti4.helpers.Constants;
+import ti4.helpers.Emojis;
 import ti4.helpers.Helper;
+import ti4.helpers.Units.UnitKey;
 import ti4.helpers.FoWHelper;
 import ti4.map.*;
 import ti4.message.MessageHelper;
-import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.events.interaction.GenericInteractionCreateEvent;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.StringTokenizer;
 
 import org.apache.commons.lang3.StringUtils;
+
+import com.amazonaws.util.CollectionUtils;
 
 abstract public class AddRemoveUnits implements Command {
 
@@ -98,299 +101,106 @@ abstract public class AddRemoveUnits implements Command {
     }
 
     public void unitParsing(SlashCommandInteractionEvent event, String color, Tile tile, String unitList, Game activeGame) {
-        unitList = unitList.replace(", ", ",");
-        StringTokenizer unitListTokenizer = new StringTokenizer(unitList, ",");
-        while (unitListTokenizer.hasMoreTokens()) {
-            String unitListToken = unitListTokenizer.nextToken();
-            StringTokenizer unitInfoTokenizer = new StringTokenizer(unitListToken, " ");
-
-            int tokenCount = unitInfoTokenizer.countTokens();
-            if (tokenCount > 3) {
-                MessageHelper.sendMessageToChannel(event.getChannel(), "Warning: Unit list should have a maximum of 3 parts `{count} {unit} {planet}` - `" + unitListToken + "` has " + tokenCount + " parts. There may be errors.");
-            }
-
-            int count = 1;
-            boolean numberIsSet = false;
-            String planetName = Constants.SPACE;
-            String unit = "";
-            if (unitInfoTokenizer.hasMoreTokens()) {
-                String ifNumber = unitInfoTokenizer.nextToken();
-                try {
-                    count = Integer.parseInt(ifNumber);
-                    numberIsSet = true;
-                } catch (Exception e) {
-                    unit = AliasHandler.resolveUnit(ifNumber);
-                }
-            }
-            if (unitInfoTokenizer.hasMoreTokens() && numberIsSet) {
-                unit = AliasHandler.resolveUnit(unitInfoTokenizer.nextToken());
-            }
-
-            color = recheckColorForUnit(unit, color, event);
-
-            String unitID = Mapper.getUnitID(unit, color);
-            String unitPath = Tile.getUnitPath(unitID);
-            if (unitPath == null) {
-                MessageHelper.sendMessageToChannel(event.getChannel(), "Unit: `" + unit + "` is not valid and not supported. Please redo this part: `" + unitListToken + "`");
-                continue;
-            }
-            if (unitInfoTokenizer.hasMoreTokens()) {
-                String planetToken = unitInfoTokenizer.nextToken();
-                planetName = AliasHandler.resolvePlanet(planetToken);
-                // if (!Mapper.isValidPlanet(planetName)) {
-                //     MessageHelper.sendMessageToChannel(event.getChannel(), "Planet: `" + planetToken + "` is not valid and not supported. Please redo this part: `" + unitListToken + "`");
-                //     continue;
-                // }
-            }
-
-            planetName = getPlanet(event, tile, planetName);
-            unitAction(event, tile, count, planetName, unitID, color, activeGame);
-
-
-            addPlanetToPlayArea(event, tile, planetName, activeGame);
-        }
-        if (activeGame.isFoWMode()) {
-            boolean pingedAlready = false;
-            int count = 0;
-            String[] tileList = activeGame.getListOfTilesPinged();
-            while (count < 10 && !pingedAlready) {
-                String tilePingedAlready = tileList[count];
-                if (tilePingedAlready != null) {
-                    pingedAlready = tilePingedAlready.equalsIgnoreCase(tile.getPosition());
-                    count++;
-                } else {
-                    break;
-                }
-            }
-            if (!pingedAlready) {
-                String colorMention = Helper.getColourAsMention(event.getGuild(), color);
-                FoWHelper.pingSystem(activeGame, event, tile.getPosition(), colorMention + " has modified units in the system. Refresh map to see what changed");
-                if (count <10) {
-                    activeGame.setPingSystemCounter(count);
-                    activeGame.setTileAsPinged(count, tile.getPosition());
-                }
-
-            }
-        }
-        actionAfterAll(event, tile, color, activeGame);
+        commonUnitParsing((GenericInteractionCreateEvent) event, color, tile, unitList, activeGame, Constants.SPACE);
+        actionAfterAll((GenericInteractionCreateEvent) event, tile, color, activeGame);
     }
+
     public void unitParsing(GenericInteractionCreateEvent event, String color, Tile tile, String unitList, Game activeGame, String planetName) {
-        unitList = unitList.replace(", ", ",");
-        StringTokenizer unitListTokenizer = new StringTokenizer(unitList, ",");
-        while (unitListTokenizer.hasMoreTokens()) {
-            String unitListToken = unitListTokenizer.nextToken();
-            StringTokenizer unitInfoTokenizer = new StringTokenizer(unitListToken, " ");
-
-            int tokenCount = unitInfoTokenizer.countTokens();
-            if (tokenCount > 3) {
-                MessageHelper.sendMessageToChannel((MessageChannel)event.getChannel(), "Warning: Unit list should have a maximum of 3 parts `{count} {unit} {planet}` - `" + unitListToken + "` has " + tokenCount + " parts. There may be errors.");
-            }
-
-            int count = 1;
-            boolean numberIsSet = false;
-
-            String unit = "";
-            if (unitInfoTokenizer.hasMoreTokens()) {
-                String ifNumber = unitInfoTokenizer.nextToken();
-                try {
-                    count = Integer.parseInt(ifNumber);
-                    numberIsSet = true;
-                } catch (Exception e) {
-                    unit = AliasHandler.resolveUnit(ifNumber);
-                }
-            }
-            if (unitInfoTokenizer.hasMoreTokens() && numberIsSet) {
-                unit = AliasHandler.resolveUnit(unitInfoTokenizer.nextToken());
-            }
-
-            color = recheckColorForUnit(unit, color, event);
-
-            String unitID = Mapper.getUnitID(unit, color);
-            String unitPath = Tile.getUnitPath(unitID);
-            if (unitPath == null) {
-                MessageHelper.sendMessageToChannel((MessageChannel)event.getChannel(), "Unit: `" + unit + "` is not valid and not supported. Please redo this part: `" + unitListToken + "`");
-                continue;
-            }
-            if (unitInfoTokenizer.hasMoreTokens()) {
-                String planetToken = unitInfoTokenizer.nextToken();
-                planetName = AliasHandler.resolvePlanet(planetToken);
-                // if (!Mapper.isValidPlanet(planetName)) {
-                //     MessageHelper.sendMessageToChannel(event.getChannel(), "Planet: `" + planetToken + "` is not valid and not supported. Please redo this part: `" + unitListToken + "`");
-                //     continue;
-                // }
-            }
-
-            planetName = getPlanet(event, tile, planetName);
-            unitAction(event, tile, count, planetName, unitID, color, activeGame);
-
-
-            addPlanetToPlayArea(event, tile, planetName, activeGame);
-        }
-        if (activeGame.isFoWMode()) {
-            boolean pingedAlready = false;
-            int count = 0;
-            String[] tileList = activeGame.getListOfTilesPinged();
-            while (count < 10 && !pingedAlready) {
-                String tilePingedAlready = tileList[count];
-                if (tilePingedAlready != null) {
-                    pingedAlready = tilePingedAlready.equalsIgnoreCase(tile.getPosition());
-                    count++;
-                } else {
-                    break;
-                }
-            }
-            if (!pingedAlready) {
-                String colorMention = Helper.getColourAsMention(event.getGuild(), color);
-                String message = colorMention + " has modified units in the system. ";
-                if(getActionDescription().contains("add_units")){
-                    message = message + " Specific units modified include: "+unitList;
-                }
-                message = message + "Refresh map to see what changed ";
-                FoWHelper.pingSystem(activeGame, event, tile.getPosition(), message);
-                  if (count <10) {
-                    activeGame.setPingSystemCounter(count);
-                    activeGame.setTileAsPinged(count, tile.getPosition());
-                  }
-            }
-        }
-        
-        if(getActionDescription().toLowerCase().contains("add units")){
-            // ButtonHelper.checkFleetAndCapacity(Helper.getPlayerFromColorOrFaction(activeMap, color), activeMap, tile, event);
-        }
+        commonUnitParsing(event, color, tile, unitList, activeGame, planetName);
         actionAfterAll(event, tile, color, activeGame);
     }
 
     public void unitParsing(SlashCommandInteractionEvent event, String color, Tile tile, String unitList, Game activeGame, String planetName) {
-        unitList = unitList.replace(", ", ",");
-        StringTokenizer unitListTokenizer = new StringTokenizer(unitList, ",");
-        while (unitListTokenizer.hasMoreTokens()) {
-            String unitListToken = unitListTokenizer.nextToken();
-            StringTokenizer unitInfoTokenizer = new StringTokenizer(unitListToken, " ");
-
-            int tokenCount = unitInfoTokenizer.countTokens();
-            if (tokenCount > 3) {
-                MessageHelper.sendMessageToChannel(event.getChannel(), "Warning: Unit list should have a maximum of 3 parts `{count} {unit} {planet}` - `" + unitListToken + "` has " + tokenCount + " parts. There may be errors.");
-            }
-
-            int count = 1;
-            boolean numberIsSet = false;
-
-            String unit = "";
-            if (unitInfoTokenizer.hasMoreTokens()) {
-                String ifNumber = unitInfoTokenizer.nextToken();
-                try {
-                    count = Integer.parseInt(ifNumber);
-                    numberIsSet = true;
-                } catch (Exception e) {
-                    unit = AliasHandler.resolveUnit(ifNumber);
-                }
-            }
-            if (unitInfoTokenizer.hasMoreTokens() && numberIsSet) {
-                unit = AliasHandler.resolveUnit(unitInfoTokenizer.nextToken());
-            }
-
-            color = recheckColorForUnit(unit, color, event);
-
-            String unitID = Mapper.getUnitID(unit, color);
-            String unitPath = Tile.getUnitPath(unitID);
-            if (unitPath == null) {
-                MessageHelper.sendMessageToChannel(event.getChannel(), "Unit: `" + unit + "` is not valid and not supported. Please redo this part: `" + unitListToken + "`");
-                continue;
-            }
-            if (unitInfoTokenizer.hasMoreTokens()) {
-                String planetToken = unitInfoTokenizer.nextToken();
-                planetName = AliasHandler.resolvePlanet(planetToken);
-                // if (!Mapper.isValidPlanet(planetName)) {
-                //     MessageHelper.sendMessageToChannel(event.getChannel(), "Planet: `" + planetToken + "` is not valid and not supported. Please redo this part: `" + unitListToken + "`");
-                //     continue;
-                // }
-            }
-
-            planetName = getPlanet(event, tile, planetName);
-            unitAction(event, tile, count, planetName, unitID, color, activeGame);
-
-
-            addPlanetToPlayArea(event, tile, planetName, activeGame);
-        }
-        if (activeGame.isFoWMode()) {
-            boolean pingedAlready = false;
-            int count = 0;
-            String[] tileList = activeGame.getListOfTilesPinged();
-            while (count < 10 && !pingedAlready) {
-                String tilePingedAlready = tileList[count];
-                if (tilePingedAlready != null) {
-                    pingedAlready = tilePingedAlready.equalsIgnoreCase(tile.getPosition());
-                    count++;
-                } else {
-                    break;
-                }
-            }
-            if (!pingedAlready) {
-                String colorMention = Helper.getColourAsMention(event.getGuild(), color);
-                FoWHelper.pingSystem(activeGame, event, tile.getPosition(), colorMention + " has modified units in the system. Refresh map to see what changed");
-                if (count <10) {
-                    activeGame.setPingSystemCounter(count);
-                    activeGame.setTileAsPinged(count, tile.getPosition());
-                }
-
-            }
-        }
-        actionAfterAll(event, tile, color, activeGame);
+        commonUnitParsing((GenericInteractionCreateEvent) event, color, tile, unitList, activeGame, planetName);
+        actionAfterAll((GenericInteractionCreateEvent) event, tile, color, activeGame);
     }
 
+    public void unitParsing(GenericInteractionCreateEvent event, String color, Tile tile, String unitList, Game activeGame) {
+        unitList = unitList.replace(", ", ",").replace("-", "").replace("'", "").toLowerCase();
+        commonUnitParsing(event, color, tile, unitList, activeGame, Constants.SPACE);
+        actionAfterAll(event, tile, color, activeGame);
+    }
 
     protected String recheckColorForUnit(String unit, String color, GenericInteractionCreateEvent event) {
         return color;
     }
 
-    public void unitParsing(GenericInteractionCreateEvent event, String color, Tile tile, String unitList, Game activeGame) {
-        unitList = unitList.replace(", ", ",").replace("-","").replace("'","").toLowerCase();
+    public void commonUnitParsing(GenericInteractionCreateEvent event, String color, Tile tile, String unitList, Game activeGame, String planetName) {
+        unitList = unitList.replace(", ", ",");
         StringTokenizer unitListTokenizer = new StringTokenizer(unitList, ",");
-        
+
         while (unitListTokenizer.hasMoreTokens()) {
             String unitListToken = unitListTokenizer.nextToken();
             StringTokenizer unitInfoTokenizer = new StringTokenizer(unitListToken, " ");
 
-            int tokenCount = unitInfoTokenizer.countTokens();
-            if (tokenCount > 3) {
-                MessageHelper.sendMessageToChannel(event.getMessageChannel(), "Warning: Unit list should have a maximum of 3 parts `{count} {unit} {planet}` - `" + unitListToken + "` has " + tokenCount + " parts. There may be errors.");
-            }
-
             int count = 1;
             boolean numberIsSet = false;
-            String planetName = Constants.SPACE;
-            String unit = "";
+
+            String originalUnit = "";
+            String resolvedUnit = "";
             if (unitInfoTokenizer.hasMoreTokens()) {
                 String ifNumber = unitInfoTokenizer.nextToken();
                 try {
                     count = Integer.parseInt(ifNumber);
                     numberIsSet = true;
                 } catch (Exception e) {
-                    unit = AliasHandler.resolveUnit(ifNumber);
+                    originalUnit = ifNumber;
                 }
             }
             if (unitInfoTokenizer.hasMoreTokens() && numberIsSet) {
-                unit = AliasHandler.resolveUnit(unitInfoTokenizer.nextToken());
+                originalUnit = unitInfoTokenizer.nextToken();
             }
-            String unitID = Mapper.getUnitID(unit, color);
+            resolvedUnit = AliasHandler.resolveUnit(originalUnit);
+
+            // !!!!!!
+            color = recheckColorForUnit(resolvedUnit, color, event);
+
+            UnitKey unitID = Mapper.getUnitKey(resolvedUnit, color);
             String unitPath = Tile.getUnitPath(unitID);
-            if (unitPath == null) {
-                MessageHelper.sendMessageToChannel(event.getMessageChannel(), "Unit `" + unit + "` is not valid and not supported. Please redo this part: `" + unitListToken + "`");
-                continue;
-            }
+
+            // RESOLVE PLANET NAME
+            String originalPlanetName = "";
             if (unitInfoTokenizer.hasMoreTokens()) {
                 String planetToken = unitInfoTokenizer.nextToken();
+                if (unitInfoTokenizer.hasMoreTokens()) {
+                    planetToken = planetToken + unitInfoTokenizer.nextToken();
+                }
+                originalPlanetName = planetToken;
                 planetName = AliasHandler.resolvePlanet(planetToken);
-                // if (!Mapper.isValidPlanet(planetName)) {
-                //     MessageHelper.sendMessageToChannel(event.getChannel(), "Planet: `" + planetToken + "` is not valid and not supported. Please redo this part: `" + unitListToken + "`");
-                //     continue;
-                // }
+            } else {
+                planetName = Constants.SPACE;
+            }
+            planetName = getPlanet(event, tile, planetName);
+            
+            boolean isValidCount = count > 0;
+            boolean isValidUnit = unitPath != null;
+            boolean isValidUnitHolder = Constants.SPACE.equals(planetName) || tile.isSpaceHolderValid(planetName);
+            if (event instanceof SlashCommandInteractionEvent && (!isValidCount || !isValidUnit || !isValidUnitHolder)) {
+                StringBuilder sb = new StringBuilder();
+                sb.append("Could not parse this section of the command: `" + unitListToken + "`\n> ");
+
+                sb.append(isValidCount ? "✅" : "❌");
+                sb.append(" Count = `").append(count).append("`");
+                sb.append(isValidCount ? "" : " -> Count must be a positive integer");
+                sb.append("\n> ");
+
+                sb.append(isValidUnit ? "✅" : "❌");
+                sb.append(" Unit = `").append(originalUnit).append("`");
+                sb.append(isValidUnit ? " -> `" + resolvedUnit + "`" : " ->  UnitID or Alias not found. Try something like: `inf, mech, dn, car, cru, des, fs, ws, sd, pds`");
+                sb.append("\n> ");
+
+                sb.append(isValidUnitHolder ? "✅" : "❌");
+                sb.append(" Planet = ` ").append(originalPlanetName).append("`");
+                sb.append(isValidUnitHolder ? " -> `" + planetName + "`" : " -> Planets in this system are: `" + CollectionUtils.join(tile.getUnitHolders().keySet(), ", ") + "`");
+                sb.append("\n");
+                MessageHelper.sendMessageToChannel(event.getMessageChannel(), sb.toString());
+                continue;
             }
 
-            planetName = getPlanet(event, tile, planetName);
             unitAction(event, tile, count, planetName, unitID, color, activeGame);
             addPlanetToPlayArea(event, tile, planetName, activeGame);
         }
+
         if (activeGame.isFoWMode()) {
             boolean pingedAlready = false;
             int count = 0;
@@ -405,86 +215,87 @@ abstract public class AddRemoveUnits implements Command {
                 }
             }
             if (!pingedAlready) {
-                String colorMention = Helper.getColourAsMention(event.getGuild(), color);
+                String colorMention = Emojis.getColourEmojis(color);
                 String message = colorMention + " has modified units in the system. ";
-                if(getActionDescription().contains("add_units")){
-                    message = message + " Specific units modified include: "+unitList;
+                if (getActionDescription().contains("add_units")) {
+                    message = message + " Specific units modified include: " + unitList;
                 }
                 message = message + "Refresh map to see what changed ";
                 FoWHelper.pingSystem(activeGame, event, tile.getPosition(), message);
-                  if (count <10) {
+                if (count < 10) {
                     activeGame.setPingSystemCounter(count);
                     activeGame.setTileAsPinged(count, tile.getPosition());
-                  }
+                }
             }
         }
-       System.out.println(getActionDescription());
-        if(getActionDescription().toLowerCase().contains("add units")){
-            
-           //  ButtonHelper.checkFleetAndCapacity(Helper.getPlayerFromColorOrFaction(activeMap, color), activeMap, tile, event);
+
+        if (getActionDescription().toLowerCase().contains("add units")) {
+            Player player = activeGame.getPlayerFromColorOrFaction(color);
+            if (player == null) {
+                return;
+            }
+            ButtonHelper.checkFleetAndCapacity(player, activeGame, tile, event);
+            if (player.getLeaderIDs().contains("naalucommander") && !player.hasLeaderUnlocked("naalucommander")) {
+                ButtonHelper.commanderUnlockCheck(player, activeGame, "naalu", event);
+            }
+            if (player.getLeaderIDs().contains("cabalcommander") && !player.hasLeaderUnlocked("cabalcommander")) {
+                ButtonHelper.commanderUnlockCheck(player, activeGame, "cabal", event);
+            }
         }
-       
     }
 
-    public void addPlanetToPlayArea(GenericInteractionCreateEvent event, Tile tile, String planetName, Game activeGame) {
+    public static void addPlanetToPlayArea(GenericInteractionCreateEvent event, Tile tile, String planetName, Game activeGame) {
         String userID = event.getUser().getId();
         GameManager gameManager = GameManager.getInstance();
-        if(activeGame == null){
+        if (activeGame == null) {
             activeGame = gameManager.getUserActiveGame(userID);
         }
-       // Map activeMap = mapManager.getUserActiveMap(userID);
-        if (!Constants.SPACE.equals(planetName)){
+        // Map activeMap = mapManager.getUserActiveMap(userID);
+        if (!Constants.SPACE.equals(planetName)) {
             UnitHolder unitHolder = tile.getUnitHolders().get(planetName);
-            if (unitHolder != null){
-                Set<String> allUnitsOnPlanet = unitHolder.getUnits().keySet();
+            if (unitHolder != null) {
+                Set<UnitKey> allUnitsOnPlanet = unitHolder.getUnits().keySet();
                 Set<String> unitColors = new HashSet<>();
-                for (String unit_ : allUnitsOnPlanet) {
-                    String unitColor = unit_.substring(0, unit_.indexOf("_"));
+                for (UnitKey unit_ : allUnitsOnPlanet) {
+                    String unitColor = unit_.getColorID();
                     unitColors.add(unitColor);
                 }
-               if (unitColors.size() == 1){
-                   String unitColor = unitColors.iterator().next();
-                   for (Player player : activeGame.getPlayers().values()) {
-                       if (player.getFaction() != null && player.getColor() != null) {
-                           String colorID = Mapper.getColorID(player.getColor());
-                           if (unitColor.equals(colorID)){
-                               if (!player.getPlanetsAllianceMode().contains(planetName)) {
-                                   new PlanetAdd().doAction(player, planetName, activeGame, event);
-                               }
-                               break;
-                           }
-                       }
-                   }
-               }
+
+                if (unitColors.size() == 1) {
+                    String unitColor = unitColors.iterator().next();
+                    for (Player player : activeGame.getPlayers().values()) {
+                        if (player.getFaction() != null && player.getColor() != null) {
+                            String colorID = Mapper.getColorID(player.getColor());
+                            if (unitColor.equals(colorID)) {
+                                if (!player.getPlanetsAllianceMode().contains(planetName)) {
+                                    new PlanetAdd().doAction(player, planetName, activeGame, event);
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
             }
         }
     }
 
     public static String getPlanet(GenericInteractionCreateEvent event, Tile tile, String planetName) {
-        if (!tile.isSpaceHolderValid(planetName)) {
-            Set<String> unitHolderIDs = new HashSet<>(tile.getUnitHolders().keySet());
-            unitHolderIDs.remove(Constants.SPACE);
-            String finalPlanetName = planetName;
-            List<String> validUnitHolderIDs = unitHolderIDs.stream().filter(unitHolderID -> unitHolderID.startsWith(finalPlanetName))
-                    .toList();
-            if (validUnitHolderIDs.size() == 1) {
-                planetName = validUnitHolderIDs.get(0);
-            } else if (validUnitHolderIDs.size() > 1) {
-                MessageHelper.sendMessageToChannel(event.getMessageChannel(), "Multiple planets found that match `" + planetName + "`: `" + validUnitHolderIDs + "`");
-            } else {
-                MessageHelper.sendMessageToChannel(event.getMessageChannel(), "Planet `" + planetName + "` could not be resolved. Valid options for tile `" + tile.getRepresentationForAutoComplete() + "` are: `" + unitHolderIDs + "`");
-            }
-        }
-        return planetName;
+        if (tile.isSpaceHolderValid(planetName)) return planetName;
+        return tile.getUnitHolders().keySet().stream()
+                .filter(id -> !Constants.SPACE.equals(planetName))
+                .filter(unitHolderID -> unitHolderID.startsWith(planetName))
+                .findFirst().orElse(planetName);
     }
 
-    abstract protected void unitAction(SlashCommandInteractionEvent event, Tile tile, int count, String planetName, String unitID, String color, Game activeGame);
-    abstract protected void unitAction(GenericInteractionCreateEvent event, Tile tile, int count, String planetName, String unitID, String color, Game activeGame);
+    abstract protected void unitAction(SlashCommandInteractionEvent event, Tile tile, int count, String planetName, UnitKey unitID, String color, Game activeGame);
 
-    protected void actionAfterAll(SlashCommandInteractionEvent event, Tile tile, String color, Game activeGame){
+    abstract protected void unitAction(GenericInteractionCreateEvent event, Tile tile, int count, String planetName, UnitKey unitID, String color, Game activeGame);
+
+    protected void actionAfterAll(SlashCommandInteractionEvent event, Tile tile, String color, Game activeGame) {
         //do nothing, overriden by child classes
     }
-    protected void actionAfterAll(GenericInteractionCreateEvent event, Tile tile, String color, Game activeGame){
+
+    protected void actionAfterAll(GenericInteractionCreateEvent event, Tile tile, String color, Game activeGame) {
         //do nothing, overriden by child classes
     }
 
@@ -500,13 +311,11 @@ abstract public class AddRemoveUnits implements Command {
         commands.addCommands(
             Commands.slash(getActionID(), getActionDescription())
                 .addOptions(new OptionData(OptionType.STRING, Constants.TILE_NAME, "System/Tile name").setRequired(true).setAutoComplete(true))
-                .addOptions(new OptionData(OptionType.STRING, Constants.UNIT_NAMES, "Unit name/s. Example: Dread, 2 Warsuns").setRequired(true))
+                .addOptions(new OptionData(OptionType.STRING, Constants.UNIT_NAMES, "Comma separated list of '{count} unit {planet}' Eg. 2 infantry primor, carrier, 2 fighter, mech pri").setRequired(true))
                 .addOptions(new OptionData(OptionType.STRING, Constants.FACTION_COLOR, "Faction or Color for unit").setAutoComplete(true))
-                .addOptions(new OptionData(OptionType.BOOLEAN, Constants.NO_MAPGEN, "'True' to not generate a map update with this command"))
-        );
+                .addOptions(new OptionData(OptionType.BOOLEAN, Constants.NO_MAPGEN, "'True' to not generate a map update with this command")));
     }
 
     abstract protected String getActionDescription();
-
 
 }

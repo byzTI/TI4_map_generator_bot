@@ -11,7 +11,6 @@ import ti4.generator.Mapper;
 import ti4.helpers.AliasHandler;
 import ti4.helpers.CombatRollType;
 import ti4.helpers.Emojis;
-import ti4.helpers.Helper;
 
 @Data
 public class UnitModel implements ModelInterface, EmbeddableModel {
@@ -46,6 +45,7 @@ public class UnitModel implements ModelInterface, EmbeddableModel {
     private Boolean isGroundForce;
     private Boolean isShip;
     private String ability;
+    private String homebrewReplacesID;
     private List<String> searchTags = new ArrayList<>();
 
     //Source: units.json - source of json: https://docs.google.com/spreadsheets/d/1nbHylJyn4VURCRKX8ePmOrLa6dAsc504ww0BPZXIRxU/edit?usp=sharing
@@ -53,10 +53,17 @@ public class UnitModel implements ModelInterface, EmbeddableModel {
     //From: https://thenewstack.io/how-to-convert-google-spreadsheet-to-json-formatted-text/
 
     public boolean isValid() {
-        return id != null 
+        return id != null
             && !id.isEmpty()
-            && List.of("ca","cv","dd","dn","ff","fs","gf","mf","pd","sd","ws","csd","plenaryorbital","tyrantslament").contains(getAsyncId())
-            && (getFaction() == null || Mapper.isFaction(getFaction().toLowerCase()));
+            && baseType != null
+            && name != null
+            && asyncId != null
+            && source != null
+            && List.of("ca", "cv", "dd", "dn", "ff", "fs", "gf", "mf", "pd", "sd", "ws", "csd", "plenaryorbital", "tyrantslament").contains(getAsyncId())
+            // && (requiredTechId == null || Mapper.isValidTech(requiredTechId))
+            // && (upgradesFromUnitId == null || Mapper.isValidUnit(upgradesFromUnitId))
+            // && (upgradesToUnitId == null || Mapper.isValidUnit(upgradesToUnitId))
+            && (!getFaction().isPresent() || Mapper.isFaction(getFaction().orElse("").toLowerCase()));
     }
 
     public String getAlias() {
@@ -74,13 +81,12 @@ public class UnitModel implements ModelInterface, EmbeddableModel {
     }
 
     public String getUnitEmoji() {
-        return Helper.getEmojiFromDiscord(getBaseType());
+        return Emojis.getEmojiFromDiscord(getBaseType());
     }
 
     public String getUnitRepresentation() {
-        String faction = getFaction();
-        String factionEmoji = Helper.getEmojiFromDiscord(faction);
-        String unitEmoji = Helper.getEmojiFromDiscord(getBaseType());
+        String factionEmoji = Emojis.getEmojiFromDiscord(getFaction().orElse(""));
+        String unitEmoji = Emojis.getEmojiFromDiscord(getBaseType());
 
         return unitEmoji + " " + getName() + factionEmoji + ": " + getAbility();
     }
@@ -91,22 +97,30 @@ public class UnitModel implements ModelInterface, EmbeddableModel {
 
     public MessageEmbed getRepresentationEmbed(boolean includeAliases) {
 
-        String factionEmoji = getFaction() == null ? "" : Helper.getFactionIconFromDiscord(getFaction());
-        String unitEmoji = getBaseType() == null ? "" : Helper.getEmojiFromDiscord(getBaseType());
+        String factionEmoji = getFaction().isEmpty() ? "" : Emojis.getFactionIconFromDiscord(getFaction().orElse(""));
+        String unitEmoji = getBaseType() == null ? "" : Emojis.getEmojiFromDiscord(getBaseType());
 
         EmbedBuilder eb = new EmbedBuilder();
-      
+
         String name = getName() == null ? "" : getName();
-        eb.setTitle(factionEmoji + unitEmoji + " __" + name + "__", null);
+        eb.setTitle(factionEmoji + unitEmoji + " __" + name + "__ " + getSourceEmoji(), null);
 
         if (!getValuesText().isEmpty()) eb.addField("Values:", getValuesText(), true);
         if (!getDiceText().isEmpty()) eb.addField("Dice Rolls:", getDiceText(), true);
         if (!getOtherText().isEmpty()) eb.addField("Traits:", getOtherText(), true);
-        if (getAbility() != null) eb.addField("Ability:", getAbility(), false);
+        if (getAbility().isPresent()) eb.addField("Ability:", getAbility().get(), false);
 
         if (includeAliases) eb.setFooter("UnitID: " + getId() + "\nAliases: " + getAsyncIDAliases() + "\nSource: " + getSource());
 
         return eb.build();
+    }
+
+    public String getSourceEmoji() {
+        return switch (getSource()) {
+            case "absol" -> Emojis.Absol;
+            case "ds" -> Emojis.DiscordantStars;
+            default -> "";
+        };
     }
 
     public int getCombatDieCountForAbility(CombatRollType rollType) {
@@ -127,10 +141,6 @@ public class UnitModel implements ModelInterface, EmbeddableModel {
             case SpaceCannonOffence, SpaceCannonDefence -> getSpaceCannonHitsOn();
             default -> getCombatHitsOn();
         };
-    }
-
-    public boolean getIsGroundForce() {
-        return Optional.ofNullable(isGroundForce).orElse(false);
     }
 
     private String getAsyncIDAliases() {
@@ -160,9 +170,9 @@ public class UnitModel implements ModelInterface, EmbeddableModel {
 
     private String getCostText() {
         if (getCost() >= 1) {
-            return "Cost: " + Helper.getResourceEmoji(Math.round(getCost())) + "\n";
+            return "Cost: " + Emojis.getResourceEmoji(Math.round(getCost())) + "\n";
         } else if (getCost() == 0.5) {
-            return "Cost: " + Emojis.Resources_1 + " (for 2 " + Helper.getEmojiFromDiscord(getBaseType()) + ")\n";
+            return "Cost: " + Emojis.Resources_1 + " (for 2 " + Emojis.getEmojiFromDiscord(getBaseType()) + ")\n";
         }
         return "";
     }
@@ -215,19 +225,20 @@ public class UnitModel implements ModelInterface, EmbeddableModel {
 
     private String getSpaceCannonText() {
         if (getSpaceCannonDieCount() > 0) {
-            return ((getDeepSpaceCannon() != null && getDeepSpaceCannon()) ? "Deep " : "") + "Space Cannon " + getSpaceCannonHitsOn() + " (x" + getSpaceCannonDieCount() + ")\n";
+            return ((getDeepSpaceCannon()) ? "Deep " : "") + "Space Cannon " + getSpaceCannonHitsOn() + " (x" + getSpaceCannonDieCount() + ")\n";
         }
         return "";
     }
+
     private String getPlanetaryShieldText() {
-        if (getPlanetaryShield() != null && getPlanetaryShield()) {
+        if (getPlanetaryShield()) {
             return "Planetary Shield\n";
         }
         return "";
     }
 
     private String getSustainDamageText() {
-        if (getSustainDamage() != null && getSustainDamage()) {
+        if (getSustainDamage()) {
             return "Sustain Damage\n";
         }
         return "";
@@ -235,17 +246,83 @@ public class UnitModel implements ModelInterface, EmbeddableModel {
 
     public boolean search(String searchString) {
         return getName().toLowerCase().contains(searchString)
-            || (getFaction() != null && getFaction().toLowerCase().contains(searchString))
+            || getFaction().orElse("").toLowerCase().contains(searchString)
             || getId().toLowerCase().contains(searchString)
             || getBaseType().toLowerCase().contains(searchString)
             || getSearchTags().contains(searchString);
     }
 
+    public static int sortFactionUnitsFirst(UnitModel a, UnitModel b) {
+        boolean fa = a.getFaction().isEmpty();
+        boolean fb = b.getFaction().isEmpty();
+        if (fa && fb) return 0;
+        if (!fa && !fb) return 0;
+        if (!fa && fb) return -1;
+        return 1;
+    }
+
     public String getAutoCompleteName() {
         StringBuilder sb = new StringBuilder();
         sb.append(getName()).append(" (");
-        if (getFaction() != null) sb.append(getFaction()).append(" ");
-        sb.append(getBaseType()).append(")");
+        if (getFaction().isPresent()) sb.append(getFaction().get()).append(" ");
+        sb.append(getBaseType()).append(") [");
+        sb.append(getSource()).append("]");
         return sb.toString();
+    }
+
+    public boolean getDeepSpaceCannon() {
+        return Optional.ofNullable(deepSpaceCannon).orElse(false);
+    }
+
+    public boolean getPlanetaryShield() {
+        return Optional.ofNullable(planetaryShield).orElse(false);
+    }
+
+    public boolean getSustainDamage() {
+        return Optional.ofNullable(sustainDamage).orElse(false);
+    }
+
+    public boolean getDisablesPlanetaryShield() {
+        return Optional.ofNullable(disablesPlanetaryShield).orElse(false);
+    }
+
+    public boolean getCanBeDirectHit() {
+        return Optional.ofNullable(canBeDirectHit).orElse(false);
+    }
+
+    public boolean getIsStructure() {
+        return Optional.ofNullable(isStructure).orElse(false);
+    }
+
+    public boolean getIsGroundForce() {
+        return Optional.ofNullable(isGroundForce).orElse(false);
+    }
+
+    public boolean getIsShip() {
+        return Optional.ofNullable(isShip).orElse(false);
+    }
+
+    public Optional<String> getUpgradesFromUnitId() {
+        return Optional.ofNullable(upgradesFromUnitId);
+    }
+
+    public Optional<String> getUpgradesToUnitId() {
+        return Optional.ofNullable(upgradesToUnitId);
+    }
+
+    public Optional<String> getRequiredTechId() {
+        return Optional.ofNullable(requiredTechId);
+    }
+
+    public Optional<String> getFaction() {
+        return Optional.ofNullable(faction);
+    }
+
+    public Optional<String> getAbility() {
+        return Optional.ofNullable(ability);
+    }
+    
+    public Optional<String> getHomebrewReplacesID() {
+        return Optional.ofNullable(homebrewReplacesID);
     }
 }

@@ -3,8 +3,8 @@ package ti4.commands.cardsac;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-
 import java.util.Map;
+
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
@@ -19,6 +19,7 @@ import ti4.helpers.AgendaHelper;
 import ti4.helpers.ButtonHelper;
 import ti4.helpers.ButtonHelperActionCards;
 import ti4.helpers.ButtonHelperFactionSpecific;
+import ti4.helpers.CombatModHelper;
 import ti4.helpers.Constants;
 import ti4.helpers.Emojis;
 import ti4.helpers.FoWHelper;
@@ -27,6 +28,7 @@ import ti4.map.Game;
 import ti4.map.Player;
 import ti4.message.MessageHelper;
 import ti4.model.ActionCardModel;
+import ti4.model.TemporaryCombatModifierModel;
 
 public class PlayAC extends ACCardsSubcommandData {
     public PlayAC() {
@@ -106,14 +108,20 @@ public class PlayAC extends ACCardsSubcommandData {
             return "You are trying to play a component action AC and the game does not think you are the active player. You can fix this with /player turn_start. Until then, you are #denied";
         }
 
-        activeGame.discardActionCard(player.getUserID(), acIndex);
+        if(player.hasAbility("cybernetic_madness")){
+            activeGame.purgedActionCard(player.getUserID(), acIndex);
+        }else{
+            activeGame.discardActionCard(player.getUserID(), acIndex);
+        }
+
+        
         StringBuilder sb = new StringBuilder();
         sb.append(Helper.getGamePing(guild, activeGame)).append(" ").append(activeGame.getName()).append("\n");
 
         if (activeGame.isFoWMode()) {
             sb.append("Someone played an Action Card:\n");
         } else {
-            sb.append(Helper.getPlayerRepresentation(player, activeGame)).append(" played an Action Card:\n");
+            sb.append(player.getRepresentation()).append(" played an Action Card:\n");
         }
         sb.append(actionCard.getRepresentation());
         List<Button> buttons = new ArrayList<>();
@@ -153,17 +161,17 @@ public class PlayAC extends ACCardsSubcommandData {
             MessageHelper.sendMessageToChannel(mainGameChannel, sb.toString());
         } else {
             if (Helper.isSaboAllowed(activeGame, player)) {
-                MessageHelper.sendMessageToChannelWithFactionReact(mainGameChannel, sb.toString(), activeGame, player, buttons);
+                MessageHelper.sendMessageToChannelWithFactionReact(mainGameChannel, sb.toString(), activeGame, player, buttons, true);
             } else {
                 MessageHelper.sendMessageToChannel(mainGameChannel, sb.toString());
                 MessageHelper.sendMessageToChannel(mainGameChannel,
                     "Either all sabos were in the discard or active player had Transparasteel Plating and everyone was passed. Instinct training and watcher mechs may still be viable, who knows. ");
             }
+            MessageChannel channel2 = ButtonHelper.getCorrectChannel(player, activeGame);
             if (actionCardTitle.contains("Manipulate Investments")) {
-                MessageChannel channel2 = ButtonHelper.getCorrectChannel(player, activeGame);
                 List<Button> scButtons = new ArrayList<>();
                 for (int sc = 1; sc < 9; sc++) {
-                    Emoji scEmoji = Emoji.fromFormatted(Helper.getSCBackEmojiFromInteger(sc));
+                    Emoji scEmoji = Emoji.fromFormatted(Emojis.getSCBackEmojiFromInteger(sc));
                     Button button;
                     if (scEmoji.getName().contains("SC") && scEmoji.getName().contains("Back")) {
                         button = Button.secondary("FFCC_" + player.getFaction() + "_increaseTGonSC_" + sc, " ").withEmoji(scEmoji);
@@ -177,17 +185,262 @@ public class PlayAC extends ACCardsSubcommandData {
                     scButtons);
             }
             if (actionCardTitle.contains("Archaeological Expedition")) {
-                MessageChannel channel2 = ButtonHelper.getCorrectChannel(player, activeGame);
                 List<Button> scButtons = ButtonHelperActionCards.getArcExpButtons(activeGame, player);
                 MessageHelper.sendMessageToChannelWithButtons(channel2,
                     Helper.getPlayerRepresentation(player, activeGame, guild, false) + " After checking for sabos, use buttons to explore a planet type x 3 and gain any frags", scButtons);
             }
-            if (actionCardTitle.contains("Plagiarize")) {
-                MessageChannel channel2 = ButtonHelper.getCorrectChannel(player, activeGame);
-                List<Button> scButtons = new ArrayList<Button>();
-                scButtons.add(Button.success("getPlagiarizeButtons", "Resolve Plagiarize"));
-                MessageHelper.sendMessageToChannelWithButtons(channel2,
-                    Helper.getPlayerRepresentation(player, activeGame, guild, false) + " After checking for sabos, use buttons to resolve plagiarize", scButtons);
+            String codedName = "Plagiarize";
+            String codedMessage = Helper.getPlayerRepresentation(player, activeGame, guild, false) + " After checking for sabos, use buttons to resolve ";
+            List<Button> codedButtons = new ArrayList<Button>();
+            if (actionCardTitle.contains(codedName)) {
+                codedButtons.add(Button.success("getPlagiarizeButtons", "Resolve Plagiarize"));
+                MessageHelper.sendMessageToChannelWithButtons(channel2, codedMessage+codedName, codedButtons);
+            }
+
+            codedName = "Mining Initiative";
+            if (actionCardTitle.contains(codedName)) {
+                codedButtons.add(Button.success("miningInitiative", "Resolve "+codedName));
+                MessageHelper.sendMessageToChannelWithButtons(channel2, codedMessage+codedName, codedButtons);
+            }
+
+            codedName = "Economic Initiative";
+            if (actionCardTitle.contains(codedName)) {
+                codedButtons.add(Button.success("economicInitiative", "Resolve "+codedName));
+                MessageHelper.sendMessageToChannelWithButtons(channel2, codedMessage+codedName, codedButtons);
+            }
+
+            codedName = "Reveal Prototype";
+            if (actionCardTitle.contains(codedName)) {
+                codedButtons.add(Button.success("focusedResearch", "Resolve "+codedName));
+                MessageHelper.sendMessageToChannelWithButtons(channel2, codedMessage+codedName, codedButtons);
+            }
+
+            codedName = "Skilled Retreat";
+            if (actionCardTitle.contains(codedName)) {
+                codedButtons.add(Button.success("retreat_"+activeGame.getActiveSystem()+"_skilled", "Resolve "+codedName));
+                MessageHelper.sendMessageToChannelWithButtons(channel2, codedMessage+codedName, codedButtons);
+            }
+
+            codedName = "Reparations";
+            if (actionCardTitle.contains(codedName)) {
+                codedButtons.add(Button.success("resolveReparationsStep1", "Resolve "+codedName));
+                MessageHelper.sendMessageToChannelWithButtons(channel2, codedMessage+codedName, codedButtons);
+            }
+            codedName = "Uprising";
+            if (actionCardTitle.contains(codedName)) {
+                codedButtons.add(Button.success("resolveUprisingStep1", "Resolve "+codedName));
+                MessageHelper.sendMessageToChannelWithButtons(channel2, codedMessage+codedName, codedButtons);
+            }
+            codedName = "Assassinate Representative";
+            if (actionCardTitle.contains(codedName)) {
+                codedButtons.add(Button.success("resolveAssRepsStep1", "Resolve "+codedName));
+                MessageHelper.sendMessageToChannelWithButtons(channel2, codedMessage+codedName, codedButtons);
+            }
+            codedName = "Signal Jamming";
+            if (actionCardTitle.contains(codedName)) {
+                codedButtons.add(Button.success("resolveSignalJammingStep1", "Resolve "+codedName));
+                MessageHelper.sendMessageToChannelWithButtons(channel2, codedMessage+codedName, codedButtons);
+            }
+            codedName = "Spy";
+            if (actionCardTitle.contains(codedName)) {
+                codedButtons.add(Button.success("resolveSpyStep1", "Resolve "+codedName));
+                MessageHelper.sendMessageToChannelWithButtons(channel2, codedMessage+codedName, codedButtons);
+            }
+
+            codedName = "Political Stability";
+            if (actionCardTitle.contains(codedName)) {
+                codedButtons.add(Button.success("resolvePSStep1", "Resolve "+codedName));
+                MessageHelper.sendMessageToChannelWithButtons(channel2, codedMessage+codedName, codedButtons);
+            }
+            codedName = "Plague";
+            if (actionCardTitle.contains(codedName)) {
+                codedButtons.add(Button.success("resolvePlagueStep1", "Resolve "+codedName));
+                MessageHelper.sendMessageToChannelWithButtons(channel2, codedMessage+codedName, codedButtons);
+            }
+            codedName = "Upgrade";
+            if (actionCardTitle.contains(codedName)) {
+                codedButtons.add(Button.success("resolveUpgrade_"+activeGame.getActiveSystem(), "Resolve "+codedName));
+                MessageHelper.sendMessageToChannelWithButtons(channel2, codedMessage+codedName, codedButtons);
+            }
+            codedName = "Infiltrate";
+            if (actionCardTitle.contains(codedName)) {
+                codedButtons.add(Button.success("resolveInfiltrateStep1", "Resolve "+codedName));
+                MessageHelper.sendMessageToChannelWithButtons(channel2, codedMessage+codedName+". Warning, this will not work if the player has already removed their structures", codedButtons);
+            }
+            codedName = "Emergency Repairs";
+            if (actionCardTitle.contains(codedName)) {
+                codedButtons.add(Button.success("resolveEmergencyRepairs_"+activeGame.getActiveSystem(), "Resolve "+codedName));
+                MessageHelper.sendMessageToChannelWithButtons(channel2, codedMessage+codedName, codedButtons);
+            }
+            codedName = "Insider Information";
+            if (actionCardTitle.contains(codedName)) {
+                codedButtons.add(Button.success("resolveInsiderInformation", "Resolve "+codedName));
+                MessageHelper.sendMessageToChannelWithButtons(channel2, codedMessage+codedName, codedButtons);
+            }
+            codedName = "Cripple Defenses";
+            if (actionCardTitle.contains(codedName)) {
+                codedButtons.add(Button.success("resolveCrippleDefensesStep1", "Resolve "+codedName));
+                MessageHelper.sendMessageToChannelWithButtons(channel2, codedMessage+codedName, codedButtons);
+            }
+            codedName = "Impersonation";
+            if (actionCardTitle.contains(codedName)) {
+                codedButtons.add(Button.success("resolveImpersonation", "Resolve "+codedName));
+                MessageHelper.sendMessageToChannelWithButtons(channel2, codedMessage+codedName, codedButtons);
+            }
+
+            codedName = "Ancient Burial Sites";
+            if (actionCardTitle.contains(codedName)) {
+                codedButtons.add(Button.success("resolveABSStep1", "Resolve "+codedName));
+                MessageHelper.sendMessageToChannelWithButtons(channel2, codedMessage+codedName, codedButtons);
+            }
+            codedName = "Salvage";
+            if (actionCardTitle.contains(codedName)) {
+                codedButtons.add(Button.success("resolveSalvageStep1", "Resolve "+codedName));
+                MessageHelper.sendMessageToChannelWithButtons(channel2, codedMessage+codedName, codedButtons);
+            }
+            codedName = "Insubordination";
+            if (actionCardTitle.contains(codedName)) {
+                codedButtons.add(Button.success("resolveInsubStep1", "Resolve "+codedName));
+                MessageHelper.sendMessageToChannelWithButtons(channel2, codedMessage+codedName, codedButtons);
+            }
+            codedName = "Frontline Deployment";
+            if (actionCardTitle.contains(codedName)) {
+                codedButtons.add(Button.success("resolveFrontline", "Resolve "+codedName));
+                MessageHelper.sendMessageToChannelWithButtons(channel2, codedMessage+codedName, codedButtons);
+            }
+            codedName = "Unexpected Action";
+            if (actionCardTitle.contains(codedName)) {
+                codedButtons.add(Button.success("resolveUnexpected", "Resolve "+codedName));
+                MessageHelper.sendMessageToChannelWithButtons(channel2, codedMessage+codedName, codedButtons);
+            }
+            codedName = "Harness Energy";
+            if (actionCardTitle.contains(codedName)) {
+                codedButtons.add(Button.success("resolveHarness", "Resolve "+codedName));
+                MessageHelper.sendMessageToChannelWithButtons(channel2, codedMessage+codedName, codedButtons);
+            }
+
+            codedName = "War Effort";
+            if (actionCardTitle.contains(codedName)) {
+                codedButtons.add(Button.success("resolveWarEffort", "Resolve "+codedName));
+                MessageHelper.sendMessageToChannelWithButtons(channel2, codedMessage+codedName, codedButtons);
+            }
+
+            codedName = "Summit";
+            if (actionCardTitle.contains(codedName)) {
+                codedButtons.add(Button.success("resolveSummit", "Resolve "+codedName));
+                MessageHelper.sendMessageToChannelWithButtons(channel2, codedMessage+codedName, codedButtons);
+            }
+
+            codedName = "Scuttle";
+            if (actionCardTitle.contains(codedName)) {
+                codedButtons.add(Button.success("startToScuttleAUnit_0", "Resolve "+codedName));
+                MessageHelper.sendMessageToChannelWithButtons(channel2, codedMessage+codedName, codedButtons);
+            }
+            codedName = "Refit Troops";
+            if (actionCardTitle.contains(codedName)) {
+                codedButtons.add(Button.success("resolveRefitTroops", "Resolve "+codedName));
+                MessageHelper.sendMessageToChannelWithButtons(channel2, codedMessage+codedName, codedButtons);
+            }
+            codedName = "Seize Artifact";
+            if (actionCardTitle.contains(codedName)) {
+                codedButtons.add(Button.success("resolveSeizeArtifactStep1", "Resolve "+codedName));
+                MessageHelper.sendMessageToChannelWithButtons(channel2, codedMessage+codedName, codedButtons);
+            }
+            codedName = "Diplomatic Pressure";
+            if (actionCardTitle.contains(codedName)) {
+                codedButtons.add(Button.success("resolveDiplomaticPressureStep1", "Resolve "+codedName));
+                MessageHelper.sendMessageToChannelWithButtons(channel2, codedMessage+codedName, codedButtons);
+            }
+            codedName = "Decoy Operation";
+            if (actionCardTitle.contains(codedName)) {
+                codedButtons.add(Button.success("resolveDecoyOperationStep1_"+activeGame.getActiveSystem(), "Resolve "+codedName));
+                MessageHelper.sendMessageToChannelWithButtons(channel2, codedMessage+codedName, codedButtons);
+            }
+            codedName = "Reactor Meltdown";
+            if (actionCardTitle.contains(codedName)) {
+                codedButtons.add(Button.success("resolveReactorMeltdownStep1", "Resolve "+codedName));
+                MessageHelper.sendMessageToChannelWithButtons(channel2, codedMessage+codedName, codedButtons);
+            }
+            codedName = "Unstable Planet";
+            if (actionCardTitle.contains(codedName)) {
+                codedButtons.add(Button.success("resolveUnstableStep1", "Resolve "+codedName));
+                MessageHelper.sendMessageToChannelWithButtons(channel2, codedMessage+codedName, codedButtons);
+            }
+            codedName = "Ghost Ship";
+            if (actionCardTitle.contains(codedName)) {
+                codedButtons.add(Button.success("resolveGhostShipStep1", "Resolve "+codedName));
+                MessageHelper.sendMessageToChannelWithButtons(channel2, codedMessage+codedName, codedButtons);
+            }
+            codedName = "Tactical Bombardment";
+            if (actionCardTitle.contains(codedName)) {
+                codedButtons.add(Button.success("resolveTacticalBombardmentStep1", "Resolve "+codedName));
+                MessageHelper.sendMessageToChannelWithButtons(channel2, codedMessage+codedName, codedButtons);
+            }
+            codedName = "Exploration Probe";
+            if (actionCardTitle.contains(codedName)) {
+                codedButtons.add(Button.success("resolveProbeStep1", "Resolve "+codedName));
+                MessageHelper.sendMessageToChannelWithButtons(channel2, codedMessage+codedName, codedButtons);
+            }
+            codedName = "Rally";
+            if (actionCardTitle.contains(codedName)) {
+                codedButtons.add(Button.success("resolveRally", "Resolve "+codedName));
+                MessageHelper.sendMessageToChannelWithButtons(channel2, codedMessage+codedName, codedButtons);
+            }
+            codedName = "Industrial Initiative";
+            if (actionCardTitle.contains(codedName)) {
+                codedButtons.add(Button.success("industrialInitiative", "Resolve "+codedName));
+                MessageHelper.sendMessageToChannelWithButtons(channel2, codedMessage+codedName, codedButtons);
+            }
+            codedName = "Repeal Law";
+            if (actionCardTitle.contains(codedName)) {
+                codedButtons.add(Button.success("getRepealLawButtons", "Resolve "+codedName));
+                MessageHelper.sendMessageToChannelWithButtons(channel2, codedMessage+codedName, codedButtons);
+            }
+            //"resolveCounterStroke"
+            codedName = "Counterstroke";
+            if (actionCardTitle.contains(codedName)) {
+                codedButtons.add(Button.success("resolveCounterStroke", "Resolve "+codedName));
+                MessageHelper.sendMessageToChannelWithButtons(channel2, codedMessage+codedName, codedButtons);
+            }
+            codedName = "Divert Funding";
+            if (actionCardTitle.contains(codedName)) {
+                codedButtons.add(Button.success("getDivertFundingButtons", "Resolve "+codedName));
+                MessageHelper.sendMessageToChannelWithButtons(channel2, codedMessage+codedName, codedButtons);
+            }
+
+            codedName = "Focused Research";
+            if (actionCardTitle.contains(codedName)) {
+                codedButtons.add(Button.success("focusedResearch", "Resolve "+codedName));
+                MessageHelper.sendMessageToChannelWithButtons(channel2, codedMessage+codedName, codedButtons);
+            }
+
+            codedName = "Forward Supply Base";
+            if (actionCardTitle.contains(codedName)) {
+                codedButtons.add(Button.success("forwardSupplyBase", "Resolve "+codedName));
+                MessageHelper.sendMessageToChannelWithButtons(channel2, codedMessage+codedName, codedButtons);
+            }
+
+            codedName = "Rise of a Messiah";
+            if (actionCardTitle.contains(codedName)) {
+                codedButtons.add(Button.success("riseOfAMessiah", "Resolve "+codedName));
+                MessageHelper.sendMessageToChannelWithButtons(channel2, codedMessage+codedName, codedButtons);
+            }
+
+            codedName = "Veto";
+            if (actionCardTitle.contains(codedName)) {
+                codedButtons.add(Button.primary("flip_agenda", "Reveal next Agenda"));
+                MessageHelper.sendMessageToChannelWithButtons(channel2, codedMessage+codedName, codedButtons);
+            }
+
+            codedName = "Fighter Conscription";
+            if (actionCardTitle.contains(codedName)) {
+                codedButtons.add(Button.success("fighterConscription", "Resolve "+codedName));
+                MessageHelper.sendMessageToChannelWithButtons(channel2, codedMessage+codedName, codedButtons);
+            }
+            TemporaryCombatModifierModel combatModAC = CombatModHelper.GetPossibleTempModifier(Constants.AC, actionCard.getAlias(), player.getNumberTurns());
+            if(combatModAC != null){
+                codedButtons.add(Button.success("applytempcombatmod__" + Constants.AC + "__"+actionCard.getAlias(), "Resolve " + actionCard.getName()));
+                MessageHelper.sendMessageToChannelWithButtons(channel2, codedMessage + actionCard.getName(), codedButtons);
             }
 
             if (actionCardWindow.contains("After an agenda is revealed")) {
@@ -218,17 +471,21 @@ public class PlayAC extends ACCardsSubcommandData {
             }
             if ("Action".equalsIgnoreCase(actionCardWindow)) {
                 String message = "Use buttons to end turn or do another action.";
+                activeGame.setJustPlayedComponentAC(true);       
                 List<Button> systemButtons = ButtonHelper.getStartOfTurnButtons(player, activeGame, true, event);
-                MessageChannel channel2 = activeGame.getMainGameChannel();
-                if (activeGame.isFoWMode()) {
-                    channel2 = player.getPrivateChannel();
-                }
                 MessageHelper.sendMessageToChannelWithButtons(channel2, message, systemButtons);
+                if (player.getLeaderIDs().contains("kelerescommander") && !player.hasLeaderUnlocked("kelerescommander")) {
+                    String message2 = ButtonHelper.getTrueIdentity(player, activeGame)+" you can unlock keleres commander (if the AC isnt sabod) by paying 1tg.";
+                    List<Button> buttons2 = new ArrayList<Button>();
+                    buttons2.add(Button.success("pay1tgforKeleres", "Pay 1tg to unlock Commander"));
+                    buttons2.add(Button.danger("deleteButtons", "Decline"));
+                    MessageHelper.sendMessageToChannelWithButtons(channel2, message2, buttons2);
+                }
                 for(Player p2 : activeGame.getRealPlayers()){
                     if(p2 == player){
                         continue;
                     }
-                    if(p2.getActionCards().keySet().contains("reverse_engineer")){
+                    if(p2.getActionCards().keySet().contains("reverse_engineer") && !ButtonHelper.isPlayerElected(activeGame, player, "censure") && !ButtonHelper.isPlayerElected(activeGame, player, "absol_censure")){
                         List<Button> reverseButtons = new ArrayList<Button>();
                         String key = "reverse_engineer";
                         String ac_name = Mapper.getActionCardName(key);
@@ -247,7 +504,7 @@ public class PlayAC extends ACCardsSubcommandData {
 
         //Fog of war ping
         if (activeGame.isFoWMode()) {
-            String fowMessage = Helper.getPlayerRepresentation(player, activeGame) + " played an Action Card: " + actionCardTitle;
+            String fowMessage = player.getRepresentation() + " played an Action Card: " + actionCardTitle;
             FoWHelper.pingAllPlayersWithFullStats(activeGame, event, player, fowMessage);
             MessageHelper.sendPrivateMessageToPlayer(player, activeGame, "Played action card: " + actionCardTitle);
         }

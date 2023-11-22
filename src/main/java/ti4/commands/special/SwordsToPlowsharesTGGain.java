@@ -7,9 +7,14 @@ import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import ti4.generator.Mapper;
 import ti4.helpers.ButtonHelper;
+import ti4.helpers.ButtonHelperAbilities;
+import ti4.helpers.ButtonHelperAgents;
 import ti4.helpers.ButtonHelperFactionSpecific;
 import ti4.helpers.Constants;
+import ti4.helpers.FoWHelper;
 import ti4.helpers.Helper;
+import ti4.helpers.Units.UnitKey;
+import ti4.helpers.Units.UnitType;
 import ti4.map.*;
 import ti4.message.MessageHelper;
 
@@ -34,47 +39,57 @@ public class SwordsToPlowsharesTGGain extends SpecialSubcommandData {
         }
         doSwords(player, event, activeGame);
     }
-    public void doSwords(Player player, GenericInteractionCreateEvent event, Game activeGame){
+
+    public void doSwords(Player player, GenericInteractionCreateEvent event, Game activeGame) {
         List<String> planets = player.getPlanets();
         String ident = player.getFactionEmoji();
         StringBuilder message = new StringBuilder();
         int oldTg = player.getTg();
         for (Tile tile : activeGame.getTileMap().values()) {
             for (UnitHolder unitHolder : tile.getUnitHolders().values()) {
-                if (planets.contains(unitHolder.getName())){
+                if (planets.contains(unitHolder.getName())) {
                     int numInf = 0;
                     String colorID = Mapper.getColorID(player.getColor());
-                    String infKey = colorID + "_gf.png";
+                    UnitKey infKey = Mapper.getUnitKey("gf", colorID);
                     if (unitHolder.getUnits() != null) {
                         if (unitHolder.getUnits().get(infKey) != null) {
                             numInf = unitHolder.getUnits().get(infKey);
                         }
                     }
                     if (numInf > 0) {
-                        int numTG = (numInf+1)/2;
+                        int numTG = (numInf + 1) / 2;
                         int cTG = player.getTg();
-                        int fTG = cTG+numTG;
+                        int fTG = cTG + numTG;
                         player.setTg(fTG);
-                        message.append(ident).append(" removed ").append(numTG).append(" infantry from ").append(Helper.getPlanetRepresentation(unitHolder.getName(), activeGame)).append(" and gained that many tg (").append(cTG).append("->").append(fTG).append("). \n");
+                        message.append(ident).append(" removed ").append(numTG).append(" infantry from ").append(Helper.getPlanetRepresentation(unitHolder.getName(), activeGame))
+                            .append(" and gained that many tg (").append(cTG).append("->").append(fTG).append("). \n");
                         tile.removeUnit(unitHolder.getName(), infKey, numTG);
-                        if(player.hasInf2Tech() ){
+                        if (player.hasInf2Tech()) {
                             ButtonHelper.resolveInfantryDeath(activeGame, player, numTG);
                         }
-                       
+                        boolean cabalMech = false;
+                        Player p2 = player;
+                        if(p2.hasAbility("amalgamation") && unitHolder.getUnitCount(UnitType.Mech, player.getColor()) > 0 && p2.hasUnit("cabal_mech") && !activeGame.getLaws().containsKey("articles_war")){
+                            cabalMech = true;
+                        }
+                        if (p2.hasAbility("amalgamation") && (ButtonHelper.doesPlayerHaveFSHere("cabal_flagship", p2, tile) || cabalMech) && FoWHelper.playerHasUnitsOnPlanet(p2, tile, unitHolder.getName())) {
+                            ButtonHelperFactionSpecific.cabalEatsUnit(p2, activeGame, p2, numTG, "infantry", event);
+                        }
+
                     }
                 }
-            }  
+            }
         }
-        if((player.getUnitsOwned().contains("mahact_infantry") || player.hasTech("cl2"))){
+        if ((player.getUnitsOwned().contains("mahact_infantry") || player.hasTech("cl2"))) {
             ButtonHelperFactionSpecific.offerMahactInfButtons(player, activeGame);
         }
-         MessageChannel channel = activeGame.getMainGameChannel();
-            if(activeGame.isFoWMode()){
-                channel = player.getPrivateChannel();
-            }
-            MessageHelper.sendMessageToChannel(channel, message.toString());
-        ButtonHelperFactionSpecific.resolveArtunoCheck(player, activeGame, player.getTg() - oldTg);
-        ButtonHelperFactionSpecific.pillageCheck(player, activeGame);
+        MessageChannel channel = activeGame.getMainGameChannel();
+        if (activeGame.isFoWMode()) {
+            channel = player.getPrivateChannel();
+        }
+        MessageHelper.sendMessageToChannel(channel, message.toString());
+        ButtonHelperAgents.resolveArtunoCheck(player, activeGame, player.getTg() - oldTg);
+        ButtonHelperAbilities.pillageCheck(player, activeGame);
 
     }
 

@@ -40,8 +40,9 @@ public class HomeSystemDraftItem extends DraftItem {
         sb.append(planet.getResources()).append("/").append(planet.getInfluence());
         sb.append(") ");
     }
+
     @Override
     public String getItemEmoji() {
-        return Helper.getFactionIconFromDiscord(ItemId);
+        return Emojis.getFactionIconFromDiscord(ItemId);
     }
 }

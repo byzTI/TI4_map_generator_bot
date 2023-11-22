@@ -9,11 +9,16 @@ import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import ti4.commands.cardsac.PlayAC;
+import ti4.commands.cardspn.PlayPN;
 import ti4.commands.status.ListTurnOrder;
 import ti4.generator.GenerateMap;
 import ti4.helpers.ButtonHelper;
+import ti4.helpers.ButtonHelperAbilities;
+import ti4.helpers.ButtonHelperActionCards;
 import ti4.helpers.ButtonHelperFactionSpecific;
 import ti4.helpers.Constants;
+import ti4.helpers.Emojis;
 import ti4.helpers.FoWHelper;
 import ti4.helpers.Helper;
 import ti4.map.Game;
@@ -144,16 +149,16 @@ public class SCPick extends PlayerSubcommandData {
 		if (tgCount != null && tgCount != 0) {
 			int tg = player.getTg();
 			tg += tgCount;
-			MessageHelper.sendMessageToChannel((MessageChannel)event.getChannel(),Helper.getPlayerRepresentation(player, activeGame)+" gained "+tgCount +" tgs from picking SC #"+scPicked);
+			MessageHelper.sendMessageToChannel((MessageChannel)event.getChannel(),player.getRepresentation()+" gained "+tgCount +" tgs from picking SC #"+scPicked);
 			if (activeGame.isFoWMode()) {
-				String messageToSend = Helper.getColourAsMention(event.getGuild(),player.getColor()) +" gained "+tgCount +" tgs from picking SC #"+scPicked;
+				String messageToSend = Emojis.getColourEmojis(player.getColor()) +" gained "+tgCount +" tgs from picking SC #"+scPicked;
 				FoWHelper.pingAllPlayersWithFullStats(activeGame, event, player, messageToSend);
 			}
 			player.setTg(tg);
 			if(player.getLeaderIDs().contains("hacancommander") && !player.hasLeaderUnlocked("hacancommander")){
 				ButtonHelper.commanderUnlockCheck(player, activeGame, "hacan", event);
 			}
-			ButtonHelperFactionSpecific.pillageCheck(player, activeGame);
+			ButtonHelperAbilities.pillageCheck(player, activeGame);
             activeGame.setScTradeGood(scPicked, 0);
 		}
         MessageHelper.sendMessageToChannelWithButtons(ButtonHelper.getCorrectChannel(player, activeGame), ButtonHelper.getTrueIdentity(player, activeGame) + " chose which player to give this SC", buttons);
@@ -213,7 +218,7 @@ public class SCPick extends PlayerSubcommandData {
         }
 
         String sb = Helper.getPlayerRepresentation(player, activeGame, event.getGuild(), true) +
-            " Picked: " + Helper.getSCFrontRepresentation(activeGame, scPicked);
+            "\n> Picked: " + Helper.getSCRepresentation(activeGame, scPicked);
 
         boolean nextCorrectPing = false;
         Queue<Player> players = new ArrayDeque<>(activePlayers);
@@ -240,6 +245,16 @@ public class SCPick extends PlayerSubcommandData {
 
         //INFORM ALL PLAYER HAVE PICKED
         if (allPicked) {
+           
+            for(Player p2 : activeGame.getRealPlayers()){
+                 ButtonHelperActionCards.checkForAssigningCoup(activeGame, p2);
+                if(activeGame.getFactionsThatReactedToThis("Play Naalu PN") != null && activeGame.getFactionsThatReactedToThis("Play Naalu PN").contains(p2.getFaction())){
+                    if(!p2.getPromissoryNotesInPlayArea().contains("gift") && p2.getPromissoryNotes().keySet().contains("gift")){
+                        ButtonHelper.resolvePNPlay("gift", p2, activeGame, event);
+                    }
+                }
+            }
+            
             msgExtra += Helper.getGamePing(event, activeGame) + "\nAll players picked SC";
 
             LinkedHashMap<Integer, Integer> scTradeGoods = activeGame.getScTradeGoods();
@@ -278,10 +293,11 @@ public class SCPick extends PlayerSubcommandData {
 
             //INFORM FIRST PLAYER IS UP FOR ACTION
             if (nextPlayer != null) {
-                msgExtra += " " + Helper.getPlayerRepresentation(nextPlayer, activeGame) + " is up for an action";
+                msgExtra += " " + nextPlayer.getRepresentation() + " is up for an action";
                 privatePlayer = nextPlayer;
                 activeGame.updateActivePlayer(nextPlayer);
-                ButtonHelperFactionSpecific.resolveMilitarySupportCheck(nextPlayer, activeGame);
+                ButtonHelperFactionSpecific.resolveMilitarySupportCheck(nextPlayer, activeGame);                     
+                ButtonHelperFactionSpecific.resolveKolleccAbilities(nextPlayer, activeGame);
                 if(activeGame.isFoWMode()){
                     FoWHelper.pingAllPlayersWithFullStats(activeGame, event, nextPlayer, "started turn");
                 }
@@ -308,10 +324,17 @@ public class SCPick extends PlayerSubcommandData {
                 MessageHelper.sendMessageToChannelWithButtons(privatePlayer.getPrivateChannel(), "Use Buttons to Pick SC", Helper.getRemainingSCButtons(event, activeGame, privatePlayer));
             }
             else{
-                   
+                privatePlayer.setTurnCount(privatePlayer.getTurnCount()+1);   
                 MessageHelper.sendMessageToChannelWithButtons(privatePlayer.getPrivateChannel(), msgExtra + "\n Use Buttons to do turn.", ButtonHelper.getStartOfTurnButtons(privatePlayer, activeGame, false, event));
                 if(privatePlayer.getStasisInfantry() > 0){
-                    MessageHelper.sendMessageToChannelWithButtons(ButtonHelper.getCorrectChannel(privatePlayer, activeGame), "Use buttons to revive infantry. You have "+privatePlayer.getStasisInfantry() + " infantry left to revive.", ButtonHelper.getPlaceStatusInfButtons(activeGame, privatePlayer));
+                    if(ButtonHelper.getPlaceStatusInfButtons(activeGame, privatePlayer).size() > 0){
+                        MessageHelper.sendMessageToChannelWithButtons(ButtonHelper.getCorrectChannel(privatePlayer, activeGame), "Use buttons to revive infantry. You have "+privatePlayer.getStasisInfantry() + " infantry left to revive.", ButtonHelper.getPlaceStatusInfButtons(activeGame, privatePlayer));
+                    }else{
+                        privatePlayer.setStasisInfantry(0);
+                        MessageHelper.sendMessageToChannel(ButtonHelper.getCorrectChannel(privatePlayer, activeGame), privatePlayer.getRepresentation()+" You had infantry2 to be revived, but the bot couldnt find planets you own in your HS to place them, so per the rules they now disappear into the ether");
+
+
+                    }
                 }    
                     
             }
@@ -327,10 +350,13 @@ public class SCPick extends PlayerSubcommandData {
                     activeGame.setCurrentPhase("strategy");
                 } else {
                     MessageHelper.sendMessageToChannel(activeGame.getMainGameChannel(), msgExtra);
+                    privatePlayer.setTurnCount(privatePlayer.getTurnCount()+1); 
                     MessageHelper.sendMessageToChannelWithButtons(activeGame.getMainGameChannel(), "\n Use Buttons to do turn.", ButtonHelper.getStartOfTurnButtons(privatePlayer, activeGame, false, event));
                     if(privatePlayer.getStasisInfantry() > 0){
                         MessageHelper.sendMessageToChannelWithButtons(ButtonHelper.getCorrectChannel(privatePlayer, activeGame), "Use buttons to revive infantry. You have "+privatePlayer.getStasisInfantry() + " infantry left to revive.", ButtonHelper.getPlaceStatusInfButtons(activeGame, privatePlayer));
                     }
+                    activeGame.setComponentAction(false);
+                     activeGame.setCurrentPhase("action");
                 }
             }
         }

@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -27,8 +28,8 @@ public class PromissoryNoteModel implements ModelInterface, EmbeddableModel {
   public boolean isValid() {
         return alias != null
             && name != null
-            && (faction != null && colour != null)
-            && attachment != null
+            && (faction != null || colour != null)
+            // && attachment != null
             && text != null
             && source != null;
     }
@@ -41,17 +42,17 @@ public class PromissoryNoteModel implements ModelInterface, EmbeddableModel {
         return name;
     }
     
-    public String getFaction() {
-        return faction;
+    public Optional<String> getFaction() {
+        return Optional.ofNullable(faction);
     }
 
-    public String getColour() {
-        return colour;
+    public Optional<String> getColour() {
+        return Optional.ofNullable(colour);
     }
 
     public String getFactionOrColour() {
-        if (!StringUtils.isBlank(getFaction())) return faction;
-        if (!StringUtils.isBlank(getColour())) return colour;
+        if (!StringUtils.isBlank(getFaction().orElse(""))) return faction;
+        if (!StringUtils.isBlank(getColour().orElse(""))) return colour;
         return faction + "_" + colour;
     }
 
@@ -59,8 +60,8 @@ public class PromissoryNoteModel implements ModelInterface, EmbeddableModel {
         return playArea;
     }
 
-    public String getAttachment() {
-        return attachment;
+    public Optional<String> getAttachment() {
+        return Optional.ofNullable(attachment);
     }
 
     public String getText() {
@@ -99,9 +100,9 @@ public class PromissoryNoteModel implements ModelInterface, EmbeddableModel {
         //TITLE
         StringBuilder title = new StringBuilder();
         title.append(Emojis.PN);
-        if (!StringUtils.isBlank(getFaction())) title.append(Helper.getFactionIconFromDiscord(getFaction()));
+        if (!StringUtils.isBlank(getFaction().orElse(""))) title.append(Emojis.getFactionIconFromDiscord(getFaction().get()));
         title.append("__**").append(getName()).append("**__");
-        if (!StringUtils.isBlank(getColour())) title.append(" (").append(getColour()).append(")");
+        if (!StringUtils.isBlank(getColour().orElse(""))) title.append(" (").append(getColour()).append(")");
         title.append(getSourceEmoji());
         eb.setTitle(title.toString());
 
@@ -115,7 +116,7 @@ public class PromissoryNoteModel implements ModelInterface, EmbeddableModel {
         //FOOTER
         StringBuilder footer = new StringBuilder();
         if (includeHelpfulText) {
-            if (!StringUtils.isBlank(getAttachment())) footer.append("Attachment: ").append(getAttachment()).append("\n");
+            if (!StringUtils.isBlank(getAttachment().orElse(""))) footer.append("Attachment: ").append(getAttachment().orElse("")).append("\n");
             if (getPlayArea()) {
                 footer.append("Play area card. ");
                 if (isPlayedDirectlyToPlayArea()) {

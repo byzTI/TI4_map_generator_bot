@@ -1,27 +1,46 @@
 package ti4.map;
 
-import java.util.concurrent.ThreadLocalRandom;
-
-import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
-import net.dv8tion.jda.api.events.interaction.GenericInteractionCreateEvent;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.jetbrains.annotations.Nullable;
-
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-
+import java.awt.Point;
+import java.lang.reflect.Field;
+import java.time.LocalDate;
+import java.time.Period;
+import java.time.ZoneId;
+import java.util.AbstractMap.SimpleEntry;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import lombok.Getter;
+import lombok.Setter;
 import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.Role;
+import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
+import net.dv8tion.jda.api.events.interaction.GenericInteractionCreateEvent;
 import net.dv8tion.jda.internal.utils.tuple.ImmutablePair;
 import net.dv8tion.jda.internal.utils.tuple.Pair;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.Nullable;
 import ti4.AsyncTI4DiscordBot;
 import ti4.commands.milty.MiltyDraftManager;
 import ti4.commands.planet.PlanetRemove;
@@ -32,43 +51,35 @@ import ti4.helpers.Constants;
 import ti4.helpers.DisplayType;
 import ti4.helpers.Emojis;
 import ti4.helpers.Helper;
+import ti4.helpers.Units.UnitKey;
 import ti4.message.BotLogger;
 import ti4.message.MessageHelper;
 import ti4.model.BorderAnomalyHolder;
 import ti4.model.BorderAnomalyModel;
 import ti4.model.DeckModel;
 import ti4.model.StrategyCardModel;
+import ti4.model.TechnologyModel;
 import ti4.model.UnitModel;
-
-import java.awt.*;
-import java.lang.reflect.Field;
-import java.time.LocalDate;
-import java.time.Period;
-import java.time.ZoneId;
-import java.util.List;
-import java.util.AbstractMap.SimpleEntry;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
-
-import java.util.*;
 
 public class Game {
 
     private String ownerID;
     private String ownerName = "";
     private String name;
-    
+
     private String latestCommand = "";
     private String latestOutcomeVotedFor = "";
     private String latestAfterMsg = "";
     private String latestWhenMsg = "";
     private String latestTransactionMsg = "";
     private String latestUpNextMsg = "";
-    @Getter @Setter
+    @Getter
+    @Setter
     private int mapImageGenerationCount;
     private final MiltyDraftManager miltyDraftManager;
     private boolean ccNPlasticLimit = true;
-    private boolean botFactionReacts = false;
+    private boolean botFactionReacts;
+    private boolean hasHadAStatusPhase;
     private boolean botShushing = true;
     @JsonIgnore
     private final HashMap<String, UnitHolder> planets = new HashMap<>();
@@ -84,33 +95,49 @@ public class Game {
     @ExportableField
     private int vp = 10;
     @ExportableField
-    private boolean competitiveTIGLGame = false;
+    private boolean competitiveTIGLGame;
     @ExportableField
-    private boolean communityMode = false;
+    private boolean communityMode;
     @ExportableField
-    private boolean allianceMode = false;
+    private boolean allianceMode;
     @ExportableField
-    private boolean fowMode = false;
+    private boolean fowMode;
     @ExportableField
     private boolean naaluAgent;
+    @ExportableField
+      private boolean l1Hero;
+    @ExportableField
+    private boolean nomadCoin;
+    @ExportableField
+    private boolean temporaryPingDisable;
     @ExportableField
     private boolean dominusOrb;
     @ExportableField
     private boolean componentAction;
     @ExportableField
-    private boolean baseGameMode = false;
+    private boolean justPlayedComponentAC;
+    @ExportableField
+    private boolean baseGameMode;
     @ExportableField
     private boolean lightFogMode;
     @ExportableField
     private boolean homebrewSCMode;
     @ExportableField
+    private boolean spinMode;
+    @ExportableField
     private boolean stratPings = true;
-    @ExportableField @Getter @Setter
+    @ExportableField
+    @Getter
+    @Setter
     private String textSize = "medium";
     @ExportableField
-    private boolean absolMode = false;
-    @Getter @Setter
-    private boolean showUnitTags = false;
+    private boolean absolMode;
+    @Getter
+    @Setter
+    private boolean showUnitTags;
+    @Getter
+    @Setter
+    private boolean extraSecretMode;
     @Getter
     @Setter
     private String acDeckID = "action_cards_pok";
@@ -131,7 +158,7 @@ public class Game {
     private String agendaDeckID = "agendas_pok";
     @Getter
     @Setter
-    private String eventDeckID = null;
+    private String eventDeckID;
     @Getter
     @Setter
     private String explorationDeckID = "explores_pok";
@@ -143,9 +170,9 @@ public class Game {
     @ExportableField
     private String scSetID = "pok";
     @ExportableField
-    private boolean discordantStarsMode = false;
+    private boolean discordantStarsMode;
     private String outputVerbosity = Constants.VERBOSITY_VERBOSE;
-    private boolean testBetaFeaturesMode = false;
+    private boolean testBetaFeaturesMode;
     private boolean hasEnded;
     private long endedDate;
     @Getter
@@ -155,11 +182,14 @@ public class Game {
     private String tableTalkChannelID;
     @Nullable
     private String mainChannelID;
+    private String savedChannelID;
+    private String savedMessage;
     @Nullable
     private String botMapUpdatesThreadID;
     private LinkedHashMap<String, Player> players = new LinkedHashMap<>();
     private final HashMap<Integer, Boolean> scPlayed = new HashMap<>();
     private HashMap<String, String> currentAgendaVotes = new HashMap<>();
+    private final HashMap<String, String> checkingForAllReacts = new HashMap<>();
     @ExportableField
     private String speaker = "";
     @ExportableField
@@ -194,8 +224,10 @@ public class Game {
     private List<String> secretObjectives;
     private List<String> actionCards;
     private LinkedHashMap<String, Integer> discardActionCards = new LinkedHashMap<>();
+    private LinkedHashMap<String, Integer> purgedActionCards = new LinkedHashMap<>();
     private HashMap<String, Integer> displacedUnitsFrom1System = new HashMap<>();
     private HashMap<String, Integer> slashCommandsUsed = new HashMap<>();
+    private HashMap<String, Integer> actionCardsSabotaged = new HashMap<>();
     private HashMap<String, Integer> displacedUnitsFromEntireTacticalAction = new HashMap<>();
     @ExportableField
     private String phaseOfGame = "";
@@ -204,14 +236,17 @@ public class Game {
     private boolean hasHackElectionBeenPlayed;
     private List<String> agendas;
     @Getter
-    private List<String> events;
+    private List<String> events = new ArrayList<>();
     @Getter
-    private List<String> discardedEvents = new ArrayList<>();
+    private LinkedHashMap<String, Integer> discardedEvents = new LinkedHashMap<>();
+    @Getter @Setter
+    private LinkedHashMap<String, Integer> eventsInEffect = new LinkedHashMap<>();
     private LinkedHashMap<Integer, Integer> scTradeGoods = new LinkedHashMap<>();
     private LinkedHashMap<String, Integer> discardAgendas = new LinkedHashMap<>();
     private LinkedHashMap<String, Integer> sentAgendas = new LinkedHashMap<>();
     private LinkedHashMap<String, Integer> laws = new LinkedHashMap<>();
     private LinkedHashMap<String, String> lawsInfo = new LinkedHashMap<>();
+    private List<String> messageIDsForSaboReacts = new ArrayList<>();
     @ExportableField
     private LinkedHashMap<String, Integer> revealedPublicObjectives = new LinkedHashMap<>();
     private LinkedHashMap<String, Integer> customPublicVP = new LinkedHashMap<>();
@@ -224,6 +259,7 @@ public class Game {
     private List<String> publicObjectives2;
     private List<String> publicObjectives1Peakable = new ArrayList<>();
     private List<String> publicObjectives2Peakable = new ArrayList<>();
+    private List<String> savedButtons = new ArrayList<>();
     private ArrayList<String> soToPoList = new ArrayList<>();
     @JsonIgnore
     private ArrayList<String> purgedPN = new ArrayList<>();
@@ -234,12 +270,17 @@ public class Game {
     private List<SimpleEntry<String, String>> tileNameAutocompleteOptionsCache;
     private final ArrayList<String> runDataMigrations = new ArrayList<>();
     private BagDraft activeDraft;
+    @JsonIgnore @Getter @Setter
+    private Map<String, Integer> tileDistances = new HashMap<>();
 
     public Game() {
         creationDate = Helper.getDateRepresentation(new Date().getTime());
         lastModifiedDate = new Date().getTime();
 
         miltyDraftManager = new MiltyDraftManager();
+    }
+
+    public void newGameSetup() {
 
         secretObjectives = Mapper.getDecks().get("secret_objectives_pok").getNewShuffledDeck();
         actionCards = Mapper.getDecks().get("action_cards_pok").getNewShuffledDeck();
@@ -249,9 +290,7 @@ public class Game {
         agendas = Mapper.getDecks().get(getAgendaDeckID()).getNewShuffledDeck();
         events = new ArrayList<>();
         relics = Mapper.getDecks().get(getRelicDeckID()).getNewShuffledDeck();
-
         addCustomPO(Constants.CUSTODIAN, 1);
-
         //Default SC initialization
         for (int i = 0; i < 8; i++) {
             scTradeGoods.put(i + 1, 0);
@@ -409,8 +448,13 @@ public class Game {
         this.purgedPN.remove(purgedPN);
     }
 
-    public BagDraft getActiveBagDraft() { return activeDraft; }
-    public void setBagDraft(BagDraft draft) { activeDraft = draft; }
+    public BagDraft getActiveBagDraft() {
+        return activeDraft;
+    }
+
+    public void setBagDraft(BagDraft draft) {
+        activeDraft = draft;
+    }
 
     public void addActionCardDuplicates(List<String> ACs) {
         actionCards.addAll(ACs);
@@ -438,25 +482,42 @@ public class Game {
         this.vp = vp;
     }
 
+    @JsonIgnore
+    public Optional<Player> getGameWinner() {
+        for (Player player : getRealPlayers()) {
+            if (player.getTotalVictoryPoints() >= getVp()) {
+                return Optional.of(player);
+                // TODO: Handle if there are more than one player with a winning amount of VP
+            }
+        }
+        return Optional.empty();
+    }
+
     public int getRound() {
         return round;
     }
+
     public int getButtonPressCount() {
         return buttonPress;
     }
+
     public void increaseButtonPressCount() {
-       buttonPress++;
+        buttonPress++;
     }
+
     public void setButtonPressCount(int count) {
-       buttonPress = count;
+        buttonPress = count;
     }
+
     public void setSlashCommandsRun(int count) {
-       slashCommandsRun = count;
+        slashCommandsRun = count;
     }
+
     public void increaseSlashCommandsRun() {
-       slashCommandsRun++;;
+        slashCommandsRun++;
     }
-    public int getSlashCommandsRunCount(){
+
+    public int getSlashCommandsRunCount() {
         return slashCommandsRun;
     }
 
@@ -560,8 +621,15 @@ public class Game {
         return homebrewSCMode;
     }
 
+    public boolean isSpinMode() {
+        return spinMode;
+    }
     public void setHomeBrewSCMode(boolean homeBrewSCMode) {
         homebrewSCMode = homeBrewSCMode;
+    }
+
+    public void setSpinMode(boolean homeBrewSCMode) {
+        spinMode = homeBrewSCMode;
     }
 
     public boolean isStratPings() {
@@ -626,7 +694,7 @@ public class Game {
     }
 
     public boolean isNormalGame() {
-        return !(isCompetitiveTIGLGame() || isCommunityMode() || isAllianceMode() || isAbsolMode() || isDiscordantStarsMode() || isFoWMode() || isHomeBrewSCMode() || isFrankenGame());
+        return !(isCompetitiveTIGLGame() || isCommunityMode() || isAllianceMode() || isAbsolMode() || isDiscordantStarsMode() || isFoWMode() || isSpinMode() || isHomeBrewSCMode() || isFrankenGame());
     }
 
     public boolean isFrankenGame() {
@@ -677,12 +745,37 @@ public class Game {
         return null;
     }
 
+    @JsonIgnore
+    public TextChannel getSavedChannel() {
+        try {
+            return AsyncTI4DiscordBot.jda.getTextChannelById(getSavedChannelID());
+        } catch (Exception e) {
+            return getMainGameChannel();
+        }
+    }
+
     public void setMainGameChannelID(String channelID) {
         mainChannelID = channelID;
     }
 
+    public void setSavedChannelID(String channelID) {
+        savedChannelID = channelID;
+    }
+
+    public void setSavedMessage(String msg) {
+        savedMessage = msg;
+    }
+
     public String getMainGameChannelID() {
         return mainChannelID;
+    }
+
+    public String getSavedChannelID() {
+        return savedChannelID;
+    }
+
+    public String getSavedMessage() {
+        return savedMessage;
     }
 
     @JsonIgnore
@@ -767,6 +860,19 @@ public class Game {
         return currentAgendaVotes;
     }
 
+    public HashMap<String, String> getMessagesThatICheckedForAllReacts() {
+        return checkingForAllReacts;
+    }
+
+    public String getFactionsThatReactedToThis(String messageID) {
+        if(checkingForAllReacts.get(messageID) != null){
+            return checkingForAllReacts.get(messageID);
+        }else{
+            return "";
+        }
+        
+    }
+
     public void resetCurrentAgendaVotes() {
         currentAgendaVotes = new HashMap<>();
     }
@@ -774,6 +880,28 @@ public class Game {
     @JsonIgnore
     public Set<Integer> getPlayedSCs() {
         return getScPlayed().entrySet().stream().filter(Map.Entry::getValue).map(Map.Entry::getKey).collect(Collectors.toSet());
+    }
+
+    public List<Integer> getPlayedSCsInOrder(Player player){
+        Set<Integer> playedSCs = getPlayedSCs();
+        List<Integer> orderedSCsBasic = new ArrayList<>();
+
+        orderedSCsBasic.addAll(playedSCs);
+        Collections.sort(orderedSCsBasic);
+        List<Integer> orderedSCs = new ArrayList<>();
+        int playerSC = player.getLowestSC();
+        for(int sc : orderedSCsBasic){
+            if(sc > playerSC){
+                orderedSCs.add(sc);
+            }
+        }
+        for(int sc : orderedSCsBasic){
+            if(sc < playerSC){
+                orderedSCs.add(sc);
+            }
+        }
+
+        return orderedSCs;
     }
 
     public DisplayType getDisplayTypeForced() {
@@ -808,6 +936,15 @@ public class Game {
     public boolean getNaaluAgent() {
         return naaluAgent;
     }
+    public boolean getL1Hero() {
+        return l1Hero;
+    }
+    public boolean getNomadCoin() {
+        return nomadCoin;
+    }
+    public boolean getTemporaryPingDisable() {
+        return temporaryPingDisable;
+    }
 
     public boolean getDominusOrbStatus() {
         return dominusOrb;
@@ -817,8 +954,21 @@ public class Game {
         return componentAction;
     }
 
+    public boolean getJustPlayedComponentAC() {
+        return justPlayedComponentAC;
+    }
+
     public void setNaaluAgent(boolean onStatus) {
         naaluAgent = onStatus;
+    }
+    public void setL1Hero(boolean onStatus) {
+        l1Hero = onStatus;
+    }
+    public void setNomadCoin(boolean onStatus) {
+        nomadCoin = onStatus;
+    }
+    public void setTemporaryPingDisable(boolean onStatus) {
+        temporaryPingDisable = onStatus;
     }
 
     public void setDominusOrb(boolean onStatus) {
@@ -827,6 +977,9 @@ public class Game {
 
     public void setComponentAction(boolean onStatus) {
         componentAction = onStatus;
+    }
+    public void setJustPlayedComponentAC(boolean onStatus) {
+        justPlayedComponentAC = onStatus;
     }
 
     public void setActivationCount(int count) {
@@ -841,6 +994,12 @@ public class Game {
         currentAgendaVotes.put(outcome, voteInfo);
     }
 
+    public void setCurrentReacts(String messageID, String factionsWhoReacted) {
+        checkingForAllReacts.put(messageID, factionsWhoReacted);
+    }
+    public void removeMessageIDFromCurrentReacts(String messageID) {
+        checkingForAllReacts.remove(messageID);
+    }
     public void removeOutcomeAgendaVote(String outcome) {
         currentAgendaVotes.remove(outcome);
     }
@@ -848,6 +1007,7 @@ public class Game {
     public String getSpeaker() {
         return speaker;
     }
+
     public void setSpeaker(String speaker) {
         this.speaker = speaker;
     }
@@ -863,6 +1023,7 @@ public class Game {
     public boolean getHackElectionStatus() {
         return hasHackElectionBeenPlayed;
     }
+
     public void addPlayersWhoHitPersistentNoAfter(String faction) {
         if (playersWhoHitPersistentNoAfter != null && playersWhoHitPersistentNoAfter.length() > 0) {
             playersWhoHitPersistentNoAfter = playersWhoHitPersistentNoAfter + "_" + faction;
@@ -870,6 +1031,7 @@ public class Game {
             playersWhoHitPersistentNoAfter = faction;
         }
     }
+
     public void addPlayersWhoHitPersistentNoWhen(String faction) {
         if (playersWhoHitPersistentNoWhen != null && playersWhoHitPersistentNoWhen.length() > 0) {
             playersWhoHitPersistentNoWhen = playersWhoHitPersistentNoWhen + "_" + faction;
@@ -877,21 +1039,27 @@ public class Game {
             playersWhoHitPersistentNoWhen = faction;
         }
     }
+
     public void setPlayersWhoHitPersistentNoAfter(String persistent) {
         playersWhoHitPersistentNoAfter = persistent;
     }
+
     public void setPlayersWhoHitPersistentNoWhen(String persistent) {
         playersWhoHitPersistentNoWhen = persistent;
     }
+
     public void setHackElectionStatus(boolean hack) {
         hasHackElectionBeenPlayed = hack;
     }
+
     public String getActivePlayer() {
         return activePlayer;
     }
+
     public String getActiveSystem() {
         return activeSystem;
     }
+
     public void setActiveSystem(String system) {
         activeSystem = system;
     }
@@ -899,8 +1067,13 @@ public class Game {
     public HashMap<String, Integer> getCurrentMovedUnitsFrom1System() {
         return displacedUnitsFrom1System;
     }
+
     public HashMap<String, Integer> getAllSlashCommandsUsed() {
         return slashCommandsUsed;
+    }
+
+    public HashMap<String, Integer> getAllActionCardsSabod() {
+        return actionCardsSabotaged;
     }
 
     public HashMap<String, Integer> getMovedUnitsFromCurrentActivation() {
@@ -910,15 +1083,25 @@ public class Game {
     public void setSpecificCurrentMovedUnitsFrom1System(String unit, int count) {
         displacedUnitsFrom1System.put(unit, count);
     }
+
     public void setSpecificSlashCommandCount(String command, int count) {
         slashCommandsUsed.put(command, count);
+    }
+
+    public void setSpecificActionCardSaboCount(String acName, int count) {
+        actionCardsSabotaged.put(acName, count);
     }
 
     public void setCurrentMovedUnitsFrom1System(HashMap<String, Integer> displacedUnits) {
         displacedUnitsFrom1System = displacedUnits;
     }
-     public void setSlashCommandsUsed(HashMap<String, Integer> commands) {
+
+    public void setSlashCommandsUsed(HashMap<String, Integer> commands) {
         slashCommandsUsed = commands;
+    }
+
+    public void setACSabod(HashMap<String, Integer> acs) {
+        actionCardsSabotaged = acs;
     }
 
     public void setSpecificCurrentMovedUnitsFrom1TacticalAction(String unit, int count) {
@@ -1036,8 +1219,27 @@ public class Game {
         return identifier;
     }
 
-    public void discardEvent(String eventID) {
-        discardedEvents.add(eventID);
+    public int discardEvent(String eventID) {
+        Collection<Integer> values = discardAgendas.values();
+        int identifier = ThreadLocalRandom.current().nextInt(1000);
+        while (values.contains(identifier)) {
+            identifier = ThreadLocalRandom.current().nextInt(1000);
+        }
+        discardedEvents.put(eventID, identifier);
+        return identifier;
+    }
+
+    public void addMessageIDForSabo(String messageID) {
+        messageIDsForSaboReacts.add(messageID);
+    }
+    public void removeMessageIDForSabo(String messageID) {
+        messageIDsForSaboReacts.remove(messageID);
+    }
+     public void setMessageIDForSabo(List<String> messageIDs) {
+        messageIDsForSaboReacts = messageIDs;
+    }
+    public List<String> getMessageIDsForSabo() {
+        return messageIDsForSaboReacts;
     }
 
     public void addRevealedPublicObjective(String id) {
@@ -1082,12 +1284,25 @@ public class Game {
     public List<Integer> getSCList() {
         return (new ArrayList<>(getScTradeGoods().keySet()));
     }
+
     public LinkedHashMap<String, Integer> getRevealedPublicObjectives() {
         return revealedPublicObjectives;
     }
 
     public List<String> getPublicObjectives1() {
         return publicObjectives1;
+    }
+
+    public List<String> getSavedButtons() {
+        return savedButtons;
+    }
+
+    public void saveButton(String button) {
+        savedButtons.add(button);
+    }
+
+    public void setSavedButtons(List<String> savedButtonsPassed) {
+        savedButtons = savedButtonsPassed;
     }
 
     public List<String> getPublicObjectives1Peakable() {
@@ -1119,7 +1334,7 @@ public class Game {
     }
 
     public void setUpPeakableObjectives(int num) {
-        if(publicObjectives1Peakable != null && publicObjectives1Peakable.size() < num-1 ){
+        if (publicObjectives1Peakable != null && publicObjectives1Peakable.size() < num - 1) {
             for (int x = 0; x < num; x++) {
                 if (!publicObjectives1.isEmpty()) {
                     Collections.shuffle(publicObjectives1);
@@ -1271,8 +1486,8 @@ public class Game {
             }
         }
 
-        if(round > 1 && discardAgendas.size() > 1){
-             custodiansTaken = true;
+        if (round > 1 && discardAgendas.size() > 1) {
+            custodiansTaken = true;
         }
         return custodiansTaken;
     }
@@ -1296,6 +1511,7 @@ public class Game {
         }
         return false;
     }
+
     public boolean scorePublicObjectiveEvenIfAlreadyScored(String userID, Integer idNumber) {
         String id = "";
         for (Map.Entry<String, Integer> po : revealedPublicObjectives.entrySet()) {
@@ -1328,7 +1544,7 @@ public class Game {
         return false;
     }
 
-    public boolean unscorePublicObjective(String userID, String id) {    
+    public boolean unscorePublicObjective(String userID, String id) {
         if (!id.isEmpty()) {
             List<String> scoredPlayerList = scoredPublicObjectives.computeIfAbsent(id, key -> new ArrayList<>());
             return scoredPlayerList.remove(userID);
@@ -1548,7 +1764,7 @@ public class Game {
         } else {
             events = eventDeckModel.getNewShuffledDeck();
         }
-        discardedEvents = new ArrayList<>();
+        discardedEvents = new LinkedHashMap<>();
     }
 
     public void resetDrawStateAgendas() {
@@ -1560,7 +1776,7 @@ public class Game {
         this.discardAgendas = discardAgendas;
     }
 
-    public void setDiscardedEvents(List<String> discardedEvents) {
+    public void setDiscardedEvents(LinkedHashMap<String, Integer> discardedEvents) {
         this.discardedEvents = discardedEvents;
     }
 
@@ -1601,6 +1817,27 @@ public class Game {
         return discardAgendas;
     }
 
+    public boolean addEventInEffect(Integer idNumber) {
+        String id = "";
+        for (Map.Entry<String, Integer> event : discardedEvents.entrySet()) {
+            if (event.getValue().equals(idNumber)) {
+                id = event.getKey();
+                break;
+            }
+        }
+        if (!id.isEmpty()) {
+            Collection<Integer> values = eventsInEffect.values();
+            int identifier = ThreadLocalRandom.current().nextInt(1000);
+            while (values.contains(identifier)) {
+                identifier = ThreadLocalRandom.current().nextInt(1000);
+            }
+            discardedEvents.remove(id);
+            eventsInEffect.put(id, identifier);
+            return true;
+        }
+        return false;
+    }
+    
     public boolean addLaw(Integer idNumber, String optionalText) {
         String id = "";
         for (Map.Entry<String, Integer> agendas : discardAgendas.entrySet()) {
@@ -1662,6 +1899,23 @@ public class Game {
         return false;
     }
 
+    public boolean shuffleEventBackIntoDeck(Integer idNumber) {
+        String id = "";
+        for (Map.Entry<String, Integer> event : discardedEvents.entrySet()) {
+            if (event.getValue().equals(idNumber)) {
+                id = event.getKey();
+                break;
+            }
+        }
+        if (!id.isEmpty()) {
+            discardedEvents.remove(id);
+            events.add(id);
+            shuffleEvents();
+            return true;
+        }
+        return false;
+    }
+
     public boolean shuffleAgendaBackIntoDeck(Integer idNumber) {
         String id = "";
         for (Map.Entry<String, Integer> agendas : discardAgendas.entrySet()) {
@@ -1674,6 +1928,22 @@ public class Game {
             discardAgendas.remove(id);
             agendas.add(id);
             shuffleAgendas();
+            return true;
+        }
+        return false;
+    }
+
+    public boolean putEventBackIntoDeckOnTop(Integer idNumber) {
+        String id = "";
+        for (Map.Entry<String, Integer> event : discardedEvents.entrySet()) {
+            if (event.getValue().equals(idNumber)) {
+                id = event.getKey();
+                break;
+            }
+        }
+        if (!id.isEmpty()) {
+            discardedEvents.remove(id);
+            events.add(0, id);
             return true;
         }
         return false;
@@ -1694,10 +1964,27 @@ public class Game {
         }
         return false;
     }
+
     public boolean putAgendaBackIntoDeckOnTop(String id) {
         if (!id.isEmpty()) {
             discardAgendas.remove(id);
             agendas.add(0, id);
+            return true;
+        }
+        return false;
+    }
+
+    public boolean removeEventInEffect(Integer idNumber) {
+        String id = "";
+        for (Map.Entry<String, Integer> event : eventsInEffect.entrySet()) {
+            if (event.getValue().equals(idNumber)) {
+                id = event.getKey();
+                break;
+            }
+        }
+        if (!id.isEmpty()) {
+            eventsInEffect.remove(id);
+            discardEvent(id);
             return true;
         }
         return false;
@@ -1726,6 +2013,42 @@ public class Game {
             lawsInfo.remove(id);
             addDiscardAgenda(id);
             return true;
+        }
+        return false;
+    }
+
+    public boolean putEventTop(Integer idNumber, Player player) {
+        if (player.getEvents().containsValue(idNumber)) {
+            String id = "";
+            for (Map.Entry<String, Integer> event : player.getEvents().entrySet()) {
+                if (event.getValue().equals(idNumber)) {
+                    id = event.getKey();
+                    break;
+                }
+            }
+            if (!id.isEmpty()) {
+                events.add(0, id);
+                player.removeEvent(id);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean putEventBottom(Integer idNumber, Player player) {
+        if (player.getEvents().containsValue(idNumber)) {
+            String id = "";
+            for (Map.Entry<String, Integer> event : player.getEvents().entrySet()) {
+                if (event.getValue().equals(idNumber)) {
+                    id = event.getKey();
+                    break;
+                }
+            }
+            if (!id.isEmpty()) {
+                events.add(id);
+                player.removeEvent(id);
+                return true;
+            }
         }
         return false;
     }
@@ -1785,12 +2108,53 @@ public class Game {
         return null;
     }
 
+    @Nullable
+    public Map.Entry<String, Integer> drawBottomAgenda() {
+        if (!agendas.isEmpty()) {
+            for (int i = agendas.size() - 1; i >= 0; i--) {
+                String id = agendas.get(i);
+                if (!sentAgendas.containsKey(id)) {
+                    setSentAgenda(id);
+                    for (Map.Entry<String, Integer> entry : sentAgendas.entrySet()) {
+                        if (entry.getKey().equals(id)) {
+                            return entry;
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
     public String lookAtTopAgenda(int index) {
         return agendas.get(index);
     }
 
     public String lookAtBottomAgenda(int indexFromEnd) {
         return agendas.get(agendas.size() - 1 - indexFromEnd);
+    }
+
+    public String lookAtTopEvent(int index) {
+        return events.get(index);
+    }
+
+    public String lookAtBottomEvent(int indexFromEnd) {
+        return events.get(events.size() - 1 - indexFromEnd);
+    }
+
+    public String revealEvent(boolean revealFromBottom) {
+        int index = revealFromBottom ? events.size() - 1 : 0;
+        String id = events.remove(index);
+        discardEvent(id);
+        return id;
+    }
+
+    public boolean revealEvent(String eventID, boolean force) {
+        if (events.remove(eventID) || force) {
+            discardEvent(eventID);
+            return true;
+        }
+        return false;
     }
 
     public String revealAgenda(boolean revealFromBottom) {
@@ -1827,6 +2191,12 @@ public class Game {
         return agendas.get(index);
     }
 
+     @Nullable
+    public void drawActionCard(String userID, int count) {
+        for(int x = 0; x < count; x++){
+            drawActionCard(userID);
+        }
+    }
     @Nullable
     public LinkedHashMap<String, Integer> drawActionCard(String userID) {
         if (!actionCards.isEmpty()) {
@@ -1842,6 +2212,25 @@ public class Game {
             discardActionCards.clear();
             Collections.shuffle(actionCards);
             return drawActionCard(userID);
+        }
+        return null;
+    }
+
+    @Nullable
+    public LinkedHashMap<String, Integer> drawEvent(String userID) {
+        if (!events.isEmpty()) {
+            String id = events.get(0);
+            Player player = getPlayer(userID);
+            if (player != null) {
+                events.remove(id);
+                player.setEvent(id);
+                return player.getActionCards();
+            }
+        } else {
+            events.addAll(discardedEvents.keySet());
+            discardedEvents.clear();
+            Collections.shuffle(events);
+            return drawEvent(userID);
         }
         return null;
     }
@@ -2051,6 +2440,14 @@ public class Game {
         }
         discardActionCards.put(id, identifier);
     }
+    public void setPurgedActionCard(String id) {
+        Collection<Integer> values = purgedActionCards.values();
+        int identifier = ThreadLocalRandom.current().nextInt(1000);
+        while (values.contains(identifier)) {
+            identifier = ThreadLocalRandom.current().nextInt(1000);
+        }
+        purgedActionCards.put(id, identifier);
+    }
 
     @JsonIgnore
     public boolean discardActionCard(String userID, Integer acIDNumber) {
@@ -2073,12 +2470,36 @@ public class Game {
         return false;
     }
 
+     public boolean purgedActionCard(String userID, Integer acIDNumber) {
+        Player player = getPlayer(userID);
+        if (player != null) {
+            LinkedHashMap<String, Integer> actionCards = player.getActionCards();
+            String acID = "";
+            for (Map.Entry<String, Integer> ac : actionCards.entrySet()) {
+                if (ac.getValue().equals(acIDNumber)) {
+                    acID = ac.getKey();
+                    break;
+                }
+            }
+            if (!acID.isEmpty()) {
+                player.removeActionCard(acIDNumber);
+                setPurgedActionCard(acID);
+                return true;
+            }
+        }
+        return false;
+    }
+
     public void shuffleActionCards() {
         Collections.shuffle(actionCards);
     }
 
     public LinkedHashMap<String, Integer> getDiscardActionCards() {
         return discardActionCards;
+    }
+
+    public LinkedHashMap<String, Integer> getPurgedActionCards() {
+        return purgedActionCards;
     }
 
     public boolean pickActionCard(String userID, Integer acIDNumber) {
@@ -2396,6 +2817,11 @@ public class Game {
         this.discardActionCards = discardActionCards;
     }
 
+    
+    public void setPurgedActionCards(LinkedHashMap<String, Integer> purgedActionCards) {
+        this.purgedActionCards = purgedActionCards;
+    }
+
     public void setDiscardActionCards(List<String> discardActionCardList) {
         LinkedHashMap<String, Integer> discardActionCards = new LinkedHashMap<>();
         for (String card : discardActionCardList) {
@@ -2407,6 +2833,19 @@ public class Game {
             discardActionCards.put(card, identifier);
         }
         this.discardActionCards = discardActionCards;
+    }
+
+    public void setPurgedActionCards(List<String> purgedActionCardList) {
+        LinkedHashMap<String, Integer> purgedActionCards = new LinkedHashMap<>();
+        for (String card : purgedActionCardList) {
+            Collection<Integer> values = purgedActionCards.values();
+            int identifier = ThreadLocalRandom.current().nextInt(1000);
+            while (values.contains(identifier)) {
+                identifier = ThreadLocalRandom.current().nextInt(1000);
+            }
+            purgedActionCards.put(card, identifier);
+        }
+        this.purgedActionCards = purgedActionCards;
     }
 
     public String getOwnerID() {
@@ -2423,6 +2862,24 @@ public class Game {
 
     public String getName() {
         return name;
+    }
+
+    @JsonIgnore
+    public String getPing() {
+        Guild guild = getGuild();
+        if (guild != null) {
+            for (Role role : guild.getRoles()) {
+                if (getName().equals(role.getName().toLowerCase())) {
+                    return role.getAsMention();
+                }
+            }
+        }
+        StringBuilder sb = new StringBuilder(getName()).append(" ");
+        for (String playerID : getPlayerIDs()) {
+            User user = AsyncTI4DiscordBot.jda.getUserById(playerID);
+            if (user != null) sb.append(user.getAsMention()).append(" ");
+        }
+        return sb.toString();
     }
 
     public HashMap<String, Tile> getTileMap() {
@@ -2477,6 +2934,11 @@ public class Game {
     }
 
     @JsonIgnore
+    public List<Player> getDummies() {
+        return getPlayers().values().stream().filter(Player::isDummy).collect(Collectors.toList());
+    }
+
+    @JsonIgnore
     public List<Player> getNotRealPlayers() {
         return getPlayers().values().stream().filter(Player::isNotRealPlayer).collect(Collectors.toList());
     }
@@ -2493,8 +2955,12 @@ public class Game {
     public void setCCNPlasticLimit(boolean limit) {
         ccNPlasticLimit = limit;
     }
+
     public void setBotFactionReactions(boolean limit) {
         botFactionReacts = limit;
+    }
+    public void setHasHadAStatusPhase(boolean limit) {
+        hasHadAStatusPhase = limit;
     }
 
     public void setShushing(boolean limit) {
@@ -2504,9 +2970,15 @@ public class Game {
     public boolean getCCNPlasticLimit() {
         return ccNPlasticLimit;
     }
+
     public boolean getBotFactionReacts() {
         return botFactionReacts;
     }
+
+    public boolean getHasHadAStatusPhase() {
+        return hasHadAStatusPhase;
+    }
+
     public boolean getBotShushing() {
         return botShushing;
     }
@@ -2522,6 +2994,15 @@ public class Game {
     @JsonIgnore
     public Set<String> getPlayerIDs() {
         return players.keySet();
+    }
+
+    @JsonIgnore
+    public List<String> getRealPlayerIDs() {
+        List<String> pIDs = new ArrayList<>();
+        for(Player player : getRealPlayers()){
+            pIDs.add(player.getUserID());
+        }
+        return pIDs;
     }
 
     public void removePlayer(String playerID) {
@@ -2621,7 +3102,7 @@ public class Game {
 
     public void rebuildTilePositionAutoCompleteList() {
         setTileNameAutocompleteOptionsCache(getTileMap().values().stream()
-            .map(tile -> new SimpleEntry<>(tile.getRepresentationForAutoComplete(), tile.getPosition()))
+            .map(tile -> new SimpleEntry<>(tile.getAutoCompleteName(), tile.getPosition()))
             .filter(e -> !e.getKey().toLowerCase().contains("hyperlane"))
             .toList());
     }
@@ -2932,7 +3413,7 @@ public class Game {
     @JsonIgnore
     public List<String> getAllPlanetsWithSleeperTokens() {
         List<String> planetsWithSleepers = new ArrayList<>();
-        for(Tile tile : getTileMap().values()){
+        for (Tile tile : getTileMap().values()) {
             planetsWithSleepers.addAll(tile.getPlanetsWithSleeperTokens());
         }
         return planetsWithSleepers;
@@ -2945,8 +3426,8 @@ public class Game {
 
     public Optional<Player> getPlayerByColorID(String color) {
         return getRealPlayers().stream()
-                    .filter(otherPlayer -> Mapper.getColorID(otherPlayer.getColor()).equals(color))
-                    .findFirst();
+            .filter(otherPlayer -> Mapper.getColorID(otherPlayer.getColor()).equals(color))
+            .findFirst();
     }
 
     public boolean isLeaderInGame(String leaderID) {
@@ -3000,12 +3481,21 @@ public class Game {
         return player;
     }
 
+    @Deprecated
     public UnitModel getUnitFromImageName(String imageName) {
         String colourID = StringUtils.substringBefore(imageName, "_");
         Player player = getPlayerFromColorOrFaction(colourID);
+        if (player == null) return null;
         return player.getUnitFromImageName(imageName);
     }
 
+    public UnitModel getUnitFromUnitKey(UnitKey unitKey) {
+        Player player = getPlayerFromColorOrFaction(unitKey.getColorID());
+        if (player == null) return null;
+        return player.getUnitFromUnitKey(unitKey);
+    }
+
+    @Deprecated
     public String getUnitNameFromImageName(String imageName) {
         String colourID = StringUtils.substringBefore(imageName, "_");
         String imageFileSuffix = StringUtils.substringAfter(imageName, colourID);
@@ -3015,5 +3505,77 @@ public class Game {
             .map(UnitModel::getName)
             .findFirst()
             .orElse(null);
+    }
+
+    public void swapInVariantUnits(String source) {
+        List<UnitModel> variantUnits = Mapper.getUnits().values().stream().filter(unit -> source.equals(unit.getSource())).toList();
+        for (Player player : getPlayers().values()) {
+            List<UnitModel> playersUnits = player.getUnitModels().stream().filter(unit -> !source.equals(unit.getSource())).toList();
+            for (UnitModel playerUnit : playersUnits) {
+                for (UnitModel variantUnit : variantUnits) {
+                    if (   (variantUnit.getHomebrewReplacesID().isPresent() && variantUnit.getHomebrewReplacesID().get().equals(playerUnit.getId())) // true variant unit replacing a PoK unit
+                        || (playerUnit.getHomebrewReplacesID().isPresent()  &&  playerUnit.getHomebrewReplacesID().get().equals(variantUnit.getId())) // PoK "variant" replacing a true variant unit
+                    ) {
+                        player.removeOwnedUnitByID(playerUnit.getId());
+                        player.addOwnedUnitByID(variantUnit.getId());
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    public void swapInVariantTechs() {
+        DeckModel deckModel = Mapper.getDeck(getTechnologyDeckID());
+        if (deckModel == null) return;
+        List<TechnologyModel> techsToReplace = deckModel.getNewDeck().stream().map(Mapper::getTech).filter(Objects::nonNull).filter(t -> t.getHomebrewReplacesID().isPresent()).toList();
+        for (Player player : getPlayers().values()) {
+            List<String> newExhaustedTechs = new ArrayList<>(player.getExhaustedTechs());
+
+            for (TechnologyModel tech : techsToReplace) {
+                String replacedTechID = tech.getHomebrewReplacesID().get();
+                String replacingTechID = tech.getAlias();
+                if (player.hasTech(tech.getHomebrewReplacesID().get())) {
+                    if (!player.hasTechReady(replacedTechID)) {
+                        player.refreshTech(replacedTechID);
+                        newExhaustedTechs.add(replacingTechID);
+                    }
+                    player.removeTech(replacedTechID);
+                    player.addTech(replacingTechID);
+                }
+                if (player.getFactionTechs().contains(replacedTechID)) {
+                    player.removeFactionTech(replacedTechID);
+                    player.addFactionTech(replacingTechID);
+                }
+            }
+            player.setExhaustedTechs(newExhaustedTechs);
+        }
+    }
+
+    public void swapOutVariantTechs() {
+        DeckModel deckModel = Mapper.getDeck(getTechnologyDeckID());
+        if (deckModel == null) return;
+        List<TechnologyModel> techsToReplace = Mapper.getTechs().values().stream().filter(t -> t.getHomebrewReplacesID().isPresent()).toList();
+        for (Player player : getPlayers().values()) {
+            List<String> newExhaustedTechs = new ArrayList<>(player.getExhaustedTechs());
+
+            for (TechnologyModel tech : techsToReplace) {
+                String replacedTechID = tech.getAlias();
+                String replacingTechID =  tech.getHomebrewReplacesID().get();
+                if (player.hasTech(replacedTechID)) {
+                    if (!player.hasTechReady(replacedTechID)) {
+                        player.refreshTech(replacedTechID);
+                        newExhaustedTechs.add(replacingTechID);
+                    }
+                    player.removeTech(replacedTechID);
+                    player.addTech(replacingTechID);
+                }
+                if (player.getFactionTechs().contains(replacedTechID)) {
+                    player.removeFactionTech(replacedTechID);
+                    player.addFactionTech(replacingTechID);
+                }
+            }
+            player.setExhaustedTechs(newExhaustedTechs);
+        }
     }
 }

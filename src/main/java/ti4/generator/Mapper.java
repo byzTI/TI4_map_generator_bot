@@ -9,6 +9,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import ti4.ResourceHelper;
 import ti4.helpers.AliasHandler;
+import ti4.helpers.Units;
+import ti4.helpers.Units.UnitKey;
 import ti4.map.Game;
 import ti4.message.BotLogger;
 import ti4.model.*;
@@ -25,57 +27,55 @@ import java.util.stream.Stream;
 public class Mapper {
     private static final Properties colors = new Properties();
     private static final Properties decals = new Properties();
-    private static final Properties cc_tokens = new Properties();
     private static final Properties attachment_tokens = new Properties();
     private static final Properties tokens = new Properties();
     private static final Properties special_case = new Properties();
-    private static final Properties faction_abilities = new Properties();
     private static final Properties general = new Properties();
-    private static final Properties planets = new Properties();
     private static final Properties faction_representation = new Properties();
     private static final Properties miltyDraft = new Properties();
     private static final Properties hyperlaneAdjacencies = new Properties();
     private static final Properties ds_handcards = new Properties();
-
+    
     //TODO: Finish moving all files over from properties to json
     private static final Map<String, DeckModel> decks = new HashMap<>();
     private static final Map<String, ExploreModel> explore = new HashMap<>();
-    private static final HashMap<String, ActionCardModel> actionCards = new HashMap<>();
-    private static final HashMap<String, AgendaModel> agendas = new HashMap<>();
-    private static final HashMap<String, FactionModel> factionSetup = new HashMap<>();
-    private static final HashMap<String, PublicObjectiveModel> publicObjectives = new HashMap<>();
-    private static final HashMap<String, SecretObjectiveModel> secretObjectives = new HashMap<>();
-    private static final HashMap<String, PromissoryNoteModel> promissoryNotes = new HashMap<>();
-    private static final HashMap<String, RelicModel> relics = new HashMap<>();
-    private static final HashMap<String, TechnologyModel> technologies = new HashMap<>();
-    private static final HashMap<String, UnitModel> units = new HashMap<>();
-    private static final HashMap<String, AttachmentModel> attachments = new HashMap<>();
-    private static final HashMap<String, LeaderModel> leaders = new HashMap<>();
+    private static final Map<String, AbilityModel>  abilities = new HashMap<>();
+    private static final Map<String, ActionCardModel> actionCards = new HashMap<>();
+    private static final Map<String, AgendaModel> agendas = new HashMap<>();
+    private static final Map<String, EventModel> events = new HashMap<>();
+    private static final Map<String, FactionModel> factions = new HashMap<>();
+    private static final Map<String, PublicObjectiveModel> publicObjectives = new HashMap<>();
+    private static final Map<String, SecretObjectiveModel> secretObjectives = new HashMap<>();
+    private static final Map<String, PromissoryNoteModel> promissoryNotes = new HashMap<>();
+    private static final Map<String, RelicModel> relics = new HashMap<>();
+    private static final Map<String, TechnologyModel> technologies = new HashMap<>();
+    private static final Map<String, UnitModel> units = new HashMap<>();
+    private static final Map<String, AttachmentModel> attachments = new HashMap<>();
+    private static final Map<String, LeaderModel> leaders = new HashMap<>();
 
     @Getter
-    private static final HashMap<String, StrategyCardModel> strategyCardSets = new HashMap<>();
-    private static final HashMap<String, CombatModifierModel> combatModifiers = new HashMap<>();
-    private static final HashMap<String, DraftErrataModel> frankenErrata = new HashMap<>();
+    private static final Map<String, StrategyCardModel> strategyCardSets = new HashMap<>();
+    private static final Map<String, CombatModifierModel> combatModifiers = new HashMap<>();
+    private static final Map<String, DraftErrataModel> frankenErrata = new HashMap<>();
 
     public static void init() {
-        importJsonObjects("faction_setup.json", factionSetup, FactionModel.class, "Could not read faction setup file");
+        importJsonObjectsFromFolder("factions", factions, FactionModel.class, "Could not read faction setup file");
         readData("color.properties", colors, "Could not read color name file");
         readData("decals.properties", decals, "Could not read decals name file");
-        readData("cc_tokens.properties", cc_tokens, "Could not read cc token name file");
         readData("attachments.properties", attachment_tokens, "Could not read attachment token name file");
         readData("tokens.properties", tokens, "Could not read token name file");
         readData("special_case.properties", special_case, "Could not read token name file");
         readData("general.properties", general, "Could not read general token name file");
-        readData("faction_abilities.properties", faction_abilities, "Could not read faction abilities file");
-        readData("planets.properties", planets, "Could not read planets file");
         readData("faction_representation.properties", faction_representation, "Could not read faction representation file");
         readData("milty_draft.properties", miltyDraft, "Could not read milty draft file");
         readData("hyperlanes.properties", hyperlaneAdjacencies, "Could not read hyperlanes file");
         readData("DS_handcards.properties", ds_handcards, "Could not read ds_handcards file");
         importJsonObjectsFromFolder("explores", explore, ExploreModel.class, "Could not read explore file");
         importJsonObjectsFromFolder("secret_objectives", secretObjectives, SecretObjectiveModel.class, "Could not read secret objectives file");
+        importJsonObjectsFromFolder("abilities", abilities, AbilityModel.class, "Could not read faction abilities file");
         importJsonObjectsFromFolder("action_cards", actionCards, ActionCardModel.class, "Could not read action cards file");
         importJsonObjectsFromFolder("agendas", agendas, AgendaModel.class, "Could not read agendas file");
+        importJsonObjectsFromFolder("events", events, EventModel.class, "Could not read events file");
         importJsonObjectsFromFolder("public_objectives", publicObjectives, PublicObjectiveModel.class, "Could not read public objective file");
         importJsonObjectsFromFolder("promissory_notes", promissoryNotes, PromissoryNoteModel.class, "Could not read promissory notes file");
         importJsonObjectsFromFolder("relics", relics, RelicModel.class, "Could not read relic file");
@@ -83,15 +83,10 @@ public class Mapper {
         importJsonObjectsFromFolder("leaders", leaders, LeaderModel.class, "Could not read leader file");
         importJsonObjectsFromFolder("decks", decks, DeckModel.class, "could not read decks file");
         importJsonObjectsFromFolder("units", units, UnitModel.class, "could not read units file");
-        importJsonObjects("attachments_info.json", attachments, AttachmentModel.class, "Could not read attachments file");
-        importJsonObjects("strategyCardSets.json", strategyCardSets, StrategyCardModel.class, "could not read strat cards file");
-        importJsonObjects("combat_modifiers.json", combatModifiers, CombatModifierModel.class, "could not read combat modifiers file");
-        importJsonObjects("franken_errata.json", frankenErrata, DraftErrataModel.class, "Could not read faction setup file");
-
-        //Ensure Faction Setup lists contain valid data
-        for (FactionModel faction : factionSetup.values()) {
-            faction.validationWarnings();
-        }
+        importJsonObjectsFromFolder("attachments", attachments, AttachmentModel.class, "Could not read attachments file");
+        importJsonObjectsFromFolder("strategy_card_sets", strategyCardSets, StrategyCardModel.class, "could not read strat cards file");
+        importJsonObjectsFromFolder("combat_modifiers", combatModifiers, CombatModifierModel.class, "could not read combat modifiers file");
+        importJsonObjectsFromFolder("franken_errata", frankenErrata, DraftErrataModel.class, "Could not read faction setup file");
     }
 
     private static void readData(String propertyFileName, Properties properties, String s) {
@@ -107,6 +102,7 @@ public class Mapper {
 
     private static <T extends ModelInterface> void importJsonObjectsFromFolder(String jsonFolderName, Map<String, T> objectMap, Class<T> target, String error) {
         String folderPath = ResourceHelper.getInstance().getDataFolder(jsonFolderName);
+        objectMap.clear(); // Added to prevent duplicates when running Mapper.init() over and over with *ModelTest classes
 
         try {
             File folder = new File(folderPath);
@@ -138,13 +134,15 @@ public class Mapper {
         }
 
         List<String> badObjects = new ArrayList<>();
-        allObjects.forEach(obj -> {
-            if (obj.isValid()) {
-                objectMap.put(obj.getAlias(), obj);
-            } else {
+        for (T obj : allObjects) {
+            if (objectMap.containsKey(obj.getAlias())) { //duplicate found
+                BotLogger.log("Duplicate **" + target.getSimpleName() + "** found: " + obj.getAlias());
+            }
+            objectMap.put(obj.getAlias(), obj);
+            if (!obj.isValid()) {
                 badObjects.add(obj.getAlias());
             }
-        });
+        }
         if (!badObjects.isEmpty())
             BotLogger.log("The following **" + target.getSimpleName() + "** are improperly formatted:\n> "
                 + String.join("\n> ", badObjects));
@@ -155,7 +153,7 @@ public class Mapper {
         color = AliasHandler.resolveColor(color);
         if (isColorValid(color) && isFaction(faction)) {
             for (PromissoryNoteModel pn : promissoryNotes.values()) {
-                if (pn.getColour().equals(color) || pn.getFaction().equalsIgnoreCase(faction)) {
+                if (pn.getColour().orElse("").equals(color) || pn.getFaction().orElse("").equalsIgnoreCase(faction)) {
                     if (activeGame.isAbsolMode() && pn.getAlias().endsWith("_ps")
                         && !"Absol".equalsIgnoreCase(pn.getSource())) {
                         continue;
@@ -171,7 +169,7 @@ public class Mapper {
         return pnList;
     }
 
-    public static HashMap<String, PromissoryNoteModel> getPromissoryNotes() {
+    public static Map<String, PromissoryNoteModel> getPromissoryNotes() {
         return promissoryNotes;
     }
 
@@ -196,6 +194,7 @@ public class Mapper {
     }
 
     public static String getDecalName(String decalID) {
+        if (decalID == null || "null".equals(decalID)) return null;
         return decals.getProperty(decalID);
     }
 
@@ -210,7 +209,7 @@ public class Mapper {
     }
 
     public static boolean isFaction(String faction) {
-        return factionSetup.containsKey(faction);
+        return factions.containsKey(faction);
     }
 
     public static String getColorID(String color) {
@@ -232,6 +231,9 @@ public class Mapper {
     }
 
     public static String getTileID(String tileID) {
+        if(TileHelper.getAllTiles().get(tileID) == null){
+            return null;
+        }
         return TileHelper.getAllTiles().get(tileID).getImagePath();
     }
 
@@ -287,6 +289,10 @@ public class Mapper {
         return units;
     }
 
+    public static List<String> getUnitSources() {
+        return units.values().stream().map(unit -> unit.getSource()).distinct().sorted().toList();
+    }
+
     public static UnitModel getUnit(String unitID) {
         return units.get(unitID);
     }
@@ -297,7 +303,7 @@ public class Mapper {
 
     public static UnitModel getUnitModelByTechUpgrade(String techID) {
         return units.values().stream()
-            .filter(unitModel -> techID.equals(unitModel.getRequiredTechId()))
+            .filter(unitModel -> techID.equals(unitModel.getRequiredTechId().orElse("")))
             .findFirst()
             .orElse(null);
     }
@@ -318,8 +324,18 @@ public class Mapper {
         return cards;
     }
 
-    public static String getUnitID(String unitID, String color) {
-        return colors.getProperty(color) + "_" + unitID + ".png";
+    // public static String getUnitID(String unitID, String color) {
+    //     return colors.getProperty(color) + "_" + unitID + ".png";
+    // }
+
+    public static UnitKey getUnitKey(String unitID, String colorID) {
+        if (!isValidAsyncUnitID(unitID)) return null;
+        String actuallyColorID = getColorID(colorID) == null ? colorID : getColorID(colorID);
+        return Units.getUnitKey(unitID, actuallyColorID);
+    }
+
+    public static boolean isValidAsyncUnitID(String asyncUnitID) {
+        return getUnitIDList().contains(asyncUnitID);
     }
 
     public static Set<String> getUnitIDList() {
@@ -331,12 +347,12 @@ public class Mapper {
 
     public static String getCCID(String color) {
         String property = colors.getProperty(color);
-        return cc_tokens.get("cc") + property + ".png";
+        return "command_" + property + ".png";
     }
 
     public static String getFleetCCID(String color) {
         String property = colors.getProperty(color);
-        return cc_tokens.get("fleet") + property + ".png";
+        return "fleet_" + property + ".png";
     }
 
     public static String getAttachmentID(String tokenID) {
@@ -347,18 +363,18 @@ public class Mapper {
         return tokens.getProperty(tokenID);
     }
 
-    public static FactionModel getFactionSetup(String factionID) {
-        return factionSetup.get(factionID);
+    public static FactionModel getFaction(String factionID) {
+        return factions.get(factionID);
     }
 
     public static String getControlID(String color) {
         String property = colors.getProperty(color);
-        return cc_tokens.get("control") + property + ".png";
+        return "control_" + property + ".png";
     }
 
     public static String getSweepID(String color) {
         String property = colors.getProperty(color);
-        return cc_tokens.get("sweep") + property + ".png";
+        return "sweep_" + property + ".png";
     }
 
     public static List<String> getColors() {
@@ -463,6 +479,10 @@ public class Mapper {
         return agendas.get(id);
     }
 
+    public static EventModel getEvent(String id) {
+        return events.get(id);
+    }
+
     public static String getExploreRepresentation(String id) {
         id = id.replace("extra1", "");
         id = id.replace("extra2", "");
@@ -475,7 +495,7 @@ public class Mapper {
             return (String) explore.get(id).getRepresentation();
         } else {
             BotLogger.log("Cannot find explore with ID: " + id);
-            throw new NullPointerException();
+            return null;
         }
     }
 
@@ -668,7 +688,7 @@ public class Mapper {
         return technologies.get(id).getType();
     }
 
-    public static HashMap<String, TechnologyModel> getTechs() {
+    public static Map<String, TechnologyModel> getTechs() {
         return technologies;
     }
 
@@ -732,6 +752,14 @@ public class Mapper {
         return getAgendas().containsKey(agendaID);
     }
 
+    public static HashMap<String, EventModel> getEvents() {
+        return new HashMap<>(events);
+    }
+
+    public static boolean isValidEvent(String eventID) {
+        return getEvents().containsKey(eventID);
+    }
+
     public static HashMap<String, DeckModel> getDecks() {
         return new HashMap<>(decks);
     }
@@ -740,35 +768,41 @@ public class Mapper {
         return getDecks().get(deckID);
     }
 
+    public static boolean isValidDeck(String deckID) {
+        return getDecks().containsKey(deckID);
+    }
+
     public static HashMap<String, CombatModifierModel> getCombatModifiers() {
         return new HashMap<>(combatModifiers);
     }
 
-    public static HashMap<String, String> getFactionAbilities() {
-        HashMap<String, String> factionAbilities = new HashMap<>();
-        for (Map.Entry<Object, Object> entry : faction_abilities.entrySet()) {
-            factionAbilities.put((String) entry.getKey(), (String) entry.getValue());
-        }
-        return factionAbilities;
+    public static HashMap<String, AbilityModel> getAbilities() {
+        return new HashMap<>(abilities);
     }
 
     public static boolean isValidAbility(String abilityID) {
-        return faction_abilities.containsKey(abilityID);
+        return abilities.containsKey(abilityID);
     }
 
-    public static String getAbility(String abilityID) {
-        return faction_abilities.getProperty(abilityID);
+    public static AbilityModel getAbility(String abilityID) {
+        return abilities.get(abilityID);
     }
 
-    public static List<String> getFactions() {
-        return factionSetup.keySet().stream()
+    public static List<String> getFactionIDs() {
+        return factions.keySet().stream()
             .filter(token -> token instanceof String)
             .map(token -> (String) token)
             .sorted()
             .collect(Collectors.toList());
     }
 
-    public static HashMap<String, DraftErrataModel> getFrankenErrata() {
+    public static List<FactionModel> getFactions() {
+        return factions.values().stream()
+            .sorted(Comparator.comparing(FactionModel::getFactionName))
+            .collect(Collectors.toList());
+    }
+
+    public static Map<String, DraftErrataModel> getFrankenErrata() {
         return frankenErrata;
     }
 

@@ -8,6 +8,7 @@ import ti4.generator.Mapper;
 import ti4.helpers.AliasHandler;
 import ti4.helpers.Constants;
 import ti4.helpers.Helper;
+import ti4.helpers.Units.UnitKey;
 import ti4.map.*;
 import java.util.*;
 
@@ -22,8 +23,8 @@ public class ChangeColor extends PlayerSubcommandData {
     public void execute(SlashCommandInteractionEvent event) {
         Game activeGame = getActiveGame();
 
-        String newColour = AliasHandler.resolveColor(event.getOption(Constants.COLOR).getAsString().toLowerCase());
-        if (!Mapper.isColorValid(newColour)) {
+        String newColor = AliasHandler.resolveColor(event.getOption(Constants.COLOR).getAsString().toLowerCase());
+        if (!Mapper.isColorValid(newColor)) {
             sendMessage("Color not valid");
             return;
         }
@@ -38,8 +39,8 @@ public class ChangeColor extends PlayerSubcommandData {
         LinkedHashMap<String, Player> players = activeGame.getPlayers();
         for (Player playerInfo : players.values()) {
             if (playerInfo != player) {
-                if (newColour.equals(playerInfo.getColor())) {
-                    sendMessage("Player:" + playerInfo.getUserName() + " already uses color:" + newColour);
+                if (newColor.equals(playerInfo.getColor())) {
+                    sendMessage("Player:" + playerInfo.getUserName() + " already uses color:" + newColor);
                     return;
                 }
             }
@@ -47,17 +48,14 @@ public class ChangeColor extends PlayerSubcommandData {
 
         String oldColor = player.getColor();
         String oldColorKey = oldColor + "_";
-        String newColorKey = newColour + "_";
-        player.changeColor(newColour);
+        String newColorKey = newColor + "_";
+        player.changeColor(newColor);
         String oldColorID = Mapper.getColorID(oldColor);
-        String colorID = Mapper.getColorID(newColour);
-        
-        String oldColorSuffix = "_" + oldColorID + ".";
-        String newColorSuffix = "_" + colorID + ".";
+        String newColorID = Mapper.getColorID(newColor);
 
         for (Player playerInfo : players.values()) {
             LinkedHashMap<String, Integer> promissoryNotes = playerInfo.getPromissoryNotes();
-            
+
             LinkedHashMap<String, Integer> promissoryNotesChanged = new LinkedHashMap<>();
             for (Map.Entry<String, Integer> pn : promissoryNotes.entrySet()) {
                 String key = pn.getKey();
@@ -80,22 +78,22 @@ public class ChangeColor extends PlayerSubcommandData {
                 promissoryNotesInPlayAreaChanged.add(newKey);
             }
             playerInfo.setPromissoryNotesInPlayArea(promissoryNotesInPlayAreaChanged);
-            
+
             List<String> mahactCC = new ArrayList<>(playerInfo.getMahactCC());
             for (String cc : mahactCC) {
                 if (cc.equals(oldColor)) {
-                    String replacedCC = cc.replace(oldColor, newColour);
+                    String replacedCC = cc.replace(oldColor, newColor);
                     playerInfo.removeMahactCC(cc);
                     playerInfo.addMahactCC(replacedCC);
                 }
             }
 
             Map<String, Integer> debtTokens = new LinkedHashMap<>(playerInfo.getDebtTokens());
-            for (String colour : debtTokens.keySet()) {
-                if (colour.equals(oldColor)) {
-                    Integer count = debtTokens.get(colour);
-                    playerInfo.clearAllDebtTokens(colour);
-                    playerInfo.addDebtTokens(newColour, count);
+            for (String color : debtTokens.keySet()) {
+                if (color.equals(oldColor)) {
+                    Integer count = debtTokens.get(color);
+                    playerInfo.clearAllDebtTokens(color);
+                    playerInfo.addDebtTokens(newColor, count);
                 }
             }
         }
@@ -111,47 +109,13 @@ public class ChangeColor extends PlayerSubcommandData {
         }
         player.setPromissoryNotesOwned(ownedPromissoryNotesChanged);
 
-
-        for (Tile tile : activeGame.getTileMap().values()) {
-            for (UnitHolder unitHolder : tile.getUnitHolders().values()) {
-
-                Map<String, Integer> unitDamage = new HashMap<>(unitHolder.getUnitDamage());
-                for (Map.Entry<String, Integer> unitDmg : unitDamage.entrySet()) {
-                    String key = unitDmg.getKey();
-                    if (!key.startsWith(oldColorID)) continue;
-                    Integer value = unitDmg.getValue();
-                    String replacedKey = key.replace(oldColorID, colorID);
-                    unitHolder.removeUnitDamage(key, value);
-                    unitHolder.addUnitDamage(replacedKey, value);
-                }
-
-                Map<String, Integer> units = new HashMap<>(unitHolder.getUnits());
-                for (Map.Entry<String, Integer> unit : units.entrySet()) {
-                    String key = unit.getKey();
-                    if (!key.startsWith(oldColorID)) continue;
-                    Integer value = unit.getValue();
-                    String replacedKey = key.replace(oldColorID, colorID);
-                    unitHolder.removeUnit(key, value);
-                    unitHolder.addUnit(replacedKey, value);
-                }
-
-                Set<String> controlList = new HashSet<>(unitHolder.getControlList());
-                for (String control : controlList) {
-                    if (!control.contains(oldColorID)) continue;
-                    unitHolder.removeControl(control);
-                    control = control.replace(oldColorID, colorID);
-                    unitHolder.addControl(control);
-                }
-
-                
-                Set<String> ccList = new HashSet<>(unitHolder.getCCList());
-                for (String cc : ccList) {
-                    unitHolder.removeCC(cc);
-                    cc = cc.replace(oldColorSuffix, newColorSuffix);
-                    unitHolder.addCC(cc);
-                }
-            }
-        }
+        // Convert all unitholders
+        activeGame.getTileMap().values().stream()
+            .flatMap(t -> t.getUnitHolders().values().stream())
+            .forEach(uh -> replaceIDsOnUnitHolder(uh, oldColorID, newColorID));
+        activeGame.getPlayers().values().stream().map(Player::getNomboxTile)
+            .flatMap(t -> t.getUnitHolders().values().stream())
+            .forEach(uh -> replaceIDsOnUnitHolder(uh, oldColorID, newColorID));
     }
 
     @Override
@@ -160,5 +124,47 @@ public class ChangeColor extends PlayerSubcommandData {
         Game activeGame = GameManager.getInstance().getUserActiveGame(userID);
         GameSaveLoadManager.saveMap(activeGame, event);
         ShowGame.simpleShowGame(activeGame, event);
+    }
+
+    private void replaceIDsOnUnitHolder(UnitHolder unitHolder, String oldColorID, String newColorID) {
+        String oldColorSuffix = "_" + oldColorID + ".";
+        String newColorSuffix = "_" + newColorID + ".";
+
+        Map<UnitKey, Integer> unitDamage = new HashMap<>(unitHolder.getUnitDamage());
+        for (Map.Entry<UnitKey, Integer> unitDmg : unitDamage.entrySet()) {
+            UnitKey unitKey = unitDmg.getKey();
+            if (unitKey.getColorID().equals(oldColorID)) {
+                Integer value = unitDmg.getValue();
+                UnitKey replacedKey = Mapper.getUnitKey(unitKey.asyncID(), newColorID);
+                unitHolder.removeUnitDamage(unitKey, value);
+                unitHolder.addUnitDamage(replacedKey, value);
+            }
+        }
+
+        Map<UnitKey, Integer> units = new HashMap<>(unitHolder.getUnits());
+        for (Map.Entry<UnitKey, Integer> unit : units.entrySet()) {
+            UnitKey unitKey = unit.getKey();
+            if (unitKey.getColorID().equals(oldColorID)) {
+                Integer value = unit.getValue();
+                UnitKey replacedKey = Mapper.getUnitKey(unitKey.asyncID(), newColorID);
+                unitHolder.removeUnit(unitKey, value);
+                unitHolder.addUnit(replacedKey, value);
+            }
+        }
+
+        Set<String> controlList = new HashSet<>(unitHolder.getControlList());
+        for (String control : controlList) {
+            if (!control.contains(oldColorID)) continue;
+            unitHolder.removeControl(control);
+            control = control.replace(oldColorID, newColorID);
+            unitHolder.addControl(control);
+        }
+
+        Set<String> ccList = new HashSet<>(unitHolder.getCCList());
+        for (String cc : ccList) {
+            unitHolder.removeCC(cc);
+            cc = cc.replace(oldColorSuffix, newColorSuffix);
+            unitHolder.addCC(cc);
+        }
     }
 }

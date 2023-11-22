@@ -1,17 +1,16 @@
 package ti4.commands.player;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.StringTokenizer;
 
+import net.dv8tion.jda.api.events.interaction.GenericInteractionCreateEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import ti4.generator.Mapper;
 import ti4.helpers.Constants;
 import ti4.helpers.Helper;
 import ti4.map.Game;
 import ti4.map.Player;
-import ti4.message.BotLogger;
 import ti4.message.MessageHelper;
+import ti4.model.AbilityModel;
 
 public class AbilityInfo extends PlayerSubcommandData {
     public AbilityInfo() {
@@ -31,8 +30,8 @@ public class AbilityInfo extends PlayerSubcommandData {
         sendAbilityInfo(activeGame, player, event);
     }
 
-    public static void sendAbilityInfo(Game activeGame, Player player, SlashCommandInteractionEvent event) {
-        String headerText = Helper.getPlayerRepresentation(player, activeGame) + " used `" + event.getCommandString() + "`";
+    public static void sendAbilityInfo(Game activeGame, Player player, GenericInteractionCreateEvent event) {
+        String headerText = player.getRepresentation() + " used a command or button";
         MessageHelper.sendMessageToPlayerCardsInfoThread(player, activeGame, headerText);
         sendAbilityInfo(activeGame, player);
     }
@@ -51,34 +50,11 @@ public class AbilityInfo extends PlayerSubcommandData {
         }
         int index = 1;
         for (String abilityID : playerAbilities) {
+            AbilityModel abilityModel = Mapper.getAbility(abilityID);
             sb.append("`").append(index).append(".` ");
-            sb.append(getAbilityRepresentation(abilityID)).append("\n");
+            sb.append(abilityModel.getRepresentation()).append("\n");
             index++;
         }
-        return sb.toString();
-    }
-
-    public static String getAbilityRepresentation(String abilityID) {
-        HashMap<String, String> abilityInfo = Mapper.getFactionAbilities();
-        String abilityRawText = abilityInfo.get(abilityID);
-        StringTokenizer tokenizer = new StringTokenizer(abilityRawText, "|");
-        int expectedTokenCount = 5;
-        if (tokenizer.countTokens() != expectedTokenCount) {
-            BotLogger.log("Ability info raw text is incorrectly formatted (needs " + (expectedTokenCount - 1) + " | to split properly):\n> " + abilityRawText);
-            return abilityRawText;
-        }
-        String abilityName = tokenizer.nextToken();
-        String abilitySourceFaction = tokenizer.nextToken();
-        String abilityRawModifier = tokenizer.nextToken();
-        String abilityWindow = tokenizer.nextToken();
-        String abilityText = tokenizer.nextToken();
-
-        StringBuilder sb = new StringBuilder();
-        sb.append(Helper.getFactionIconFromDiscord(abilitySourceFaction)).append("__**").append(abilityName).append("**__");
-        if (!abilityRawModifier.isBlank()) sb.append(": ").append(abilityRawModifier);
-        if (!abilityWindow.isBlank() || !abilityText.isBlank()) sb.append("\n> *").append(abilityWindow).append("*:\n> ").append(abilityText);
-
-
         return sb.toString();
     }
 }

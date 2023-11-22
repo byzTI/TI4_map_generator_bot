@@ -123,6 +123,8 @@ public class PlayerCommand implements Command {
         subcommands.add(new ChangeUnitDecal());
         subcommands.add(new UnitInfo());
         subcommands.add(new AddAllianceMember());
+        subcommands.add(new AddTeamMate());
+        subcommands.add(new RemoveTeamMate());
         subcommands.add(new SetStatsAnchor());
         return subcommands;
     }

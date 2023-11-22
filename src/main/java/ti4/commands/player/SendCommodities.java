@@ -5,6 +5,7 @@ import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import ti4.helpers.ButtonHelper;
+import ti4.helpers.ButtonHelperAbilities;
 import ti4.helpers.ButtonHelperFactionSpecific;
 import ti4.helpers.Constants;
 import ti4.helpers.Emojis;
@@ -61,18 +62,18 @@ public class SendCommodities extends PlayerSubcommandData {
             player_.setCommodities(targetTG);
         }
         
-        String p1 = Helper.getPlayerRepresentation(player, activeGame);
-        String p2 = Helper.getPlayerRepresentation(player_, activeGame);
+        String p1 = player.getRepresentation();
+        String p2 = player_.getRepresentation();
         String commString = sendCommodities + " " + Emojis.comm + " commodities";
         String message =  p1 + " sent " + commString + " to " + p2;
         sendMessage(message);
-        ButtonHelperFactionSpecific.pillageCheck(player_, activeGame);
-        ButtonHelperFactionSpecific.pillageCheck(player, activeGame);
+        ButtonHelperAbilities.pillageCheck(player_, activeGame);
+        ButtonHelperAbilities.pillageCheck(player, activeGame);
         ButtonHelperFactionSpecific.resolveDarkPactCheck(activeGame, player, player_, sendCommodities, event);
 
         if (event.getOption(Constants.CLEAR_DEBT, false, OptionMapping::getAsBoolean)) {
 			ClearDebt.clearDebt(player_, player, sendCommodities);
-			sendMessage(Helper.getPlayerRepresentation(player_, activeGame) + " cleared " + sendCommodities + " debt tokens owned by " + Helper.getPlayerRepresentation(player, activeGame));
+			sendMessage(player_.getRepresentation() + " cleared " + sendCommodities + " debt tokens owned by " + player.getRepresentation());
 		}
 
         if (activeGame.isFoWMode()) {

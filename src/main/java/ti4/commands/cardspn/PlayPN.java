@@ -1,11 +1,14 @@
 package ti4.commands.cardspn;
 
 import java.util.Map;
+
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import ti4.generator.Mapper;
+import ti4.helpers.ButtonHelperFactionSpecific;
+import ti4.helpers.CombatModHelper;
 import ti4.helpers.Constants;
 import ti4.helpers.Emojis;
 import ti4.helpers.FoWHelper;
@@ -94,7 +97,7 @@ public class PlayPN extends PNCardsSubcommandData {
        
 
         String emojiToUse = activeGame.isFoWMode() ? "" : pnOwner.getFactionEmoji();
-        StringBuilder sb = new StringBuilder(Helper.getPlayerRepresentation(player, activeGame) + " played promissory note: " + pnName + "\n");
+        StringBuilder sb = new StringBuilder(player.getRepresentation() + " played promissory note: " + pnName + "\n");
         sb.append(emojiToUse).append(Emojis.PN);
         String pnText;
 
@@ -105,12 +108,22 @@ public class PlayPN extends PNCardsSubcommandData {
         if ("terraform".equalsIgnoreCase(pnID)) {
             sb.append("`/add_token token:titanspn`\n");
         }
-
+        
+        if ("dspnkoll".equalsIgnoreCase(pnID)) {
+            ButtonHelperFactionSpecific.offerKolleccPNButtons(player, activeGame, event);
+        }
         //Fog of war ping
-		if (activeGame.isFoWMode()) {
+        if (activeGame.isFoWMode()) {
             // Add extra message for visibility
-			FoWHelper.pingAllPlayersWithFullStats(activeGame, event, player, sb.toString());
-		}
+            FoWHelper.pingAllPlayersWithFullStats(activeGame, event, player, sb.toString());
+        }
+        
+        var posssibleCombatMod = CombatModHelper.GetPossibleTempModifier(Constants.PROMISSORY_NOTES, pnID,
+                player.getNumberTurns());
+        if (posssibleCombatMod != null) {
+            player.addNewTempCombatMod(posssibleCombatMod);
+            sendMessage("Combat modifier will be applied next time you push the combat roll button.");
+        }
 
         sendMessage(sb.toString());
         PNInfo.sendPromissoryNoteInfo(activeGame, player, false);

@@ -3,6 +3,7 @@ package ti4;
 import java.util.concurrent.ThreadLocalRandom;
 import ti4.helpers.Constants;
 import ti4.helpers.Storage;
+import ti4.helpers.Units.UnitKey;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -13,6 +14,7 @@ public class ResourceHelper {
     private static ResourceHelper resourceHelper;
     private final HashMap<String, String> unitCache = new HashMap<>();
     private final HashMap<String, String> decalCache = new HashMap<>();
+    private final HashMap<String, String> spoopyCache = new HashMap<>();
     private final HashMap<String, String> tileCache = new HashMap<>();
     private final HashMap<String, String> ccCache = new HashMap<>();
     private final HashMap<String, String> attachmentCache = new HashMap<>();
@@ -74,6 +76,7 @@ public class ResourceHelper {
         return tile;
     }
 
+    //@Deprecated
     @Nullable
     public String getUnitFile(String name) {
         if (name.endsWith(Constants.UNIT_DD)) {
@@ -91,6 +94,18 @@ public class ResourceHelper {
     }
 
     @Nullable
+    public String getUnitFile(UnitKey unit) {
+        String name = unit.getFileName();
+        String unitPath = unitCache.get(name);
+        if (unitPath != null) {
+            return unitPath;
+        }
+        String filePath = getResourceFromFolder("units/", name, "Could not find unit file");
+        unitCache.put(name, filePath);
+        return filePath;
+    }
+
+    @Nullable
     public String getDecalFile(String name) {
         String decalPath = decalCache.get(name);
         if (decalPath != null) {
@@ -98,6 +113,20 @@ public class ResourceHelper {
         }
         String unit = getResourceFromFolder("decals/", name, "Could not find decal file");
         decalCache.put(name, unit);
+        return unit;
+    }
+
+    @Nullable
+    public String getSpoopyFile() {
+        // overlay_jackolantern_1
+        int face = ThreadLocalRandom.current().nextInt(1, 4);
+        String name = "overlay_jackolantern_" + String.valueOf(face) + ".png";
+        String spoopyPath = spoopyCache.get(name);
+        if (spoopyPath != null) {
+            return spoopyPath;
+        }
+        String unit = getResourceFromFolder("decals/", name, "Could not find decal file");
+        spoopyCache.put(name, unit);
         return unit;
     }
 

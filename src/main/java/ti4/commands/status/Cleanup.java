@@ -7,6 +7,7 @@ import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import ti4.commands.leaders.RefreshLeader;
 import ti4.commands.cardspn.PNInfo;
+import ti4.commands.custom.SpinTilesInFirstThreeRings;
 import ti4.helpers.Constants;
 import ti4.map.*;
 import ti4.message.MessageHelper;
@@ -65,6 +66,7 @@ public class Cleanup extends StatusSubcommandData {
                 activeGame.setScTradeGood(sc, 0);
             }            
             player.clearSCs();
+            player.setTurnCount(0);
             player.clearFollowedSCs();
             player.cleanExhaustedTechs();
             player.cleanExhaustedPlanets(true);
@@ -81,10 +83,11 @@ public class Cleanup extends StatusSubcommandData {
                 }
             }
         }
-        int round = activeGame.getRound();
-        round++;
-        
-        activeGame.setRound(round);
+        activeGame.setCurrentReacts("absolMOW", "");
+        activeGame.setHasHadAStatusPhase(true);
+        if(activeGame.isSpinMode()){
+            new SpinTilesInFirstThreeRings().spinRings(activeGame);
+        }
     }
   
 

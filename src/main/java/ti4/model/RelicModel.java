@@ -49,21 +49,22 @@ public class RelicModel implements ModelInterface, EmbeddableModel {
     }
 
     public MessageEmbed getRepresentationEmbed() {
-        return getRepresentationEmbed(false);
+        return getRepresentationEmbed(false, false);
     }
 
-    public MessageEmbed getRepresentationEmbed(boolean includeID) {
+    public MessageEmbed getRepresentationEmbed(boolean includeID, boolean includeFlavourText) {
         EmbedBuilder eb = new EmbedBuilder();
         String name = getName() == null ? "" : getName();
         eb.setTitle(Emojis.Relic + "__" + name + "__" + getSourceEmoji(), null);
         eb.setColor(Color.yellow);
         eb.setDescription(getText());
+        if (includeFlavourText && getFlavourText() != null) eb.addField("", "*" + getFlavourText() + "*", false);
         if (includeID) eb.setFooter("ID: " + getAlias() + "  Source: " + getSource());
         return eb.build();
     }
 
     public boolean search(String searchString) {
-        return getAlias().toLowerCase().contains(searchString) || getText().toLowerCase().contains(searchString) || getSearchTags().contains(searchString);
+        return getAlias().toLowerCase().contains(searchString) || getName().toLowerCase().contains(searchString) || getText().toLowerCase().contains(searchString) || getSearchTags().contains(searchString);
     }
 
     public String getAutoCompleteName() {

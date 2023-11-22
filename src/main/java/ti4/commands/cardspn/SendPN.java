@@ -1,12 +1,13 @@
 package ti4.commands.cardspn;
 
 import java.util.Map;
+
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import ti4.generator.Mapper;
-import ti4.helpers.ButtonHelperFactionSpecific;
+import ti4.helpers.ButtonHelperAbilities;
 import ti4.helpers.Constants;
 import ti4.helpers.Emojis;
 import ti4.helpers.FoWHelper;
@@ -19,7 +20,7 @@ import ti4.model.PromissoryNoteModel;
 public class SendPN extends PNCardsSubcommandData {
 	public SendPN() {
 		super(Constants.SEND_PN, "Send Promissory Note to player");
-		addOptions(new OptionData(OptionType.STRING, Constants.PROMISSORY_NOTE_ID,"Promissory Note ID that is sent between () or Name/Part of Name").setRequired(true));
+		addOptions(new OptionData(OptionType.STRING, Constants.PROMISSORY_NOTE_ID, "Promissory Note ID that is sent between () or Name/Part of Name").setRequired(true));
 		addOptions(new OptionData(OptionType.STRING, Constants.FACTION_COLOR, "Faction or Color").setRequired(true).setAutoComplete(true));
 	}
 
@@ -85,19 +86,19 @@ public class SendPN extends PNCardsSubcommandData {
 		}
 
 		Player pnOwner = activeGame.getPNOwner(id);
-		if (player.getPromissoryNotesInPlayArea().contains(id) ) {
+		if (player.getPromissoryNotesInPlayArea().contains(id)) {
 			if (!targetPlayer.equals(pnOwner)) {
 				sendMessage("Promissory Notes in Play Area can only be sent to the owner of the PN");
 				return;
 			}
 		}
-		ButtonHelperFactionSpecific.pillageCheck(player, activeGame);
+		ButtonHelperAbilities.pillageCheck(player, activeGame);
 		player.removePromissoryNote(id);
-		ButtonHelperFactionSpecific.pillageCheck(targetPlayer, activeGame);
+		ButtonHelperAbilities.pillageCheck(targetPlayer, activeGame);
 		targetPlayer.setPromissoryNote(id);
 
 		boolean placeDirectlyInPlayArea = pnModel.isPlayedDirectlyToPlayArea();
-		if (placeDirectlyInPlayArea && !targetPlayer.equals(pnOwner)&& !targetPlayer.isPlayerMemberOfAlliance(pnOwner)) {
+		if (placeDirectlyInPlayArea && !targetPlayer.equals(pnOwner) && !targetPlayer.isPlayerMemberOfAlliance(pnOwner)) {
 			targetPlayer.setPromissoryNotesInPlayArea(id);
 		}
 
@@ -105,7 +106,7 @@ public class SendPN extends PNCardsSubcommandData {
 		PNInfo.sendPromissoryNoteInfo(activeGame, player, false);
 
 		String extraText = placeDirectlyInPlayArea ? "**" + pnModel.getName() + "**" : "";
-		String message = Helper.getPlayerRepresentation(player, activeGame) + " sent " + Emojis.PN + extraText + " to " + Helper.getPlayerRepresentation(targetPlayer, activeGame);
+		String message = player.getRepresentation() + " sent " + Emojis.PN + extraText + " to " + targetPlayer.getRepresentation();
 		if (activeGame.isFoWMode()) {
 			String fail = "User for faction not found. Report to ADMIN";
 			String success = message + "\nThe other player has been notified";

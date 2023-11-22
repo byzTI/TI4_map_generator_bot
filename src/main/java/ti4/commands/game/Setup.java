@@ -1,7 +1,6 @@
 package ti4.commands.game;
 
 import java.util.ArrayList;
-
 import net.dv8tion.jda.api.events.interaction.GenericInteractionCreateEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
@@ -9,6 +8,7 @@ import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import ti4.generator.Mapper;
 import ti4.helpers.Constants;
+import ti4.helpers.Emojis;
 import ti4.map.Game;
 import ti4.map.Player;
 import ti4.message.MessageHelper;
@@ -27,6 +27,7 @@ public class Setup extends GameSubcommandData {
         addOptions(new OptionData(OptionType.BOOLEAN, Constants.DISCORDANT_STARS_MODE, "True to add the Discordant Stars factions to the pool."));
         addOptions(new OptionData(OptionType.INTEGER, Constants.AUTO_PING, "Hours between auto pings. Min 1. Enter 0 to turn off."));
         addOptions(new OptionData(OptionType.BOOLEAN, Constants.BETA_TEST_MODE, "True to test new features that may not be released to all games yet."));
+        addOptions(new OptionData(OptionType.BOOLEAN, "extra_secret_mode", "True to allow each player to start with 2 secrets. Great for SftT-less games!"));
     }
 
     @Override
@@ -67,7 +68,7 @@ public class Setup extends GameSubcommandData {
                 activeGame.setAutoPingSpacer(pingHours);
             } else {
                 activeGame.setAutoPing(true);
-                if (pingHours < 1){
+                if (pingHours < 1) {
                     pingHours = 1;
                 }
                 activeGame.setAutoPingSpacer(pingHours);
@@ -85,10 +86,14 @@ public class Setup extends GameSubcommandData {
 
         Boolean betaTestMode = event.getOption(Constants.BETA_TEST_MODE, null, OptionMapping::getAsBoolean);
         if (betaTestMode != null) activeGame.setTestBetaFeaturesMode(betaTestMode);
+
+        Boolean extraSecretMode = event.getOption("extra_secret_mode", false, OptionMapping::getAsBoolean);
+        activeGame.setExtraSecretMode(extraSecretMode);
     }
 
     public static boolean setGameMode(SlashCommandInteractionEvent event, Game activeGame) {
-        if (event.getOption(Constants.TIGL_GAME) == null && event.getOption(Constants.ABSOL_MODE) == null && event.getOption(Constants.DISCORDANT_STARS_MODE) == null && event.getOption(Constants.BASE_GAME_MODE) == null) {
+        if (event.getOption(Constants.TIGL_GAME) == null && event.getOption(Constants.ABSOL_MODE) == null && event.getOption(Constants.DISCORDANT_STARS_MODE) == null
+            && event.getOption(Constants.BASE_GAME_MODE) == null) {
             return true; //no changes were made
         }
         boolean isTIGLGame = event.getOption(Constants.TIGL_GAME, activeGame.isCompetitiveTIGLGame(), OptionMapping::getAsBoolean);
@@ -100,11 +105,13 @@ public class Setup extends GameSubcommandData {
 
     public static boolean setGameMode(GenericInteractionCreateEvent event, Game activeGame, boolean baseGameMode, boolean absolMode, boolean discordantStarsMode, boolean isTIGLGame) {
 
-        if (isTIGLGame && (baseGameMode || absolMode || discordantStarsMode || activeGame.isHomeBrewSCMode() || activeGame.isFoWMode() || activeGame.isAllianceMode() || activeGame.isCommunityMode())) {
+        if (isTIGLGame
+            && (baseGameMode || absolMode || discordantStarsMode || activeGame.isHomeBrewSCMode() || activeGame.isFoWMode() || activeGame.isAllianceMode() || activeGame.isCommunityMode())) {
             MessageHelper.sendMessageToChannel(event.getMessageChannel(), "TIGL Games can not be mixed with other game modes.");
             return false;
         } else if (isTIGLGame) {
             activeGame.setCompetitiveTIGLGame(isTIGLGame);
+            sendTIGLSetupText(activeGame);
             return true;
         }
 
@@ -122,6 +129,7 @@ public class Setup extends GameSubcommandData {
 
             for (Player player : activeGame.getPlayers().values()) {
                 player.setLeaders(new ArrayList<>());
+                if (player.getUnitByBaseType("mech") != null) player.removeOwnedUnitByID(player.getUnitByBaseType("mech").getId());
             }
 
             activeGame.setScSetID("base_game");
@@ -133,7 +141,7 @@ public class Setup extends GameSubcommandData {
             return true;
         }
         activeGame.setBaseGameMode(baseGameMode);
-        
+
         // BOTH ABSOL & DS, and/or if either was set before the other
         if (absolMode && discordantStarsMode) {
             if (!activeGame.validateAndSetAgendaDeck(event, Mapper.getDeck("agendas_absol"))) return false;
@@ -144,13 +152,14 @@ public class Setup extends GameSubcommandData {
             if (!activeGame.validateAndSetRelicDeck(event, Mapper.getDeck("relics_absol_ds"))) return false;
             if (!activeGame.validateAndSetExploreDeck(event, Mapper.getDeck("explores_DS"))) return false;
             activeGame.setTechnologyDeckID("techs_ds_absol");
-            // SOMEHOW HANDLE MECHS AND STARTING/FACTION TECHS
             activeGame.setAbsolMode(absolMode);
             activeGame.setDiscordantStarsMode(discordantStarsMode);
             activeGame.setBaseGameMode(false);
+            activeGame.swapInVariantUnits("absol");
+            activeGame.swapInVariantTechs();
             return true;
         }
-    
+
         // JUST DS
         if (discordantStarsMode && !absolMode) {
             if (!activeGame.validateAndSetAgendaDeck(event, Mapper.getDeck("agendas_pok"))) return false;
@@ -162,6 +171,7 @@ public class Setup extends GameSubcommandData {
             if (!activeGame.validateAndSetExploreDeck(event, Mapper.getDeck("explores_DS"))) return false;
             activeGame.setTechnologyDeckID("techs_ds");
             activeGame.setAbsolMode(false);
+            activeGame.swapOutVariantTechs();
         }
         activeGame.setDiscordantStarsMode(discordantStarsMode);
 
@@ -176,10 +186,11 @@ public class Setup extends GameSubcommandData {
             if (!activeGame.validateAndSetExploreDeck(event, Mapper.getDeck("explores_pok"))) return false;
             activeGame.setTechnologyDeckID("techs_absol");
             activeGame.setDiscordantStarsMode(false);
-            // SOMEHOW HANDLE MECHS AND STARTING/FACTION TECHS
+            activeGame.swapInVariantUnits("absol");
+            activeGame.swapInVariantTechs();
         }
         activeGame.setAbsolMode(absolMode);
-        
+
         // JUST PoK
         if (!absolMode && !discordantStarsMode) {
             if (!activeGame.validateAndSetAgendaDeck(event, Mapper.getDeck("agendas_pok"))) return false;
@@ -193,9 +204,20 @@ public class Setup extends GameSubcommandData {
             activeGame.setBaseGameMode(false);
             activeGame.setAbsolMode(false);
             activeGame.setDiscordantStarsMode(false);
+            activeGame.swapOutVariantTechs();
+            activeGame.swapInVariantUnits("pok");
         }
 
         return true;
     }
-}
 
+    private static void sendTIGLSetupText(Game activeGame) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("# ").append(Emojis.TIGL).append("TIGL\nThis game has been flagged as a Twilight Imperium Global League (TIGL) Game!\n");
+        sb.append("Please ensure you have all:\n");
+        sb.append("- [Signed up for TIGL](https://forms.gle/QQKWraMyd373GsLN6)\n");
+        sb.append("- Read and accepted the TIGL [Code of Conduct](https://discord.com/channels/943410040369479690/1003741148017336360/1155173892734861402)\n");
+        sb.append("For more information, please see this channel: https://discord.com/channels/943410040369479690/1003741148017336360");
+        MessageHelper.sendMessageToChannel(activeGame.getActionsChannel(), sb.toString());
+    }
+}

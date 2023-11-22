@@ -5,7 +5,7 @@ import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import ti4.helpers.ButtonHelper;
-import ti4.helpers.ButtonHelperFactionSpecific;
+import ti4.helpers.ButtonHelperAbilities;
 import ti4.helpers.Constants;
 import ti4.helpers.Emojis;
 import ti4.helpers.FoWHelper;
@@ -43,25 +43,25 @@ public class SendTG extends PlayerSubcommandData {
 		sendTG = Math.min(sendTG, tg);
 		tg -= sendTG;
 		player.setTg(tg);
-		ButtonHelperFactionSpecific.pillageCheck(player, activeGame);
+		ButtonHelperAbilities.pillageCheck(player, activeGame);
 
 		int targetTG = player_.getTg();
 		targetTG += sendTG;
 		player_.setTg(targetTG);
-		ButtonHelperFactionSpecific.pillageCheck(player_, activeGame);
+		ButtonHelperAbilities.pillageCheck(player_, activeGame);
 
-		String p1 = Helper.getPlayerRepresentation(player, activeGame);
-		String p2 = Helper.getPlayerRepresentation(player_, activeGame);
-		if(player_.getLeaderIDs().contains("hacancommander") && !player_.hasLeaderUnlocked("hacancommander")){
+		String p1 = player.getRepresentation();
+		String p2 = player_.getRepresentation();
+		if (player_.getLeaderIDs().contains("hacancommander") && !player_.hasLeaderUnlocked("hacancommander")) {
 			ButtonHelper.commanderUnlockCheck(player_, activeGame, "hacan", event);
 		}
-		String tgString = sendTG + " " + Emojis.tg + " trade goods";
-		String message =  p1 + " sent " + tgString + " to " + p2;
+		String tgString = sendTG + " " + Emojis.getTGorNomadCoinEmoji(activeGame) + " trade goods";
+		String message = p1 + " sent " + tgString + " to " + p2;
 		sendMessage(message);
 
 		if (event.getOption(Constants.CLEAR_DEBT, false, OptionMapping::getAsBoolean)) {
 			ClearDebt.clearDebt(player_, player, sendTG);
-			sendMessage(Helper.getPlayerRepresentation(player_, activeGame) + " cleared " + sendTG + " debt tokens owned by " + Helper.getPlayerRepresentation(player, activeGame));
+			sendMessage(player_.getRepresentation() + " cleared " + sendTG + " debt tokens owned by " + player.getRepresentation());
 		}
 
 		if (activeGame.isFoWMode()) {
@@ -72,6 +72,6 @@ public class SendTG extends PlayerSubcommandData {
 			// Add extra message for transaction visibility
 			FoWHelper.pingPlayersTransaction(activeGame, event, player, player_, tgString, null);
 		}
-		
+
 	}
 }

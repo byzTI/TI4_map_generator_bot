@@ -36,8 +36,8 @@ public class Undo extends GameSubcommandData{
             return;
         }
 
-        MessageHelper.sendMessageToChannel(event.getChannel(), "Undoing the last saved command:\n> " + userActiveGame.getLatestCommand());
+        
 
-        GameSaveLoadManager.undo(userActiveGame);
+        GameSaveLoadManager.undo(userActiveGame, event);
     }
 }

@@ -9,7 +9,7 @@ import ti4.commands.player.TurnEnd;
 import ti4.helpers.AgendaHelper;
 import ti4.helpers.ButtonHelper;
 import ti4.helpers.Constants;
-
+import ti4.helpers.Helper;
 import ti4.map.Game;
 import ti4.message.MessageHelper;
 
@@ -31,6 +31,7 @@ public class StartPhase extends GameSubcommandData {
             case "strategy" -> ButtonHelper.startStrategyPhase(event, activeGame);
             case "voting" -> AgendaHelper.startTheVoting(activeGame, event);
             case "finSpecial" -> ButtonHelper.fixAllianceMembers(activeGame);
+            case "finSpecialSomnoFix" -> Helper.addBotHelperPermissionsToGameChannels(event);
             case "finSpecialAbsol" -> AgendaHelper.resolveAbsolAgainstChecksNBalances(activeGame);
             case "statusScoring" -> {
                 TurnEnd.showPublicObjectivesWhenAllPassed(event, activeGame, activeGame.getMainGameChannel());
@@ -39,6 +40,7 @@ public class StartPhase extends GameSubcommandData {
             case "statusHomework" -> ButtonHelper.startStatusHomework(event, activeGame);
             case "agendaResolve" -> AgendaHelper.resolveTime(event, activeGame, null);
             case "action" -> ButtonHelper.startActionPhase(event, activeGame);
+            case "playerSetup" -> ButtonHelper.offerPlayerSetupButtons(event.getMessageChannel());
             default -> MessageHelper.sendMessageToChannel(event.getMessageChannel(), "Could not find phase: `" + phase + "`");
         }
     }

@@ -4,6 +4,7 @@ import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.events.interaction.GenericInteractionCreateEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import ti4.generator.GenerateMap;
+import ti4.helpers.ButtonHelper;
 import ti4.helpers.Constants;
 import ti4.helpers.Emojis;
 import ti4.helpers.Helper;
@@ -23,10 +24,14 @@ public class ListTurnOrder extends StatusSubcommandData {
     @Override
     public void execute(SlashCommandInteractionEvent event) {
         Game activeGame = getActiveGame();
-        turnOrder(event, activeGame);
+        turnOrder(event, activeGame, false);
     }
 
     public static void turnOrder(GenericInteractionCreateEvent event, Game activeGame) {
+        turnOrder(event, activeGame, true);
+    }
+
+    public static void turnOrder(GenericInteractionCreateEvent event, Game activeGame, boolean pingPeople) {
 
         if (activeGame.isFoWMode()) {
             MessageHelper.replyToMessage(event, "Turn order does not display when `/game setup fow_mode:YES`");
@@ -49,11 +54,11 @@ public class ListTurnOrder extends StatusSubcommandData {
             for (int sc_ : SCs) {
                 Boolean found = scPlayed.get(sc_);
                 boolean isPlayed = found != null ? found : false;
-                String scEmoji = isPlayed ? Helper.getSCBackEmojiFromInteger(sc_) : Helper.getSCEmojiFromInteger(sc_);
+                String scEmoji = isPlayed ? Emojis.getSCBackEmojiFromInteger(sc_) : Emojis.getSCEmojiFromInteger(sc_);
                 if (isPlayed) {
                     textBuilder.append("~~");
                 }
-                textBuilder.append(scEmoji).append(Helper.getSCAsMention(event.getGuild(), sc_, activeGame));
+                textBuilder.append(scEmoji).append(Helper.getSCAsMention(sc_, activeGame));
                 if (isPlayed) {
                     textBuilder.append("~~");
                 }
@@ -62,7 +67,12 @@ public class ListTurnOrder extends StatusSubcommandData {
             if (passed) {
                 text += "~~";
             }
-            text += Helper.getPlayerRepresentation(player, activeGame);
+            if(pingPeople || activeGame.isFoWMode()){
+                text += player.getRepresentation();
+            }else{
+                text += ButtonHelper.getIdent(player) + " "+player.getUserName();
+            }
+            
             if (passed) {
                 text += "~~ - PASSED";
             }

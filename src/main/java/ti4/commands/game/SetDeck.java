@@ -27,6 +27,7 @@ public class SetDeck extends GameSubcommandData {
         addDefaultOption(Constants.STAGE_2_PUBLIC_DECK, "Stage 2 public");
         addDefaultOption(Constants.RELIC_DECK, "Relic");
         addDefaultOption(Constants.AGENDA_DECK, "Agenda");
+        addDefaultOption(Constants.EVENT_DECK, "Event");
         addDefaultOption(Constants.EXPLORATION_DECKS, "Exploration");
         addDefaultOption(Constants.STRATEGY_CARD_SET, "Strategy card");
         addDefaultOption(Constants.TECHNOLOGY_DECK, "Technology");
@@ -55,6 +56,10 @@ public class SetDeck extends GameSubcommandData {
                     } else {
                         MessageHelper.sendMessageToChannel(event.getChannel(), "Something went wrong and the deck ***" + value + "*** could not be set, please see error above or try executing the command again (without copy/pasting).");
                     }
+                }
+                if (deckType.equals(Constants.TECHNOLOGY_DECK)) {
+                    activeGame.swapOutVariantTechs();
+                    activeGame.swapInVariantTechs();
                 }
             }
         });
@@ -95,6 +100,9 @@ public class SetDeck extends GameSubcommandData {
                 }
                 case Constants.AGENDA_DECK -> {
                     return activeGame.validateAndSetAgendaDeck(event, deckModel);
+                }
+                case Constants.EVENT_DECK -> {
+                    return activeGame.validateAndSetEventDeck(event, deckModel);
                 }
                 case Constants.EXPLORATION_DECKS -> {
                     activeGame.setExploreDeck(new ArrayList<>(deckModel.getNewShuffledDeck()));

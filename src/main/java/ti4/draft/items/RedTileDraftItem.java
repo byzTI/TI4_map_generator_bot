@@ -39,39 +39,23 @@ public class RedTileDraftItem extends DraftItem {
         sb.append(") ");
     }
 
-    private String planetTypeEmoji(PlanetTypeModel.PlanetType type){
-        switch (type) {
-
-            case CULTURAL -> {
-                return Emojis.Cultural;
-            }
-            case HAZARDOUS -> {
-                return Emojis.Hazardous;
-            }
-            case INDUSTRIAL -> {
-                return Emojis.Industrial;
-            }
-        }
-        return Emojis.GoodDog;
+    private String planetTypeEmoji(PlanetTypeModel.PlanetType type) {
+        return switch (type) {
+            case CULTURAL -> Emojis.Cultural;
+            case HAZARDOUS -> Emojis.Hazardous;
+            case INDUSTRIAL -> Emojis.Industrial;
+            default -> Emojis.GoodDog;
+        };
     }
 
-    private String techSpecEmoji(TechSpecialtyModel.TechSpecialty type){
-        switch (type) {
-
-            case BIOTIC -> {
-                return Emojis.BioticTech;
-            }
-            case CYBERNETIC -> {
-                return Emojis.CyberneticTech;
-            }
-            case PROPULSION -> {
-                return Emojis.PropulsionTech;
-            }
-            case WARFARE -> {
-                return Emojis.WarfareTech;
-            }
-        }
-        return Emojis.GoodDog;
+    private String techSpecEmoji(TechSpecialtyModel.TechSpecialty type) {
+        return switch (type) {
+            case BIOTIC -> Emojis.BioticTech;
+            case CYBERNETIC -> Emojis.CyberneticTech;
+            case PROPULSION -> Emojis.PropulsionTech;
+            case WARFARE -> Emojis.WarfareTech;
+            default -> Emojis.GoodDog;
+        };
     }
 
     @Override

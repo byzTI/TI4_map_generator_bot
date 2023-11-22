@@ -23,6 +23,7 @@ public class LeaderModel implements ModelInterface, EmbeddableModel {
     private String type;
     private String faction;
     private String name;
+    private String shortName;
     private String title;
     private String abilityName;
     private String abilityWindow;
@@ -54,16 +55,20 @@ public class LeaderModel implements ModelInterface, EmbeddableModel {
         return getID();
     }
 
+    public String getShortName() {
+        return Optional.ofNullable(shortName).orElse(getName());
+    }
+
     public String getLeaderEmoji() {
-        return Optional.ofNullable(getEmoji()).orElse(Helper.getEmojiFromDiscord(getID()));
+        return Optional.ofNullable(getEmoji()).orElse(Emojis.getEmojiFromDiscord(getID()));
     }
 
-    public String getAbilityName() {
-        return Optional.ofNullable(abilityName).orElse("");
+    public Optional<String> getAbilityName() {
+        return Optional.ofNullable(abilityName);
     }
 
-    public String getFlavourText() {
-        return Optional.ofNullable(flavourText).orElse("");
+    public Optional<String> getFlavourText() {
+        return Optional.ofNullable(flavourText);
     }
 
     public String getRepresentation(boolean includeTitle, boolean includeAbility, boolean includeUnlockCondition) {
@@ -79,7 +84,7 @@ public class LeaderModel implements ModelInterface, EmbeddableModel {
     }
 
     public MessageEmbed getRepresentationEmbed() {
-        return getRepresentationEmbed(false, false, false, false);
+        return getRepresentationEmbed(false, true, false, false);
     }
 
     public MessageEmbed getRepresentationEmbed(boolean includeID, boolean includeFactionType, boolean showUnlockConditions, boolean includeFlavourText) {
@@ -101,11 +106,11 @@ public class LeaderModel implements ModelInterface, EmbeddableModel {
         //DESCRIPTION
         StringBuilder description = new StringBuilder();
         if (includeFactionType) {
-            FactionModel faction = Mapper.getFactionSetup(getFaction());
+            FactionModel faction = Mapper.getFaction(getFaction());
             if (faction != null) {
-                description.append(Helper.getFactionIconFromDiscord(faction.getAlias())).append(" ").append(faction.getFactionName()).append(" ");
+                description.append(Emojis.getFactionIconFromDiscord(faction.getAlias())).append(" ").append(faction.getFactionName()).append(" ");
             } else {
-                description.append(Helper.getFactionIconFromDiscord(getFaction())).append(" ").append(getFaction());
+                description.append(Emojis.getFactionIconFromDiscord(getFaction())).append(" ").append(getFaction());
             }
             description.append(" ").append(StringUtils.capitalize(getType()));
         }
@@ -113,8 +118,8 @@ public class LeaderModel implements ModelInterface, EmbeddableModel {
         eb.setDescription(description.toString());
 
         //FIELDS
-        eb.addField(Optional.ofNullable(getAbilityName()).orElse(" "), "**" + getAbilityWindow() + "**\n> " + getAbilityText(), false);
-        if (includeFlavourText && !StringUtils.isBlank(getFlavourText())) eb.addField(" ", "*" + getFlavourText() + "*", false);
+        eb.addField(getAbilityName().orElse(" "), "**" + getAbilityWindow() + "**\n> " + getAbilityText(), false);
+        if (includeFlavourText && getFlavourText().isPresent()) eb.addField(" ", "*" + getFlavourText() + "*", false);
 
         //FOOTER
         StringBuilder footer = new StringBuilder();
@@ -129,7 +134,7 @@ public class LeaderModel implements ModelInterface, EmbeddableModel {
         return switch (getSource()) {
             case "ds" -> Emojis.DiscordantStars;
             case "cryppter" -> "";
-            case "baldrick" -> "";
+            case "baldrick" -> Emojis.IgnisAurora;
             default -> "";
         };
     }
@@ -140,7 +145,7 @@ public class LeaderModel implements ModelInterface, EmbeddableModel {
         return getID().toLowerCase().contains(searchString)
             || getName().toLowerCase().contains(searchString) 
             || getTitle().toLowerCase().contains(searchString) 
-            || getAbilityName().toLowerCase().contains(searchString) 
+            || getAbilityName().orElse("").toLowerCase().contains(searchString) 
             || getAbilityWindow().toLowerCase().contains(searchString) 
             || getAbilityText().toLowerCase().contains(searchString)
             || getUnlockCondition().toLowerCase().contains(searchString)

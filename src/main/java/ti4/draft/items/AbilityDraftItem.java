@@ -4,7 +4,7 @@ import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import ti4.draft.DraftItem;
 import ti4.generator.Mapper;
-import ti4.helpers.Helper;
+import ti4.model.AbilityModel;
 
 public class AbilityDraftItem extends DraftItem {
     public AbilityDraftItem(String itemId) {
@@ -40,7 +40,7 @@ public class AbilityDraftItem extends DraftItem {
 
     @Override
     public String getItemEmoji() {
-        return Helper.getFactionIconFromDiscord(getAbilityStringSplit()[1]);
+        return getAbilityModel().getFactionEmoji();
     }
 
     // #Columns: ID = Ability Name | Faction | Raw Modifier | AbilityWindow | AbilityText

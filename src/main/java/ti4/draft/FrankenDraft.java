@@ -5,6 +5,7 @@ import ti4.commands.milty.MiltyDraftTile;
 import ti4.commands.milty.StartMilty;
 import ti4.generator.Mapper;
 import ti4.map.Game;
+import ti4.message.BotLogger;
 import ti4.model.DraftErrataModel;
 import ti4.model.FactionModel;
 
@@ -38,7 +39,7 @@ public class FrankenDraft extends BagDraft {
     }
 
     private static void filterUndraftablesAndShuffle(List<DraftItem> items, DraftItem.Category listCategory) {
-        HashMap<String, DraftErrataModel> frankenErrata = Mapper.getFrankenErrata();
+        Map<String, DraftErrataModel> frankenErrata = Mapper.getFrankenErrata();
         items.removeIf((DraftItem item) -> frankenErrata.containsKey(item.getAlias()) && frankenErrata.get(item.getAlias()).Undraftable);
         items.addAll(DraftItem.GetAlwaysIncludeItems(listCategory));
         Collections.shuffle(items);
@@ -53,7 +54,7 @@ public class FrankenDraft extends BagDraft {
     };
 
     private static final String[] excludedFactions = {"lazax", "admins", "franken", "keleresm", "keleresx"};
-    private static List<String> getAllFactionIds(Game activeGame) {
+    public static List<String> getAllFactionIds(Game activeGame) {
         Map<String, String> factionSet = Mapper.getFactionRepresentations();
         List<String> factionIds = new ArrayList<String>();
         factionSet.forEach((String id, String name) -> {
@@ -103,10 +104,15 @@ public class FrankenDraft extends BagDraft {
         List<String> allFactions = getAllFactionIds(activeGame);
         List<DraftItem> allAbilityItems = new ArrayList<>();
         for (var factionId : allFactions) {
-            FactionModel faction  = Mapper.getFactionSetup(factionId);
-            for (var ability : faction.getAbilities()) {
-                allAbilityItems.add(DraftItem.Generate(DraftItem.Category.ABILITY,ability));
+            FactionModel faction  = Mapper.getFaction(factionId);
+            if(faction != null){
+                for (var ability : faction.getAbilities()) {
+                    allAbilityItems.add(DraftItem.Generate(DraftItem.Category.ABILITY,ability));
+                }
+            }else{
+                BotLogger.log("Franken faction returned null on this id"+factionId);
             }
+            
         }
 
         filterUndraftablesAndShuffle(allAbilityItems, DraftItem.Category.ABILITY);
@@ -117,7 +123,7 @@ public class FrankenDraft extends BagDraft {
         List<String> allFactions = getAllFactionIds(activeGame);
         List<DraftItem> allDraftableTechs = new ArrayList<>();
         for (var factionId : allFactions) {
-            FactionModel faction = Mapper.getFactionSetup(factionId);
+            FactionModel faction = Mapper.getFaction(factionId);
             for(var tech : faction.getFactionTech()) {
                 allDraftableTechs.add(DraftItem.Generate(DraftItem.Category.TECH, tech));
             }

@@ -91,7 +91,7 @@ public class Info extends GameSubcommandData {
             sb.append("### Players: ").append(NEW_LINE);
             int index = 1;
             for (Player player : activeGame.getRealPlayers()) {
-                sb.append("> `").append(index).append(".` ").append(player.getFactionEmoji()).append(player.getUserName()).append(Helper.getColourAsMention(event.getGuild(), player.getColor()));
+                sb.append("> `").append(index).append(".` ").append(player.getFactionEmoji()).append(player.getUserName()).append(Emojis.getColourEmojis(player.getColor()));
                 if (player.getRoleForCommunity() != null) sb.append(" - Community Role: ").append(player.getRoleForCommunity().getName());
                 sb.append(NEW_LINE);
                 index++;
@@ -117,6 +117,7 @@ public class Info extends GameSubcommandData {
         sb.append("Public Objectives: `").append(activeGame.getRevealedPublicObjectives()).append("`").append(NEW_LINE);
         sb.append("Laws: `").append(activeGame.getLaws()).append("`").append(NEW_LINE);
         sb.append("Laws Info: `").append(activeGame.getLawsInfo()).append("`").append(NEW_LINE);
+        sb.append("Events: `").append(activeGame.getEventsInEffect()).append("`").append(NEW_LINE);
         sb.append("Migrations Run: `").append(activeGame.getRunMigrations()).append("`").append(NEW_LINE);
         sb.append("Buttons pressed: `").append(activeGame.getButtonPressCount()).append("`").append(NEW_LINE);
 
