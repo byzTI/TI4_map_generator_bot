@@ -40,6 +40,7 @@ public class ServerLimitStats extends BothelperSubcommandData {
         long cardsInfoThreadCount = threadChannels.stream().filter(t -> t.getName().startsWith(Constants.CARDS_INFO_THREAD_PREFIX)).count();
         long botThreadCount = threadChannels.stream().filter(t -> t.getName().contains("-bot-map-updates")).count();
         long roundThreadCount = threadChannels.stream().filter(t -> t.getName().contains("-round-")).count();
+        long draftBagThreadCount = threadChannels.stream().filter(t -> t.getName().startsWith(Constants.BAG_INFO_THREAD_PREFIX)).count();
         long privateThreadCount = threadChannels.stream().filter(t -> !t.isPublic()).count();
         long publicThreadCount = threadChannels.stream().filter(ThreadChannel::isPublic).count();
 
@@ -61,6 +62,7 @@ public class ServerLimitStats extends BothelperSubcommandData {
           " - " + "   " + threadArchivedCount + " - loaded archived threads" + "\n" +
           "- " + privateThreadCount + "   " + getPercentage(privateThreadCount, threadCount) + "  private threads" + "\n" +
           " - " + cardsInfoThreadCount + "   " + getPercentage(cardsInfoThreadCount, threadCount) + "  'Cards Info' threads (/cards_info)" + "\n" +
+          " - " + draftBagThreadCount + "   " + getPercentage(draftBagThreadCount, threadCount) + "  'Draft Bag' threads" + "\n" +
           "- " + publicThreadCount + "   " + getPercentage(publicThreadCount, threadCount) + "  public threads" + "\n" +
           " - " + botThreadCount + "   " + getPercentage(botThreadCount, threadCount) + "  '-bot-map-updates' threads" + "\n" +
           " - " + roundThreadCount + "   " + getPercentage(roundThreadCount, threadCount) + "  '-round-' threads (/sc play and combat)" + "\n";

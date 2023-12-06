@@ -37,9 +37,22 @@ public class FrankenDraftHelper {
                 case 2 -> ButtonStyle.SECONDARY;
                 default -> ButtonStyle.SUCCESS;
             };
-            buttons.add(Button.of(style, ActionName + item.getAlias(), item.getItemName()).withEmoji(Emoji.fromFormatted(item.getItemEmoji())));
+            try {
+                buttons.add(Button.of(style, ActionName + item.getAlias(), item.getItemName()).withEmoji(Emoji.fromFormatted(item.getItemEmoji())));
+            }
+            catch (Exception e)
+            {
+
+            }
         }
         return buttons;
+    }
+
+    public static void resolveButtonPress(Game activeGame, Player player, ButtonInteractionEvent event, String buttonID) {
+        String[] args = buttonID.split(";")[1].split("_");
+        activeGame.getActiveBagDraft().getCurrentPhase().ProcessCommand(player, args[0], Arrays.copyOfRange(args, 1, args.length));
+        GameSaveLoadManager.saveMap(activeGame);
+        event.getMessage().delete().queue();
     }
 
     public static void resolveFrankenDraftAction(Game activeGame, Player player, ButtonInteractionEvent event, String buttonID) {
@@ -49,14 +62,14 @@ public class FrankenDraftHelper {
         if (!action.contains(":")) {
             switch (action) {
                 case "reset_queue":
-                    player.getCurrentDraftBag().Contents.addAll(player.getDraftQueue().Contents);
+                    player.getCurrentDraftBag().Contents.addAll(player.getDraftQueue());
                     player.resetDraftQueue();
                     showPlayerBag(activeGame, player);
 
                     GameSaveLoadManager.saveMap(activeGame);
                     return;
                 case "confirm_draft":
-                    player.getDraftHand().Contents.addAll(player.getDraftQueue().Contents);
+                    player.getDraftHand().Contents.addAll(player.getDraftQueue());
                     player.resetDraftQueue();
                     draft.setPlayerReadyToPass(player, true);
 
@@ -117,7 +130,10 @@ public class FrankenDraftHelper {
     }
 
     public static void showPlayerBag(Game activeGame, Player player) {
-        ThreadChannel bagChannel = activeGame.getActiveBagDraft().regenerateBagChannel(player);
+        ThreadChannel bagChannel = player.getDraftHand().getDiscordThread();
+        if (bagChannel == null) {
+            bagChannel = player.getDraftHand().createDiscordThread();
+        }
 
         List<DraftItem> draftables = new ArrayList<>(player.getCurrentDraftBag().Contents);
         List<DraftItem> undraftables = new ArrayList<>(player.getCurrentDraftBag().Contents);
@@ -125,10 +141,29 @@ public class FrankenDraftHelper {
         draftables.removeIf(draftItem -> !draftItem.isDraftable(player));
         undraftables.removeIf(draftItem -> draftItem.isDraftable(player));
 
-        String bagString = getCurrentBagRepresentation(draftables, undraftables);
-        MessageHelper.sendMessageToChannel(bagChannel, bagString);
+        MessageHelper.sendMessageToChannel(bagChannel, "# Draftable");
+        for (DraftItem item : draftables) {
+            try {
+                bagChannel.sendMessageEmbeds(item.getItemCard()).queue();
+            }
+            catch (Exception e) {
+                bagChannel.sendMessage("Error Building Embed for " + item.getAlias());
+            }
+        }
 
-        int draftQueueCount = player.getDraftQueue().Contents.size();
+        MessageHelper.sendMessageToChannel(bagChannel, "# Undraftable");
+
+        for (DraftItem item : undraftables) {
+            try {
+                bagChannel.sendMessageEmbeds(item.getItemCard()).queue();
+            }
+            catch (Exception e) {
+                bagChannel.sendMessage("Error Building Embed for " + item.getAlias());
+            }
+        }
+
+
+        int draftQueueCount = player.getDraftQueue().size();
         boolean isFirstDraft = player.getDraftHand().Contents.isEmpty();
         boolean isQueueFull = draftQueueCount >= 2 && !isFirstDraft || draftQueueCount >= 3;
         if (draftables.isEmpty()) {
@@ -202,8 +237,10 @@ public class FrankenDraftHelper {
     }
 
     public static void clearPlayerHands(Game activeGame) {
-        for (Player player : activeGame.getRealPlayers()) {
-            player.setDraftHand(new DraftBag());
+        for(Player player: activeGame.getRealPlayers()) {
+            if (player.getDraftHand() != null) {
+                player.getDraftHand().Contents.clear();
+            }
         }
     }
 
@@ -213,6 +250,7 @@ public class FrankenDraftHelper {
         List<Player> realPlayers = activeGame.getRealPlayers();
         for (int i = 0; i < realPlayers.size(); i++) {
             Player player = realPlayers.get(i);
+            player.setDraftHand(new DraftBag("Hand", player.getUserName(), activeGame.getName()));
             activeGame.getActiveBagDraft().giveBagToPlayer(bags.get(i), player);
             player.resetDraftQueue();
 

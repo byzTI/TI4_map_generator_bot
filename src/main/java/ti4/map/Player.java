@@ -103,7 +103,7 @@ public class Player {
     private List<String> factionTechs = new ArrayList<>();
     private DraftBag draftHand = new DraftBag();
     private DraftBag currentDraftBag = new DraftBag();
-    private DraftBag draftItemQueue = new DraftBag();
+    private List<DraftItem> draftItemQueue = new ArrayList<>();
     private List<String> exhaustedTechs = new ArrayList<>();
     private List<String> planets = new ArrayList<>();
     private List<String> exhaustedPlanets = new ArrayList<>();
@@ -290,7 +290,7 @@ public class Player {
     }
 
     @JsonIgnore
-    public ThreadChannel getCardsInfoThread() {
+    public ThreadChannel  getCardsInfoThread() {
         Game activeGame = getGame();
         TextChannel actionsChannel = activeGame.getMainGameChannel();
         if (activeGame.isFoWMode() || activeGame.isCommunityMode())
@@ -1536,7 +1536,7 @@ public class Player {
         currentDraftBag = bag;
     }
 
-    public DraftBag getDraftQueue() {
+    public List<DraftItem> getDraftQueue() {
         return draftItemQueue;
     }
 
@@ -1572,20 +1572,13 @@ public class Player {
         this.planets = planets;
     }
 
-    public void loadDraftHand(List<String> saveString) {
-        DraftBag newBag = new DraftBag();
-        for (String item : saveString) {
-            newBag.Contents.add(DraftItem.GenerateFromAlias(item));
-        }
-        this.draftHand = newBag;
+
+    public void loadDraftHand(String saveString) {
+        this.draftHand = DraftBag.fromStoreString(saveString, this.gameID);
     }
 
-    public void loadCurrentDraftBag(List<String> saveString) {
-        DraftBag newBag = new DraftBag();
-        for (String item : saveString) {
-            newBag.Contents.add(DraftItem.GenerateFromAlias(item));
-        }
-        this.currentDraftBag = newBag;
+    public void loadCurrentDraftBag(String saveString) {
+        this.currentDraftBag = DraftBag.fromStoreString(saveString, this.gameID);
     }
 
     public void loadItemsToDraft(List<String> saveString) {
@@ -1593,15 +1586,15 @@ public class Player {
         for (String item : saveString) {
             items.add(DraftItem.GenerateFromAlias(item));
         }
-        this.draftItemQueue.Contents = items;
+        this.draftItemQueue = items;
     }
 
     public void queueDraftItem(DraftItem item) {
-        this.draftItemQueue.Contents.add(item);
+        this.draftItemQueue.add(item);
     }
 
     public void resetDraftQueue() {
-        this.draftItemQueue.Contents.clear();
+        this.draftItemQueue.clear();
     }
 
     @JsonIgnore

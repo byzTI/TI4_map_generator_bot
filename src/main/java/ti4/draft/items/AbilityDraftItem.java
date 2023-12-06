@@ -13,29 +13,12 @@ public class AbilityDraftItem extends DraftItem {
 
     @Override
     public String getItemName() {
-        String[] split = getAbilityStringSplit();
-        return split[0];
+        return getAbilityModel().getName();
     }
 
     @Override
     public MessageEmbed getItemCard() {
-        EmbedBuilder eb = new EmbedBuilder();
-        eb.setTitle(getItemEmoji() + getItemName());
-
-
-        String[] split = getAbilityStringSplit();
-        if (!split[2].equals(" ")) {
-            eb.addField("Additional Text:", split[2], true);
-        }
-        if (!split[3].equals(" ")) {
-            eb.addField("Window:", split[3], true);
-        }
-        if (!split[4].equals(" ")) {
-            eb.addField("Ability:", split[4], true);
-        }
-
-
-        return eb.build();
+        return getAbilityModel().getRepresentationEmbed(true);
     }
 
     @Override
@@ -43,8 +26,7 @@ public class AbilityDraftItem extends DraftItem {
         return getAbilityModel().getFactionEmoji();
     }
 
-    // #Columns: ID = Ability Name | Faction | Raw Modifier | AbilityWindow | AbilityText
-    private String[] getAbilityStringSplit() {
-        return Mapper.getAbility(ItemId).split("\\|");
+    private AbilityModel getAbilityModel() {
+        return Mapper.getAbility(ItemId);
     }
 }

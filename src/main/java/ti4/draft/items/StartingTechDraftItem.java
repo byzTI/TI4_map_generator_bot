@@ -29,10 +29,6 @@ public class StartingTechDraftItem extends DraftItem {
     public MessageEmbed getItemCard() {
         EmbedBuilder eb = new EmbedBuilder();
 
-        Emoji emoji = Emoji.fromFormatted(Helper.getFactionIconFromDiscord(getFaction().getAlias()));
-        CustomEmoji customEmoji = (CustomEmoji) emoji;
-        eb.setThumbnail(customEmoji.getImageUrl());
-
         eb.setTitle(getItemEmoji() + getItemName());
         eb.addField("Starting tech:", getTechString(), true);
         return eb.build();

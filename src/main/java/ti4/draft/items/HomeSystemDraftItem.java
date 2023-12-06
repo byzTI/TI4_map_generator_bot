@@ -5,7 +5,7 @@ import net.dv8tion.jda.api.entities.MessageEmbed;
 import ti4.draft.DraftItem;
 import ti4.generator.Mapper;
 import ti4.generator.TileHelper;
-import ti4.helpers.Helper;
+import ti4.helpers.Emojis;
 import ti4.model.FactionModel;
 import ti4.model.PlanetModel;
 import ti4.model.TileModel;
@@ -18,7 +18,7 @@ public class HomeSystemDraftItem extends DraftItem {
     @Override
     public MessageEmbed getItemCard() {
         EmbedBuilder eb = new EmbedBuilder();
-        FactionModel faction = Mapper.getFactionSetup(ItemId);
+        FactionModel faction = Mapper.getFaction(ItemId);
         TileModel tile = TileHelper.getTile(faction.getHomeSystem());
 
         eb.setTitle(getItemEmoji() + getItemName());

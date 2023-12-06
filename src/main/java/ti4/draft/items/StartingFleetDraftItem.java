@@ -33,7 +33,7 @@ public class StartingFleetDraftItem extends DraftItem {
         EmbedBuilder eb = new EmbedBuilder();
         String[] fleetDesc = getFaction().getStartingFleet().split(",");
 
-        Emoji emoji = Emoji.fromFormatted(Helper.getFactionIconFromDiscord(getFaction().getAlias()));
+        Emoji emoji = Emoji.fromFormatted(Emojis.getFactionIconFromDiscord(getFaction().getAlias()));
         CustomEmoji customEmoji = (CustomEmoji) emoji;
         eb.setThumbnail(customEmoji.getImageUrl());
 

@@ -3774,8 +3774,24 @@ public class ButtonHelper {
     public static List<Button> getFactionSetupButtons(Game activeGame, String buttonID){
         String userId = buttonID.split("_")[1];
         List<Button> buttons = new ArrayList<>();
-        List<String> allFactions = FrankenDraft.getAllFactionIds(activeGame);
+        List<String> allFactions = Mapper.getFactionIDs();
+        String[] excludedFactions = {"lazax", "admins", "franken", "keleresm", "keleresx"};
         for (var factionId : allFactions) {
+            if (factionId.contains("(DS)") && !activeGame.isDiscordantStarsMode()) {
+                continue;
+            }
+
+            boolean isExcluded = false;
+            for (String excludedFaction : excludedFactions) {
+                if (factionId.contains(excludedFaction)) {
+                    isExcluded = true;
+                    break;
+                }
+            }
+            if (isExcluded){
+                continue;
+            }
+
             FactionModel faction  = Mapper.getFaction(factionId);
             if(faction != null && activeGame.getPlayerFromColorOrFaction(factionId) == null){
                 String name = faction.getFactionName();

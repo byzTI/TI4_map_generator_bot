@@ -1,5 +1,6 @@
 package ti4.draft;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import ti4.draft.items.*;
 import ti4.generator.Mapper;
@@ -124,11 +125,11 @@ public abstract class DraftItem implements ModelInterface {
         ItemCategory = category;
         ItemId = itemId;
     }
-
+    @JsonIgnore
     public abstract String getItemName();
-
+    @JsonIgnore
     public abstract MessageEmbed getItemCard();
-
+    @JsonIgnore
     public abstract String getItemEmoji();
 
     public boolean isDraftable(Player player) {
@@ -138,7 +139,10 @@ public abstract class DraftItem implements ModelInterface {
         if (isAtHandLimit) {
             return false;
         }
-        boolean hasDraftedThisBag = player.getDraftQueue().getCategoryCount(ItemCategory) > 0;
+        boolean hasDraftedThisBag = false;
+        if (player.getDraftQueue() != null) {
+            hasDraftedThisBag = player.getDraftQueue().stream().anyMatch(item -> item.ItemCategory == ItemCategory);
+        }
 
         boolean allOtherCategoriesAtHandLimit = true;
         for (Category cat : Category.values()) {
