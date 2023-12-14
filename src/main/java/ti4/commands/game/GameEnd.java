@@ -1,13 +1,9 @@
 package ti4.commands.game;
 
 import java.util.Date;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
-
-import org.apache.commons.lang3.StringUtils;
-
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
@@ -21,6 +17,7 @@ import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.utils.FileUpload;
+import org.apache.commons.lang3.StringUtils;
 import ti4.AsyncTI4DiscordBot;
 import ti4.generator.GenerateMap;
 import ti4.helpers.Constants;
@@ -100,11 +97,9 @@ public class GameEnd extends GameSubcommandData {
         activeGame.setAutoPingSpacer(0);
 
         // SEND THE MAP IMAGE
-        FileUpload fileUpload = GenerateMap.getInstance().saveImage(activeGame, DisplayType.all, event);
+        FileUpload fileUpload = new GenerateMap().saveImage(activeGame, DisplayType.all, event);
         MessageHelper.replyToMessage(event, fileUpload);
 
-        
-        
         StringBuilder message = new StringBuilder();
         for (String playerID : activeGame.getRealPlayerIDs()) { //GET ALL PLAYER PINGS
             Member member = event.getGuild().getMemberById(playerID);
@@ -126,7 +121,8 @@ public class GameEnd extends GameSubcommandData {
                 // INFORM PLAYERS
                 pbdChroniclesChannel.sendMessage(gameEndText).queue(m -> { //POST INITIAL MESSAGE
                     m.editMessageAttachments(fileUpload).queueAfter(50, TimeUnit.MILLISECONDS); //ADD MAP FILE TO MESSAGE
-                    m.createThreadChannel(gameName).queueAfter(500, TimeUnit.MILLISECONDS, t -> t.sendMessage(message.toString()).queue(null, (error) -> BotLogger.log("Failure to create Game End thread for **" + activeGame.getName() + "** in PBD Chronicles:\n> " + error.getMessage()))); //CREATE THREAD AND POST FOLLOW UP
+                    m.createThreadChannel(gameName).queueAfter(500, TimeUnit.MILLISECONDS, t -> t.sendMessage(message.toString()).queue(null,
+                        (error) -> BotLogger.log("Failure to create Game End thread for **" + activeGame.getName() + "** in PBD Chronicles:\n> " + error.getMessage()))); //CREATE THREAD AND POST FOLLOW UP
                     MessageHelper.sendMessageToChannel(event.getMessageChannel(), "Game summary has been posted in the " + channelMention + " channel: " + m.getJumpUrl());
                 });
             }
@@ -155,7 +151,7 @@ public class GameEnd extends GameSubcommandData {
             if (inLimboCategory.getChannels().size() > 48) { //HANDLE FULL IN-LIMBO
                 cleanUpInLimboCategory(event.getGuild(), 10);
             }
-            
+
             String moveMessage = "Channel has been moved to Category **" + inLimboCategory.getName() + "** and will be automatically cleaned up shortly.";
             if (tableTalkChannel != null) { //MOVE TABLETALK CHANNEL
                 tableTalkChannel.getManager().setParent(inLimboCategory).queue();
@@ -181,10 +177,6 @@ public class GameEnd extends GameSubcommandData {
 
         // POST GAME END TO BOTHELPER LOUNGE GAME STARTS & ENDS THREAD
         List<ThreadChannel> threadChannels = bothelperLoungeChannel.getThreadChannels();
-        if (threadChannels == null) {
-            BotLogger.log(event, "`#bothelper-lounge` did not have any threads open - `/game end` cannot continue");
-            return;
-        }
         String threadName = "game-starts-and-ends";
         for (ThreadChannel threadChannel_ : threadChannels) {
             if (threadChannel_.getName().equals(threadName)) {
@@ -207,7 +199,7 @@ public class GameEnd extends GameSubcommandData {
             int playerVP = player.getTotalVictoryPoints();
             sb.append("> `").append(index).append(".` ");
             sb.append(player.getFactionEmoji());
-            sb.append(Emojis.getColourEmojis(player.getColor())).append(" ");
+            sb.append(Emojis.getColorEmojiWithName(player.getColor())).append(" ");
             if (user.isPresent()) {
                 sb.append(user.get().getAsMention());
             } else {

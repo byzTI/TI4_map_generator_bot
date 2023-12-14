@@ -15,6 +15,8 @@ import ti4.generator.PositionMapper;
 import ti4.generator.TileHelper;
 import ti4.helpers.AliasHandler;
 import ti4.helpers.Storage;
+import ti4.message.BotLogger;
+import ti4.model.Source.ComponentSource;
 
 public class AbilityModelTest {
 
@@ -30,8 +32,15 @@ public class AbilityModelTest {
     @Test
     public void testAbilities() {
         for (AbilityModel model : Mapper.getAbilities().values()) {
-            assertTrue(model.isValid());
+            assertTrue(model.isValid(), model.getAlias() + ": invalid");
+            assertTrue(validateFaction(model), model.getAlias() + ": invalid FactionID");
         }
+    }
+
+    private boolean validateFaction(AbilityModel model) {
+        if (Mapper.isValidFaction(model.getFaction()) || "keleres".equals(model.getFaction())) return true;
+        BotLogger.log("Ability **" + model.getAlias() + "** failed validation due to invalid FactionID: `" + model.getFaction() + "`");
+        return false;
     }
 
     @Test
@@ -68,7 +77,8 @@ public class AbilityModelTest {
     @Test
     public void testSource() {
         AbilityModel abilityModel = Mapper.getAbility("mitosis");
-        String source = "testSource";
+        ComponentSource source = ComponentSource.base;
+        abilityModel.setSource(source);
         assertEquals(source, abilityModel.getSource());
     }
 
@@ -88,7 +98,7 @@ public class AbilityModelTest {
         abilityModel.setId("testId");
         abilityModel.setName("testName");
         abilityModel.setFaction("testFaction");
-        abilityModel.setSource("testSource");
+        abilityModel.setSource(ComponentSource.testsource);
         assertTrue(abilityModel.isValid());
     }
 

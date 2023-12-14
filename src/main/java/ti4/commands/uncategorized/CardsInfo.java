@@ -81,7 +81,7 @@ public class CardsInfo implements Command {
         } else {
             activeGame = gameManager.getUserActiveGame(userID);
             String color = Helper.getColor(activeGame, event);
-            if (!Mapper.isColorValid(color)) {
+            if (!Mapper.isValidColor(color)) {
                 MessageHelper.replyToMessage(event, "Color/Faction not valid");
                 return;
             }
@@ -100,7 +100,7 @@ public class CardsInfo implements Command {
 
     public static void sendCardsInfo(Game activeGame, Player player, SlashCommandInteractionEvent event) {
         if (player == null) return;
-        String headerText = Helper.getPlayerRepresentation(player, activeGame, activeGame.getGuild(), true) + " used `" + event.getCommandString() + "`";
+        String headerText = player.getRepresentation(true, true) + " used `" + event.getCommandString() + "`";
         MessageHelper.sendMessageToPlayerCardsInfoThread(player, activeGame, headerText);
         sendCardsInfo(activeGame, player);
     }

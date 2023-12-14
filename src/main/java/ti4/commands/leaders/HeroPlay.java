@@ -2,7 +2,6 @@ package ti4.commands.leaders;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import net.dv8tion.jda.api.events.interaction.GenericInteractionCreateEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
@@ -58,12 +57,12 @@ public class HeroPlay extends LeaderAction {
     @Override
     void action(SlashCommandInteractionEvent event, String leaderID, Game activeGame, Player player) {
         Leader playerLeader = player.unsafeGetLeader(leaderID);
-        
+
         if (playerLeader == null) {
             sendMessage("Leader '" + leaderID + "'' could not be found. The leader might have been purged earlier.");
             return;
         }
-        
+
         if (playerLeader.isLocked()) {
             sendMessage("Leader is locked, use command to unlock `/leaders unlock leader:" + leaderID + "`");
             sendMessage(Helper.getLeaderLockedRepresentation(playerLeader));
@@ -97,12 +96,15 @@ public class HeroPlay extends LeaderAction {
             sb.append("\nLeader will be PURGED after status cleanup");
             MessageHelper.sendMessageToChannel(ButtonHelper.getCorrectChannel(player, activeGame), sb.toString());
         } else {
-            boolean purged = player.removeLeader(playerLeader);
-
+            boolean purged = true;
+            if(!"mykomentorihero".equals(playerLeader.getId())){
+                purged = player.removeLeader(playerLeader);
+            }
+            
 
             if (purged) {
                 MessageHelper.sendMessageToChannel(ButtonHelper.getCorrectChannel(player, activeGame), "Leader " + playerLeader.getId() + " has been purged");
-                ButtonHelperHeroes.checkForMykoHero(activeGame, playerLeader.getId());
+                ButtonHelperHeroes.checkForMykoHero(activeGame, playerLeader.getId(), player);
             } else {
                 MessageHelper.sendMessageToChannel(event.getMessageChannel(), "Leader was not purged - something went wrong");
                 return;
@@ -110,6 +112,7 @@ public class HeroPlay extends LeaderAction {
         }
 
         switch (playerLeader.getId()) {
+            case "kollecchero" -> DrawRelic.drawWithAdvantage(player, event, activeGame, activeGame.getRealPlayers().size());
             case "titanshero" -> {
                 String titanshero = Mapper.getTokenID("titanshero");
                 System.out.println(titanshero);
@@ -130,8 +133,9 @@ public class HeroPlay extends LeaderAction {
                     }
                 }
             }
-            case "l1z1xhero"->{
-                String message = player.getRepresentation()+" Resolving L1 Hero. L1 Hero is at the moment implemented as a sort of tactical action, relying on the player to follow the rules. The game will know not to take a tactical cc from you, and will allow you to move out of locked systems. Reminder that you can carry infantry/ff with your dreads/flagship, and that they cant move into supernovas(or asteroid fields if you dont have antimass.)";
+            case "l1z1xhero" -> {
+                String message = player.getRepresentation()
+                    + " Resolving L1 Hero. L1 Hero is at the moment implemented as a sort of tactical action, relying on the player to follow the rules. The game will know not to take a tactical cc from you, and will allow you to move out of locked systems. Reminder that you can carry infantry/ff with your dreads/flagship, and that they cant move into supernovas(or asteroid fields if you dont have antimass.)";
                 List<Button> ringButtons = ButtonHelper.getPossibleRings(player, activeGame);
                 activeGame.setL1Hero(true);
                 activeGame.resetCurrentMovedUnitsFrom1TacticalAction();
@@ -160,9 +164,13 @@ public class HeroPlay extends LeaderAction {
                     + " use the button to pick which planet youd like to get a tech and tgs from (and kill any opponent units)",
                     buttons);
             }
+            case "bentorhero" -> {
+                ButtonHelperHeroes.resolveBentorHero(activeGame, player);
+                MessageHelper.sendMessageToChannel(event.getMessageChannel(), ButtonHelper.getIdent(player) + " offered buttons to explore all planets");
+            }
             case "nivynhero" -> {
                 ButtonHelperHeroes.resolveNivynHeroSustainEverything(activeGame, player);
-                MessageHelper.sendMessageToChannel(event.getMessageChannel(), ButtonHelper.getIdent(player)+ " sustained all units except their mechs");
+                MessageHelper.sendMessageToChannel(event.getMessageChannel(), ButtonHelper.getIdent(player) + " sustained all units except their mechs");
             }
             case "jolnarhero" -> {
                 List<Button> buttons = ButtonHelperHeroes.getJolNarHeroSwapOutOptions(player, activeGame);
@@ -217,15 +225,13 @@ public class HeroPlay extends LeaderAction {
                     }
                     List<Button> buttons = new ArrayList<>(ACInfo.getYssarilHeroActionCardButtons(activeGame, player, p2));
                     MessageHelper.sendMessageToChannelWithButtons(p2.getCardsInfoThread(),
-                        Helper.getPlayerRepresentation(p2, activeGame, activeGame.getGuild(), true) + " Yssaril hero played.  Use buttons to select which AC you will offer to them.",
+                        p2.getRepresentation(true, true) + " Yssaril hero played.  Use buttons to select which AC you will offer to them.",
                         buttons);
                 }
                 MessageHelper.sendMessageToChannel(event.getMessageChannel(),
                     player.getRepresentation(true, showFlavourText) + " sent everyone a ping in their private threads with buttons to send you an AC");
             }
-            case "keleresheroharka" -> {
-                KeleresHeroMentak.resolveKeleresHeroMentak(activeGame, player, event);
-            }
+            case "keleresheroharka" -> KeleresHeroMentak.resolveKeleresHeroMentak(activeGame, player, event);
         }
         var posssibleCombatMod = CombatModHelper.GetPossibleTempModifier(Constants.LEADER, leaderModel.getID(), player.getNumberTurns());
         if (posssibleCombatMod != null) {

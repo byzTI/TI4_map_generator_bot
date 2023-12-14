@@ -4,14 +4,16 @@ import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-
-import org.jetbrains.annotations.Nullable;
-
+import java.util.stream.Stream;
 import lombok.Data;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
+import software.amazon.awssdk.utils.StringUtils;
+
+import org.jetbrains.annotations.Nullable;
 import ti4.generator.Mapper;
 import ti4.helpers.Emojis;
+import ti4.model.Source.ComponentSource;
 
 @Data
 public class EventModel implements ModelInterface, EmbeddableModel {
@@ -23,7 +25,7 @@ public class EventModel implements ModelInterface, EmbeddableModel {
     private String target;
     private String text;
     private String mapText;
-    private String source;
+    private ComponentSource source;
     private List<String> searchTags = new ArrayList<>();
 
     public boolean isValid() {
@@ -38,15 +40,19 @@ public class EventModel implements ModelInterface, EmbeddableModel {
     private boolean validateCategory() {
         switch (getCategory()) {
             case "faction" -> {
-                return Mapper.isFaction(getCategoryDescription());
+                return Mapper.isValidFaction(getCategoryDescription());
             }
             case "event" -> {
-                return List.of("immediate", "permanent", "temporary").stream().anyMatch(s -> s.equalsIgnoreCase(getCategoryDescription()));
+                return Stream.of("immediate", "permanent", "temporary").anyMatch(s -> s.equalsIgnoreCase(getCategoryDescription()));
             }
             default -> {
                 return true;
             }
         }
+    }
+
+    public boolean staysInPlay() {
+        return getCategoryDescription().equalsIgnoreCase("permanent") || getCategoryDescription().equalsIgnoreCase("temporary");
     }
 
     public String getAlias() {
@@ -81,17 +87,6 @@ public class EventModel implements ModelInterface, EmbeddableModel {
         return Optional.ofNullable(mapText).orElse(getText());
     }
 
-    public String getSource() {
-        return Optional.ofNullable(source).orElse("");
-    }
-
-    public String getSourceEmoji() {
-      return switch (source.toLowerCase()) {
-        case "ignis_aurora" -> Emojis.IgnisAurora;
-        default -> "";
-      };
-    }
-
     public String getRepresentation() {
         return getRepresentation(null);
     }
@@ -104,7 +99,7 @@ public class EventModel implements ModelInterface, EmbeddableModel {
             sb.append("(").append(uniqueID).append(") - ");
         }
         sb.append(name).append("__** ");
-        sb.append(getSourceEmoji());
+        sb.append(getSource().emoji());
         sb.append("\n");
 
         sb.append("> **").append(type).append(":** *").append(target).append("*\n");
@@ -117,16 +112,23 @@ public class EventModel implements ModelInterface, EmbeddableModel {
     }
 
     public MessageEmbed getRepresentationEmbed() {
-        return getRepresentationEmbed(false);
+        return getRepresentationEmbed(false, null);
     }
 
-    public MessageEmbed getRepresentationEmbed(boolean includeID) {
+    public MessageEmbed getRepresentationEmbed(int numericalID) {
+        return getRepresentationEmbed(false, numericalID);
+    }
+
+    public MessageEmbed getRepresentationEmbed(boolean includeID, Integer numericalID) {
         EmbedBuilder eb = new EmbedBuilder();
-        String name = getName() == null ? "" : getName();
-        eb.setTitle("__" + name + "__" + getSourceEmoji(), null);
+
+        StringBuilder sb = new StringBuilder();
+        if (numericalID != null) sb.append("(").append(numericalID).append(") ");
+        sb.append(Emojis.EventCard).append("__**").append(getName()).append("**__").append(getSource().emoji());
+        eb.setTitle(sb.toString());
+
         eb.setColor(Color.black);
-        eb.setDescription(getType() + "\n" + getTarget());
-        eb.addField("", getText(), false);
+        eb.addField(StringUtils.capitalize(getCategoryDescription()) + " " + getType(), getText(), false);
         if (includeID) eb.setFooter("ID: " + getAlias() + "  Source: " + getSource());
         return eb.build();
     }
@@ -136,6 +138,6 @@ public class EventModel implements ModelInterface, EmbeddableModel {
     }
 
     public String getAutoCompleteName() {
-        return getName() + " (" + getSource() + ")";
+        return getName() + " [" + getSource() + "]";
     }
 }

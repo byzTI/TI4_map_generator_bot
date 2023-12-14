@@ -22,7 +22,8 @@ public class Setup extends GameSubcommandData {
         addOptions(new OptionData(OptionType.BOOLEAN, Constants.TIGL_GAME, "True to mark the game as TIGL"));
         addOptions(new OptionData(OptionType.BOOLEAN, Constants.COMMUNITY_MODE, "True if want Community Mode for map, False to disable it").setRequired(false));
         addOptions(new OptionData(OptionType.BOOLEAN, Constants.FOW_MODE, "True if want FoW Mode for map, False to disable it").setRequired(false));
-        addOptions(new OptionData(OptionType.BOOLEAN, Constants.BASE_GAME_MODE, "True to "));
+        addOptions(new OptionData(OptionType.BOOLEAN, Constants.BASE_GAME_MODE, "True to switch to base game mode."));
+        addOptions(new OptionData(OptionType.BOOLEAN, Constants.MILTYMOD_MODE, "True to switch to MiltyMod mode (only compatabile with Base Game Mode)"));
         addOptions(new OptionData(OptionType.BOOLEAN, Constants.ABSOL_MODE, "True to switch out the PoK Agendas & Relics for Absol's "));
         addOptions(new OptionData(OptionType.BOOLEAN, Constants.DISCORDANT_STARS_MODE, "True to add the Discordant Stars factions to the pool."));
         addOptions(new OptionData(OptionType.INTEGER, Constants.AUTO_PING, "Hours between auto pings. Min 1. Enter 0 to turn off."));
@@ -93,31 +94,61 @@ public class Setup extends GameSubcommandData {
 
     public static boolean setGameMode(SlashCommandInteractionEvent event, Game activeGame) {
         if (event.getOption(Constants.TIGL_GAME) == null && event.getOption(Constants.ABSOL_MODE) == null && event.getOption(Constants.DISCORDANT_STARS_MODE) == null
-            && event.getOption(Constants.BASE_GAME_MODE) == null) {
+            && event.getOption(Constants.BASE_GAME_MODE) == null && event.getOption(Constants.MILTYMOD_MODE) == null) {
             return true; //no changes were made
         }
         boolean isTIGLGame = event.getOption(Constants.TIGL_GAME, activeGame.isCompetitiveTIGLGame(), OptionMapping::getAsBoolean);
         boolean absolMode = event.getOption(Constants.ABSOL_MODE, activeGame.isAbsolMode(), OptionMapping::getAsBoolean);
+        boolean miltyModMode = event.getOption(Constants.MILTYMOD_MODE, activeGame.isMiltyModMode(), OptionMapping::getAsBoolean);
         boolean discordantStarsMode = event.getOption(Constants.DISCORDANT_STARS_MODE, activeGame.isDiscordantStarsMode(), OptionMapping::getAsBoolean);
         boolean baseGameMode = event.getOption(Constants.BASE_GAME_MODE, activeGame.isBaseGameMode(), OptionMapping::getAsBoolean);
-        return setGameMode(event, activeGame, baseGameMode, absolMode, discordantStarsMode, isTIGLGame);
+        return setGameMode(event, activeGame, baseGameMode, absolMode, miltyModMode, discordantStarsMode, isTIGLGame);
     }
 
-    public static boolean setGameMode(GenericInteractionCreateEvent event, Game activeGame, boolean baseGameMode, boolean absolMode, boolean discordantStarsMode, boolean isTIGLGame) {
-
+    // TODO: find a better way to handle this - this is annoying
+    public static boolean setGameMode(GenericInteractionCreateEvent event, Game activeGame, boolean baseGameMode, boolean absolMode, boolean miltyModMode, boolean discordantStarsMode, boolean isTIGLGame) {
         if (isTIGLGame
             && (baseGameMode || absolMode || discordantStarsMode || activeGame.isHomeBrewSCMode() || activeGame.isFoWMode() || activeGame.isAllianceMode() || activeGame.isCommunityMode())) {
             MessageHelper.sendMessageToChannel(event.getMessageChannel(), "TIGL Games can not be mixed with other game modes.");
             return false;
         } else if (isTIGLGame) {
-            activeGame.setCompetitiveTIGLGame(isTIGLGame);
+            activeGame.setCompetitiveTIGLGame(true);
             sendTIGLSetupText(activeGame);
             return true;
+        }
+
+        if (miltyModMode && !baseGameMode) {
+            MessageHelper.sendMessageToChannel(event.getMessageChannel(), "Milty Mod Mode can only be combined with Base Game Mode. Please set the game to Base Game Mode first.");
+            return false;
         }
 
         if (baseGameMode && (absolMode || discordantStarsMode)) {
             MessageHelper.sendMessageToChannel(event.getMessageChannel(), "Base Game Mode is not supported with Discordant Stars or Absol Mode");
             return false;
+        } else if (baseGameMode && miltyModMode) {
+            if (!activeGame.validateAndSetAgendaDeck(event, Mapper.getDeck("agendas_miltymod"))) return false;
+            if (!activeGame.validateAndSetPublicObjectivesStage1Deck(event, Mapper.getDeck("public_stage_1_objectives_miltymod"))) return false;
+            if (!activeGame.validateAndSetPublicObjectivesStage2Deck(event, Mapper.getDeck("public_stage_2_objectives_miltymod"))) return false;
+            if (!activeGame.validateAndSetSecretObjectiveDeck(event, Mapper.getDeck("secret_objectives_miltymod"))) return false;
+            if (!activeGame.validateAndSetActionCardDeck(event, Mapper.getDeck("action_cards_miltymod"))) return false;
+            if (!activeGame.validateAndSetRelicDeck(event, Mapper.getDeck("relics_base"))) return false;
+            if (!activeGame.validateAndSetExploreDeck(event, Mapper.getDeck("explores_base"))) return false;
+
+            for (Player player : activeGame.getPlayers().values()) {
+                player.setLeaders(new ArrayList<>());
+                if (player.getUnitByBaseType("mech") != null) player.removeOwnedUnitByID(player.getUnitByBaseType("mech").getId());
+            }
+
+            activeGame.setScSetID("miltymod");
+
+            activeGame.setTechnologyDeckID("techs_miltymod");
+            activeGame.swapInVariantTechs();
+            activeGame.swapInVariantUnits("miltymod");
+            activeGame.setBaseGameMode(true);
+            activeGame.setMiltyModMode(true);
+            activeGame.setAbsolMode(false);
+            activeGame.setDiscordantStarsMode(false);
+            return true;
         } else if (baseGameMode) {
             if (!activeGame.validateAndSetAgendaDeck(event, Mapper.getDeck("agendas_base_game"))) return false;
             if (!activeGame.validateAndSetPublicObjectivesStage1Deck(event, Mapper.getDeck("public_stage_1_objectives_base"))) return false;
@@ -135,12 +166,13 @@ public class Setup extends GameSubcommandData {
             activeGame.setScSetID("base_game");
 
             activeGame.setTechnologyDeckID("techs_base");
-            activeGame.setBaseGameMode(baseGameMode);
+            activeGame.setBaseGameMode(true);
             activeGame.setAbsolMode(false);
             activeGame.setDiscordantStarsMode(false);
             return true;
         }
-        activeGame.setBaseGameMode(baseGameMode);
+        activeGame.setBaseGameMode(false);
+        activeGame.setMiltyModMode(false);
 
         // BOTH ABSOL & DS, and/or if either was set before the other
         if (absolMode && discordantStarsMode) {
@@ -152,8 +184,8 @@ public class Setup extends GameSubcommandData {
             if (!activeGame.validateAndSetRelicDeck(event, Mapper.getDeck("relics_absol_ds"))) return false;
             if (!activeGame.validateAndSetExploreDeck(event, Mapper.getDeck("explores_DS"))) return false;
             activeGame.setTechnologyDeckID("techs_ds_absol");
-            activeGame.setAbsolMode(absolMode);
-            activeGame.setDiscordantStarsMode(discordantStarsMode);
+            activeGame.setAbsolMode(true);
+            activeGame.setDiscordantStarsMode(true);
             activeGame.setBaseGameMode(false);
             activeGame.swapInVariantUnits("absol");
             activeGame.swapInVariantTechs();
@@ -161,7 +193,7 @@ public class Setup extends GameSubcommandData {
         }
 
         // JUST DS
-        if (discordantStarsMode && !absolMode) {
+        if (discordantStarsMode) {
             if (!activeGame.validateAndSetAgendaDeck(event, Mapper.getDeck("agendas_pok"))) return false;
             if (!activeGame.validateAndSetPublicObjectivesStage1Deck(event, Mapper.getDeck("public_stage_1_objectives_pok"))) return false;
             if (!activeGame.validateAndSetPublicObjectivesStage2Deck(event, Mapper.getDeck("public_stage_2_objectives_pok"))) return false;
@@ -176,7 +208,7 @@ public class Setup extends GameSubcommandData {
         activeGame.setDiscordantStarsMode(discordantStarsMode);
 
         // JUST ABSOL
-        if (absolMode && !discordantStarsMode) {
+        if (absolMode) {
             if (!activeGame.validateAndSetAgendaDeck(event, Mapper.getDeck("agendas_absol"))) return false;
             if (!activeGame.validateAndSetPublicObjectivesStage1Deck(event, Mapper.getDeck("public_stage_1_objectives_pok"))) return false;
             if (!activeGame.validateAndSetPublicObjectivesStage2Deck(event, Mapper.getDeck("public_stage_2_objectives_pok"))) return false;
@@ -212,12 +244,11 @@ public class Setup extends GameSubcommandData {
     }
 
     private static void sendTIGLSetupText(Game activeGame) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("# ").append(Emojis.TIGL).append("TIGL\nThis game has been flagged as a Twilight Imperium Global League (TIGL) Game!\n");
-        sb.append("Please ensure you have all:\n");
-        sb.append("- [Signed up for TIGL](https://forms.gle/QQKWraMyd373GsLN6)\n");
-        sb.append("- Read and accepted the TIGL [Code of Conduct](https://discord.com/channels/943410040369479690/1003741148017336360/1155173892734861402)\n");
-        sb.append("For more information, please see this channel: https://discord.com/channels/943410040369479690/1003741148017336360");
-        MessageHelper.sendMessageToChannel(activeGame.getActionsChannel(), sb.toString());
+      String sb = "# " + Emojis.TIGL + "TIGL\nThis game has been flagged as a Twilight Imperium Global League (TIGL) Game!\n" +
+          "Please ensure you have all:\n" +
+          "- [Signed up for TIGL](https://forms.gle/QQKWraMyd373GsLN6)\n" +
+          "- Read and accepted the TIGL [Code of Conduct](https://discord.com/channels/943410040369479690/1003741148017336360/1155173892734861402)\n" +
+          "For more information, please see this channel: https://discord.com/channels/943410040369479690/1003741148017336360";
+        MessageHelper.sendMessageToChannel(activeGame.getActionsChannel(), sb);
     }
 }

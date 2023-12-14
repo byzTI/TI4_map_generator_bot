@@ -105,7 +105,7 @@ public class Game {
     @ExportableField
     private boolean naaluAgent;
     @ExportableField
-      private boolean l1Hero;
+    private boolean l1Hero;
     @ExportableField
     private boolean nomadCoin;
     @ExportableField
@@ -130,8 +130,10 @@ public class Game {
     @Getter
     @Setter
     private String textSize = "medium";
-    @ExportableField
+    @ExportableField @Getter @Setter
     private boolean absolMode;
+    @Getter @Setter
+    private boolean miltyModMode;
     @Getter
     @Setter
     private boolean showUnitTags;
@@ -169,7 +171,7 @@ public class Game {
     @Setter
     @ExportableField
     private String scSetID = "pok";
-    @ExportableField
+    @ExportableField @Getter @Setter
     private boolean discordantStarsMode;
     private String outputVerbosity = Constants.VERBOSITY_VERBOSE;
     private boolean testBetaFeaturesMode;
@@ -239,7 +241,8 @@ public class Game {
     private List<String> events = new ArrayList<>();
     @Getter
     private LinkedHashMap<String, Integer> discardedEvents = new LinkedHashMap<>();
-    @Getter @Setter
+    @Getter
+    @Setter
     private LinkedHashMap<String, Integer> eventsInEffect = new LinkedHashMap<>();
     private LinkedHashMap<Integer, Integer> scTradeGoods = new LinkedHashMap<>();
     private LinkedHashMap<String, Integer> discardAgendas = new LinkedHashMap<>();
@@ -270,8 +273,13 @@ public class Game {
     private List<SimpleEntry<String, String>> tileNameAutocompleteOptionsCache;
     private final ArrayList<String> runDataMigrations = new ArrayList<>();
     private BagDraft activeDraft;
-    @JsonIgnore @Getter @Setter
+    @JsonIgnore
+    @Getter
+    @Setter
     private Map<String, Integer> tileDistances = new HashMap<>();
+    @Getter
+    @Setter
+    private int numberOfPurgedFragments;
 
     public Game() {
         creationDate = Helper.getDateRepresentation(new Date().getTime());
@@ -624,6 +632,7 @@ public class Game {
     public boolean isSpinMode() {
         return spinMode;
     }
+
     public void setHomeBrewSCMode(boolean homeBrewSCMode) {
         homebrewSCMode = homeBrewSCMode;
     }
@@ -638,22 +647,6 @@ public class Game {
 
     public void setStratPings(boolean stratPings) {
         this.stratPings = stratPings;
-    }
-
-    public boolean isAbsolMode() {
-        return absolMode;
-    }
-
-    public void setAbsolMode(boolean absolMode) {
-        this.absolMode = absolMode;
-    }
-
-    public boolean isDiscordantStarsMode() {
-        return discordantStarsMode;
-    }
-
-    public void setDiscordantStarsMode(boolean discordantStarsMode) {
-        this.discordantStarsMode = discordantStarsMode;
     }
 
     public String getOutputVerbosity() {
@@ -678,8 +671,9 @@ public class Game {
     public String getGameModesText() {
         Map<String, Boolean> gameModes = new HashMap<>() {
             {
-                put("Normal", isNormalGame());
-                put("Base Game", isBaseGameMode());
+                put(Emojis.TI4PoK + "Normal", isNormalGame());
+                put(Emojis.TI4BaseGame + "Base Game", isBaseGameMode());
+                put(Emojis.MiltyMod + "MiltyMod", isMiltyModMode());
                 put(Emojis.TIGL + "TIGL", isCompetitiveTIGLGame());
                 put("Community", isCommunityMode());
                 put("Alliance", isAllianceMode());
@@ -694,7 +688,7 @@ public class Game {
     }
 
     public boolean isNormalGame() {
-        return !(isCompetitiveTIGLGame() || isCommunityMode() || isAllianceMode() || isAbsolMode() || isDiscordantStarsMode() || isFoWMode() || isSpinMode() || isHomeBrewSCMode() || isFrankenGame());
+        return !(isCompetitiveTIGLGame() || isCommunityMode() || isAllianceMode() || isAbsolMode() || isDiscordantStarsMode() || isFoWMode() || isSpinMode() || isHomeBrewSCMode() || isFrankenGame() || isMiltyModMode());
     }
 
     public boolean isFrankenGame() {
@@ -790,8 +784,7 @@ public class Game {
         } catch (Exception e) {
             ThreadChannel threadChannel; //exists and is not locked
             List<ThreadChannel> botChannels = AsyncTI4DiscordBot.jda.getThreadChannelsByName(getName() + Constants.BOT_CHANNEL_SUFFIX, true);
-            if (botChannels.size() == 1) { //found a matching thread
-            } else { //can't find it, might be archived
+            if (botChannels.size() != 1) { //can't find it, might be archived
                 for (ThreadChannel threadChannel_ : getActionsChannel().retrieveArchivedPublicThreadChannels()) {
                     if (threadChannel_.getName().equals(getName() + Constants.BOT_CHANNEL_SUFFIX)) {
                         threadChannel = threadChannel_;
@@ -865,12 +858,12 @@ public class Game {
     }
 
     public String getFactionsThatReactedToThis(String messageID) {
-        if(checkingForAllReacts.get(messageID) != null){
+        if (checkingForAllReacts.get(messageID) != null) {
             return checkingForAllReacts.get(messageID);
-        }else{
+        } else {
             return "";
         }
-        
+
     }
 
     public void resetCurrentAgendaVotes() {
@@ -882,21 +875,20 @@ public class Game {
         return getScPlayed().entrySet().stream().filter(Map.Entry::getValue).map(Map.Entry::getKey).collect(Collectors.toSet());
     }
 
-    public List<Integer> getPlayedSCsInOrder(Player player){
+    public List<Integer> getPlayedSCsInOrder(Player player) {
         Set<Integer> playedSCs = getPlayedSCs();
-        List<Integer> orderedSCsBasic = new ArrayList<>();
 
-        orderedSCsBasic.addAll(playedSCs);
+        List<Integer> orderedSCsBasic = new ArrayList<>(playedSCs);
         Collections.sort(orderedSCsBasic);
         List<Integer> orderedSCs = new ArrayList<>();
         int playerSC = player.getLowestSC();
-        for(int sc : orderedSCsBasic){
-            if(sc > playerSC){
+        for (int sc : orderedSCsBasic) {
+            if (sc > playerSC) {
                 orderedSCs.add(sc);
             }
         }
-        for(int sc : orderedSCsBasic){
-            if(sc < playerSC){
+        for (int sc : orderedSCsBasic) {
+            if (sc < playerSC) {
                 orderedSCs.add(sc);
             }
         }
@@ -936,12 +928,15 @@ public class Game {
     public boolean getNaaluAgent() {
         return naaluAgent;
     }
+
     public boolean getL1Hero() {
         return l1Hero;
     }
+
     public boolean getNomadCoin() {
         return nomadCoin;
     }
+
     public boolean getTemporaryPingDisable() {
         return temporaryPingDisable;
     }
@@ -961,12 +956,15 @@ public class Game {
     public void setNaaluAgent(boolean onStatus) {
         naaluAgent = onStatus;
     }
+
     public void setL1Hero(boolean onStatus) {
         l1Hero = onStatus;
     }
+
     public void setNomadCoin(boolean onStatus) {
         nomadCoin = onStatus;
     }
+
     public void setTemporaryPingDisable(boolean onStatus) {
         temporaryPingDisable = onStatus;
     }
@@ -978,6 +976,7 @@ public class Game {
     public void setComponentAction(boolean onStatus) {
         componentAction = onStatus;
     }
+
     public void setJustPlayedComponentAC(boolean onStatus) {
         justPlayedComponentAC = onStatus;
     }
@@ -997,9 +996,11 @@ public class Game {
     public void setCurrentReacts(String messageID, String factionsWhoReacted) {
         checkingForAllReacts.put(messageID, factionsWhoReacted);
     }
+
     public void removeMessageIDFromCurrentReacts(String messageID) {
         checkingForAllReacts.remove(messageID);
     }
+
     public void removeOutcomeAgendaVote(String outcome) {
         currentAgendaVotes.remove(outcome);
     }
@@ -1054,6 +1055,9 @@ public class Game {
 
     public String getActivePlayer() {
         return activePlayer;
+    }
+    public Player getActivePlayerObject() {
+        return getPlayer(activePlayer);
     }
 
     public String getActiveSystem() {
@@ -1220,7 +1224,7 @@ public class Game {
     }
 
     public int discardEvent(String eventID) {
-        Collection<Integer> values = discardAgendas.values();
+        Collection<Integer> values = discardedEvents.values();
         int identifier = ThreadLocalRandom.current().nextInt(1000);
         while (values.contains(identifier)) {
             identifier = ThreadLocalRandom.current().nextInt(1000);
@@ -1232,12 +1236,15 @@ public class Game {
     public void addMessageIDForSabo(String messageID) {
         messageIDsForSaboReacts.add(messageID);
     }
+
     public void removeMessageIDForSabo(String messageID) {
         messageIDsForSaboReacts.remove(messageID);
     }
-     public void setMessageIDForSabo(List<String> messageIDs) {
+
+    public void setMessageIDForSabo(List<String> messageIDs) {
         messageIDsForSaboReacts = messageIDs;
     }
+
     public List<String> getMessageIDsForSabo() {
         return messageIDsForSaboReacts;
     }
@@ -1837,7 +1844,7 @@ public class Game {
         }
         return false;
     }
-    
+
     public boolean addLaw(Integer idNumber, String optionalText) {
         String id = "";
         for (Map.Entry<String, Integer> agendas : discardAgendas.entrySet()) {
@@ -2191,12 +2198,12 @@ public class Game {
         return agendas.get(index);
     }
 
-     @Nullable
     public void drawActionCard(String userID, int count) {
-        for(int x = 0; x < count; x++){
+        for (int x = 0; x < count; x++) {
             drawActionCard(userID);
         }
     }
+
     @Nullable
     public LinkedHashMap<String, Integer> drawActionCard(String userID) {
         if (!actionCards.isEmpty()) {
@@ -2308,7 +2315,8 @@ public class Game {
 
     public void addExplore(String id) {
         if (Mapper.getExploreRepresentation(id) != null) {
-            explore.add(id);
+            int place = ThreadLocalRandom.current().nextInt(explore.size());
+            explore.add(place,id);
         }
         discardExplore.remove(id);
     }
@@ -2352,6 +2360,17 @@ public class Game {
             return "";
         }
         return relics.remove(0);
+    }
+
+    public String drawRelic(int location) {
+        if (relics.isEmpty()) {
+            return "";
+        }
+        return relics.remove(location);
+    }
+
+    public void shuffleRelics() {
+        Collections.shuffle(relics);
     }
 
     public boolean shuffleRelicBack(String relicID) {
@@ -2440,6 +2459,7 @@ public class Game {
         }
         discardActionCards.put(id, identifier);
     }
+
     public void setPurgedActionCard(String id) {
         Collection<Integer> values = purgedActionCards.values();
         int identifier = ThreadLocalRandom.current().nextInt(1000);
@@ -2470,7 +2490,7 @@ public class Game {
         return false;
     }
 
-     public boolean purgedActionCard(String userID, Integer acIDNumber) {
+    public boolean purgedActionCard(String userID, Integer acIDNumber) {
         Player player = getPlayer(userID);
         if (player != null) {
             LinkedHashMap<String, Integer> actionCards = player.getActionCards();
@@ -2836,7 +2856,6 @@ public class Game {
         this.discardActionCards = discardActionCards;
     }
 
-    
     public void setPurgedActionCards(LinkedHashMap<String, Integer> purgedActionCards) {
         this.purgedActionCards = purgedActionCards;
     }
@@ -2951,6 +2970,10 @@ public class Game {
     public List<Player> getRealPlayers() {
         return getPlayers().values().stream().filter(Player::isRealPlayer).collect(Collectors.toList());
     }
+     @JsonIgnore
+    public List<Player> getRealPlayersNDummies() {
+        return getPlayers().values().stream().filter(player -> (player.isRealPlayer() || player.isDummy())).collect(Collectors.toList());
+    }
 
     @JsonIgnore
     public List<Player> getDummies() {
@@ -2978,6 +3001,7 @@ public class Game {
     public void setBotFactionReactions(boolean limit) {
         botFactionReacts = limit;
     }
+
     public void setHasHadAStatusPhase(boolean limit) {
         hasHadAStatusPhase = limit;
     }
@@ -3018,7 +3042,7 @@ public class Game {
     @JsonIgnore
     public List<String> getRealPlayerIDs() {
         List<String> pIDs = new ArrayList<>();
-        for(Player player : getRealPlayers()){
+        for (Player player : getRealPlayers()) {
             pIDs.add(player.getUserID());
         }
         return pIDs;
@@ -3099,6 +3123,8 @@ public class Game {
                 }
             }
             planets.put("custodiavigilia", new Planet("custodiavigilia", new Point(0, 0)));
+            planets.put("custodiavigiliaplus", new Planet("custodiavigiliaplus", new Point(0, 0)));
+            planets.put("nevermore", new Planet("nevermore", new Point(0, 0)));
             planets.put("ghoti", new Planet("ghoti", new Point(0, 0)));
         }
         return planets.keySet();
@@ -3502,8 +3528,8 @@ public class Game {
 
     @Deprecated
     public UnitModel getUnitFromImageName(String imageName) {
-        String colourID = StringUtils.substringBefore(imageName, "_");
-        Player player = getPlayerFromColorOrFaction(colourID);
+        String colorID = StringUtils.substringBefore(imageName, "_");
+        Player player = getPlayerFromColorOrFaction(colorID);
         if (player == null) return null;
         return player.getUnitFromImageName(imageName);
     }
@@ -3516,9 +3542,11 @@ public class Game {
 
     @Deprecated
     public String getUnitNameFromImageName(String imageName) {
-        String colourID = StringUtils.substringBefore(imageName, "_");
-        String imageFileSuffix = StringUtils.substringAfter(imageName, colourID);
-        Player player = getPlayerFromColorOrFaction(colourID);
+        String colorID = StringUtils.substringBefore(imageName, "_");
+        String imageFileSuffix = StringUtils.substringAfter(imageName, colorID);
+        Player player = getPlayerFromColorOrFaction(colorID);
+        if (player == null) return null;
+
         return player.getUnitModels().stream()
             .filter(unit -> unit.getImageFileSuffix().equals(imageFileSuffix))
             .map(UnitModel::getName)
@@ -3527,13 +3555,13 @@ public class Game {
     }
 
     public void swapInVariantUnits(String source) {
-        List<UnitModel> variantUnits = Mapper.getUnits().values().stream().filter(unit -> source.equals(unit.getSource())).toList();
+        List<UnitModel> variantUnits = Mapper.getUnits().values().stream().filter(unit -> source.equals(unit.getSource().toString())).toList();
         for (Player player : getPlayers().values()) {
-            List<UnitModel> playersUnits = player.getUnitModels().stream().filter(unit -> !source.equals(unit.getSource())).toList();
+            List<UnitModel> playersUnits = player.getUnitModels().stream().filter(unit -> !source.equals(unit.getSource().toString())).toList();
             for (UnitModel playerUnit : playersUnits) {
                 for (UnitModel variantUnit : variantUnits) {
-                    if (   (variantUnit.getHomebrewReplacesID().isPresent() && variantUnit.getHomebrewReplacesID().get().equals(playerUnit.getId())) // true variant unit replacing a PoK unit
-                        || (playerUnit.getHomebrewReplacesID().isPresent()  &&  playerUnit.getHomebrewReplacesID().get().equals(variantUnit.getId())) // PoK "variant" replacing a true variant unit
+                    if ((variantUnit.getHomebrewReplacesID().isPresent() && variantUnit.getHomebrewReplacesID().get().equals(playerUnit.getId())) // true variant unit replacing a PoK unit
+                        || (playerUnit.getHomebrewReplacesID().isPresent() && playerUnit.getHomebrewReplacesID().get().equals(variantUnit.getId())) // PoK "variant" replacing a true variant unit
                     ) {
                         player.removeOwnedUnitByID(playerUnit.getId());
                         player.addOwnedUnitByID(variantUnit.getId());
@@ -3543,7 +3571,7 @@ public class Game {
             }
         }
     }
-
+    @JsonIgnore
     public void swapInVariantTechs() {
         DeckModel deckModel = Mapper.getDeck(getTechnologyDeckID());
         if (deckModel == null) return;
@@ -3570,7 +3598,7 @@ public class Game {
             player.setExhaustedTechs(newExhaustedTechs);
         }
     }
-
+    @JsonIgnore
     public void swapOutVariantTechs() {
         DeckModel deckModel = Mapper.getDeck(getTechnologyDeckID());
         if (deckModel == null) return;
@@ -3580,7 +3608,7 @@ public class Game {
 
             for (TechnologyModel tech : techsToReplace) {
                 String replacedTechID = tech.getAlias();
-                String replacingTechID =  tech.getHomebrewReplacesID().get();
+                String replacingTechID = tech.getHomebrewReplacesID().get();
                 if (player.hasTech(replacedTechID)) {
                     if (!player.hasTechReady(replacedTechID)) {
                         player.refreshTech(replacedTechID);

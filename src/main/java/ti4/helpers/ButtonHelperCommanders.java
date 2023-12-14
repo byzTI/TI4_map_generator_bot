@@ -2,7 +2,6 @@ package ti4.helpers;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.events.interaction.GenericInteractionCreateEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
@@ -26,42 +25,59 @@ import ti4.message.MessageHelper;
 
 public class ButtonHelperCommanders {
 
+    public static void yinCommanderStep1(Player player, Game activeGame, ButtonInteractionEvent event) {
+        List<Button> buttons = new ArrayList<>();
+        for (Tile tile : ButtonHelper.getTilesOfPlayersSpecificUnits(activeGame, player, UnitType.Infantry)) {
+            for (UnitHolder unitHolder : tile.getUnitHolders().values()) {
+                if (unitHolder.getUnitCount(UnitType.Infantry, player.getColor()) > 0) {
+                    buttons
+                        .add(
+                            Button.success("yinCommanderRemoval_" + tile.getPosition() + "_" + unitHolder.getName(), "Remove Inf from " + ButtonHelper.getUnitHolderRep(unitHolder, tile, activeGame)));
+                }
+            }
+        }
+        ButtonHelper.deleteTheOneButton(event);
+        MessageHelper.sendMessageToChannelWithButtons(event.getMessageChannel(), player.getRepresentation(true, true) + " use buttons to remove an infantry", buttons);
+    }
 
-    public static void mykoCommanderUsage(Player player, Game activeGame, ButtonInteractionEvent event){
-        String msg = ButtonHelper.getIdent(player)+ " spent 1 ";
-        if(player.getCommodities() > 0){
-            msg = msg + "commoditity ("+player.getCommodities()+"->"+(player.getCommodities()-1)+") ";
-            player.setCommodities(player.getCommodities()-1);
-        }else{
-            msg = msg + "tg ("+player.getTg()+"->"+(player.getTg()-1)+") ";
-            player.setTg(player.getTg()-1);
+    public static void resolveYinCommanderRemoval(Player player, Game activeGame, String buttonID, ButtonInteractionEvent event) {
+        String pos = buttonID.split("_")[1];
+        String unitHName = buttonID.split("_")[2];
+        Tile tile = activeGame.getTileByPosition(pos);
+        UnitHolder unitHolder = tile.getUnitHolders().get(unitHName);
+        if ("space".equalsIgnoreCase(unitHName)) {
+            unitHName = "";
+        }
+        MessageHelper.sendMessageToChannel(ButtonHelper.getCorrectChannel(player, activeGame),
+            ButtonHelper.getIdent(player) + " removed 1 infantry from " + ButtonHelper.getUnitHolderRep(unitHolder, tile, activeGame) + " using Yin Commander");
+        new RemoveUnits().unitParsing(event, player.getColor(), tile, "1 infantry " + unitHName, activeGame);
+        event.getMessage().delete().queue();
+    }
+
+    public static void mykoCommanderUsage(Player player, Game activeGame, ButtonInteractionEvent event) {
+        String msg = ButtonHelper.getIdent(player) + " spent 1 ";
+        if (player.getCommodities() > 0) {
+            msg = msg + "commoditity (" + player.getCommodities() + "->" + (player.getCommodities() - 1) + ") ";
+            player.setCommodities(player.getCommodities() - 1);
+        } else {
+            msg = msg + "tg (" + player.getTg() + "->" + (player.getTg() - 1) + ") ";
+            player.setTg(player.getTg() - 1);
         }
         msg = msg + " to cancel one hit";
         MessageHelper.sendMessageToChannel(event.getMessageChannel(), msg);
     }
+
     public static void titansCommanderUsage(String buttonID, ButtonInteractionEvent event, Game activeGame, Player player, String ident) {
         int cTG = player.getTg();
         int fTG = cTG + 1;
         player.setTg(fTG);
-        String msg = " used Titans commander to gain a tg (" + cTG + "->" + fTG + "). ";
-        String exhaustedMessage = event.getMessage().getContentRaw();
-        List<ActionRow> actionRow2 = new ArrayList<>();
-        for (ActionRow row : event.getMessage().getActionRows()) {
-            List<ItemComponent> buttonRow = row.getComponents();
-            int buttonIndex = buttonRow.indexOf(event.getButton());
-            if (buttonIndex > -1) {
-                buttonRow.remove(buttonIndex);
-            }
-            if (buttonRow.size() > 0) {
-                actionRow2.add(ActionRow.of(buttonRow));
-            }
-        }
-        if (!exhaustedMessage.contains("Click the names")) {
-            exhaustedMessage = exhaustedMessage + ", " + msg;
-        } else {
-            exhaustedMessage = ident + msg;
-        }
-        event.getMessage().editMessage(exhaustedMessage).setComponents(actionRow2).queue();
+        ButtonHelperAbilities.pillageCheck(player, activeGame);
+        ButtonHelperAgents.resolveArtunoCheck(player, activeGame, 1);
+        String msg = "Used Titans commander to gain a tg (" + cTG + "->" + fTG + "). ";
+        player.addSpentThing(msg);
+        String exhaustedMessage = Helper.buildSpentThingsMessage(player, activeGame, "res");
+        ButtonHelper.deleteTheOneButton(event);
+        event.getMessage().editMessage(exhaustedMessage).queue();
     }
 
     public static void resolveLetnevCommanderCheck(Player player, Game activeGame, GenericInteractionCreateEvent event) {
@@ -69,7 +85,7 @@ public class ButtonHelperCommanders {
             int old = player.getTg();
             int newTg = player.getTg() + 1;
             player.setTg(player.getTg() + 1);
-            String mMessage = Helper.getPlayerRepresentation(player, activeGame, activeGame.getGuild(), true) + " Since you have Barony commander unlocked, 1tg has been added automatically (" + old
+            String mMessage = player.getRepresentation(true, true) + " Since you have Barony commander unlocked, 1tg has been added automatically (" + old
                 + "->" + newTg + ")";
             MessageHelper.sendMessageToChannel(event.getMessageChannel(), mMessage);
             ButtonHelperAbilities.pillageCheck(player, activeGame);
@@ -102,7 +118,7 @@ public class ButtonHelperCommanders {
             int old = player.getTg();
             int newTg = player.getTg() + 1;
             player.setTg(player.getTg() + 1);
-            String mMessage = Helper.getPlayerRepresentation(player, activeGame, activeGame.getGuild(), true) + " Since you have Muaat commander unlocked, 1tg has been added automatically (" + old
+            String mMessage = player.getRepresentation(true, true) + " Since you have Muaat commander unlocked, 1tg has been added automatically (" + old
                 + "->" + newTg + ")";
             if (activeGame.isFoWMode()) {
                 MessageHelper.sendMessageToChannel(player.getPrivateChannel(), mMessage);
@@ -125,18 +141,22 @@ public class ButtonHelperCommanders {
                 }
                 buttons.add(Button.danger("deleteButtons", "Delete These Buttons"));
                 MessageHelper.sendMessageToChannelWithButtons(ButtonHelper.getCorrectChannel(player, activeGame),
-                    Helper.getPlayerRepresentation(player, activeGame, activeGame.getGuild(), true) + " You gained tech while having Nekro commander, use buttons to resolve. ", buttons);
+                    player.getRepresentation(true, true) + " You gained tech while having Nekro commander, use buttons to resolve. ", buttons);
             } else {
-                if (!player.hasAbility("technological_singularity")) {
-                    int count = 1;
+                if (player.hasAbility("technological_singularity")) {
+                    int count = 0;
                     for (String nekroTech : player.getTechs()) {
-                        if ("".equals(Mapper.getTech(AliasHandler.resolveTech(nekroTech)).getFaction().orElse(""))) {
+                        if ("vax".equalsIgnoreCase(nekroTech) || "vay".equalsIgnoreCase(nekroTech)) {
+                            continue;
+                        }
+                        if (!"".equals(Mapper.getTech(AliasHandler.resolveTech(nekroTech)).getFaction().orElse(""))) {
                             count = count + 1;
                         }
+
                     }
                     if (count > 2) {
                         MessageHelper.sendMessageToChannel(ButtonHelper.getCorrectChannel(player, activeGame),
-                            "# " + ButtonHelper.getTrueIdentity(player, activeGame) + " heads up, that was your 3rd faction tech, you may wanna lose one with /tech remove");
+                            "# " + player.getRepresentation(true, true) + " heads up, that was your 3rd faction tech, you may wanna lose one with /tech remove");
                     }
                 }
             }

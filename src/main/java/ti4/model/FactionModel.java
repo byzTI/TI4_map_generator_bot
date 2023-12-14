@@ -1,17 +1,23 @@
 package ti4.model;
 
+import java.awt.Color;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.entities.emoji.CustomEmoji;
+import net.dv8tion.jda.api.entities.emoji.Emoji;
+import ti4.helpers.AliasHandler;
+import ti4.helpers.Emojis;
+import ti4.model.Source.ComponentSource;
+
 import org.apache.commons.lang3.StringUtils;
 
-import net.dv8tion.jda.api.entities.MessageEmbed;
-import ti4.generator.Mapper;
-import ti4.generator.TileHelper;
-import ti4.message.BotLogger;
+import lombok.Data;
 
-import java.util.ArrayList;
-
+@Data
 public class FactionModel implements ModelInterface, EmbeddableModel {
     private String alias;
     private String factionName;
@@ -26,7 +32,9 @@ public class FactionModel implements ModelInterface, EmbeddableModel {
     private List<String> leaders;
     private List<String> promissoryNotes;
     private List<String> units;
-    private String source;
+    private ComponentSource source;
+    private String homebrewReplacesID;
+    private String factionSheetURL;
 
     public boolean isValid() {
         return alias != null
@@ -43,32 +51,13 @@ public class FactionModel implements ModelInterface, EmbeddableModel {
             && source != null;
     }
 
-    public String getAlias() {
-        return alias;
-    }
-
-    public String getFactionName() {
-        return factionName;
+    public String getFactionEmoji() {
+        if (homebrewReplacesID != null) return Emojis.getFactionIconFromDiscord(homebrewReplacesID);
+        return Emojis.getFactionIconFromDiscord(getAlias());
     }
 
     public String getShortTag() {
         return StringUtils.left(Optional.ofNullable(shortTag).orElse(getAlias()), 3).toUpperCase();
-    }
-
-    public String getHomeSystem() {
-        return homeSystem;
-    }
-
-    public String getStartingFleet() {
-        return startingFleet;
-    }
-
-    public int getCommodities() {
-        return commodities;
-    }
-
-    public String getSource() {
-        return source;
     }
 
     public List<String> getFactionTech() {
@@ -99,20 +88,64 @@ public class FactionModel implements ModelInterface, EmbeddableModel {
         return new ArrayList<>(units);
     }
 
+    public Optional<String> getHomebrewReplacesID() {
+        return Optional.ofNullable(homebrewReplacesID);
+    }
+
+    public Optional<String> getFactionSheetURL() {
+        return Optional.ofNullable(factionSheetURL);
+    }
+
     @Override
     public MessageEmbed getRepresentationEmbed() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getRepresentationEmbed'");
+        return getRepresentationEmbed(false, false);
+    }
+
+    public MessageEmbed getRepresentationEmbed(boolean includeID, boolean includeAliases) {
+        EmbedBuilder eb = new EmbedBuilder();
+
+        //TITLE
+        String title = getFactionEmoji() +
+            " __**" + getFactionName() + "**__" +
+            getSource().emoji();
+        eb.setTitle(title);
+
+        // Emoji emoji = Emoji.fromFormatted(getFactionEmoji());
+        // if (emoji instanceof CustomEmoji customEmoji) {
+        //     eb.setThumbnail(customEmoji.getImageUrl());
+        // }
+
+        //DESCRIPTION
+        StringBuilder description = new StringBuilder();
+        eb.setDescription(description.toString());
+
+        //FIELDS
+        // eb.addField("title", "contents", true);      
+
+        if (getFactionSheetURL().isPresent()) eb.setImage(getFactionSheetURL().get());
+
+        //FOOTER
+        StringBuilder footer = new StringBuilder();
+        if (includeID) footer.append("ID: ").append(getAlias()).append("    Source: ").append(getSource());
+        if (includeAliases) footer.append("\nAliases: ").append(AliasHandler.getFactionAliasEntryList(getAlias()));
+        eb.setFooter(footer.toString());
+
+        eb.setColor(Color.black);
+        return eb.build();
     }
 
     @Override
     public boolean search(String searchString) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'search'");
+        searchString = searchString.toLowerCase();
+        return getFactionName().contains(searchString)
+            || getAlias().contains(searchString)
+            || getShortTag().contains(searchString)
+            || getSource().toString().contains(searchString)
+            || getAlias().equals(AliasHandler.resolveFaction(searchString));
     }
 
     @Override
     public String getAutoCompleteName() {
-        return getFactionName();
+        return getFactionName() + " [" + source + "]";
     }
 }

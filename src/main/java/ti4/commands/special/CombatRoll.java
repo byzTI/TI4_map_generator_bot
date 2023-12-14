@@ -1,21 +1,18 @@
 package ti4.commands.special;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.StringTokenizer;
 import java.util.Map.Entry;
+import java.util.StringTokenizer;
 import java.util.stream.Collectors;
-
-import org.apache.commons.lang3.StringUtils;
-
 import net.dv8tion.jda.api.events.interaction.GenericInteractionCreateEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
+import org.apache.commons.lang3.StringUtils;
 import ti4.commands.units.AddRemoveUnits;
 import ti4.generator.Mapper;
 import ti4.generator.TileHelper;
@@ -110,16 +107,16 @@ public class CombatRoll extends SpecialSubcommandData {
 
         CombatRollType rollType = CombatRollType.combatround;
         if (rollTypeOption != null) {
-            if (rollTypeOption.getAsString().toLowerCase().equals("afb")) {
+            if ("afb".equalsIgnoreCase(rollTypeOption.getAsString())) {
                 rollType = CombatRollType.AFB;
             }
-            if (rollTypeOption.getAsString().toLowerCase().equals("bombardment")) {
+            if ("bombardment".equalsIgnoreCase(rollTypeOption.getAsString())) {
                 rollType = CombatRollType.bombardment;
             }
-            if (rollTypeOption.getAsString().toLowerCase().equals("spacecannonoffence")) {
+            if ("spacecannonoffence".equalsIgnoreCase(rollTypeOption.getAsString())) {
                 rollType = CombatRollType.SpaceCannonOffence;
             }
-            if (rollTypeOption.getAsString().toLowerCase().equals("spacecannondefence")) {
+            if ("spacecannondefence".equalsIgnoreCase(rollTypeOption.getAsString())) {
                 rollType = CombatRollType.SpaceCannonDefence;
             }
         }
@@ -144,18 +141,18 @@ public class CombatRoll extends SpecialSubcommandData {
                     "Planet needs to be specified to fire space cannon defence on tile " + tile.getPosition());
         }
 
-        Map<UnitModel, Integer> unitsByQuantity = CombatHelper.GetUnitsInCombat(tile, combatOnHolder, player, event,
+        Map<UnitModel, Integer> playerUnitsByQuantity = CombatHelper.GetUnitsInCombat(tile, combatOnHolder, player, event,
                 rollType, activeGame);
         if (activeGame.getLaws().containsKey("articles_war")) {
-            if (unitsByQuantity.keySet().stream().anyMatch(unit -> "naaz_mech_space".equals(unit.getAlias()))) {
-                unitsByQuantity = new HashMap<>(unitsByQuantity.entrySet().stream()
+            if (playerUnitsByQuantity.keySet().stream().anyMatch(unit -> "naaz_mech_space".equals(unit.getAlias()))) {
+                playerUnitsByQuantity = new HashMap<>(playerUnitsByQuantity.entrySet().stream()
                         .filter(e -> !"naaz_mech_space".equals(e.getKey().getAlias()))
                         .collect(Collectors.toMap(Entry::getKey, Entry::getValue)));
                 MessageHelper.sendMessageToChannel(event.getMessageChannel(),
                         "Skipping " + Emojis.Naaz + " Z-Grav Eidolon due to Articles of War agenda.");
             }
         }
-        if (unitsByQuantity.size() == 0) {
+        if (playerUnitsByQuantity.size() == 0) {
             String fightingOnUnitHolderName = unitHolderName;
             if (!unitHolderName.equalsIgnoreCase(Constants.SPACE)) {
                 fightingOnUnitHolderName = Helper.getPlanetRepresentation(unitHolderName, activeGame);
@@ -169,7 +166,7 @@ public class CombatRoll extends SpecialSubcommandData {
             return;
         }
 
-        List<UnitHolder> combatHoldersForOpponent = new ArrayList<>(Arrays.asList(combatOnHolder));
+        List<UnitHolder> combatHoldersForOpponent = new ArrayList<>(List.of(combatOnHolder));
         if (rollType == CombatRollType.SpaceCannonDefence || rollType == CombatRollType.SpaceCannonOffence) {
             // Including space for finding opponents for pds - since people will fire before
             // landing sometimes
@@ -177,13 +174,18 @@ public class CombatRoll extends SpecialSubcommandData {
             combatHoldersForOpponent.add(tile.getUnitHolders().get(Constants.SPACE));
         }
         Player opponent = CombatHelper.GetOpponent(player, combatHoldersForOpponent, activeGame);
+        if(opponent == null){
+            opponent = player;
+        }
+        Map<UnitModel, Integer> opponentUnitsByQuantity = CombatHelper.GetUnitsInCombat(tile, combatOnHolder, opponent, event,
+                rollType, activeGame);
 
         TileModel tileModel = TileHelper.getAllTiles().get(tile.getTileID());
         List<NamedCombatModifierModel> autoMods = CombatModHelper.CalculateAutomaticMods(player, opponent,
-                unitsByQuantity, tileModel, activeGame, rollType, Constants.COMBAT_MODIFIERS);
+                playerUnitsByQuantity, tileModel, activeGame, rollType, Constants.COMBAT_MODIFIERS);
 
         List<NamedCombatModifierModel> autoExtraRolls = CombatModHelper.CalculateAutomaticMods(player, opponent,
-                unitsByQuantity, tileModel, activeGame, rollType, Constants.COMBAT_EXTRA_ROLLS);
+                playerUnitsByQuantity, tileModel, activeGame, rollType, Constants.COMBAT_EXTRA_ROLLS);
 
         // Check for temp mods
         CombatModHelper.EnsureValidTempMods(player, tileModel, combatOnHolder);
@@ -198,7 +200,7 @@ public class CombatRoll extends SpecialSubcommandData {
         
         tempMods.addAll(tempOpponentMods);
 
-        List<UnitModel> unitsInCombat = new ArrayList<>(unitsByQuantity.keySet());
+        List<UnitModel> unitsInCombat = new ArrayList<>(playerUnitsByQuantity.keySet());
         customMods = CombatModHelper.FilterRelevantMods(customMods, unitsInCombat, rollType);
         autoMods = CombatModHelper.FilterRelevantMods(autoMods, unitsInCombat, rollType);
 
@@ -224,7 +226,7 @@ public class CombatRoll extends SpecialSubcommandData {
         String message = String.format("**%s** rolls for %s on %s %s:  \n",
                 combatTypeName, player.getFactionEmoji(),
                 tile.getPosition(), Emojis.RollDice);
-        message += CombatHelper.RollForUnits(unitsByQuantity, autoExtraRolls, customMods, autoMods, tempMods, player,
+        message += CombatHelper.RollForUnits(playerUnitsByQuantity, opponentUnitsByQuantity, autoExtraRolls, customMods, autoMods, tempMods, player,
                 opponent,
                 activeGame, rollType);
 

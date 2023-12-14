@@ -34,7 +34,7 @@
       "alias": "hacan",
       "factionName": "The Emirates of Hacan",
       "homeSystem": "16",
-      "startingFleet": "2 cv,cr,2 ff,4 inf h,sd a",
+      "startingFleet": "2 cv,cr,2 ff,2 inf h,sd a, inf a, inf k",
       "commodities": 6,
       "factionTech": ["qdn", "pm"],
       "startingTech": ["st", "amd"],
@@ -201,22 +201,6 @@
       "source": "base"
     },
     {
-      "alias": "titans",
-      "factionName": "The Titans of Ul",
-      "shortTag": "UL",
-      "homeSystem": "55",
-      "startingFleet": "dn,2 cr,2 ff,3 inf elysium,sd elysium",
-      "commodities": 2,
-      "factionTech": ["ht2", "se2"],
-      "startingTech": ["amd", "sdn"],
-      "homePlanets": ["elysium"],
-      "abilities": ["terragenesis", "awaken", "coalescence"],
-      "leaders": ["titansagent", "titanscommander", "titanshero"],
-      "promissoryNotes": ["terraform"],
-      "units": ["fighter", "destroyer", "titans_cruiser", "carrier", "dreadnought", "titans_flagship", "infantry", "titans_mech", "titans_pds", "spacedock"],
-      "source": "base"
-    },
-    {
       "alias": "winnu",
       "factionName": "The Winnu",
       "homeSystem": "07",
@@ -259,6 +243,7 @@
       "leaders": ["yinagent", "yincommander", "yinhero"],
       "promissoryNotes": ["greyfire"],
       "units": ["fighter", "destroyer", "cruiser", "carrier", "dreadnought", "yin_flagship", "infantry", "yin_mech", "pds", "spacedock"],
+      "factionSheetURL" : "https://static.wikia.nocookie.net/twilight-imperium-4/images/1/14/Yin1.jpg",
       "source": "base"
     },
     {

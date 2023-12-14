@@ -8,15 +8,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import net.dv8tion.jda.api.entities.channel.Channel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.events.interaction.GenericInteractionCreateEvent;
 import net.dv8tion.jda.api.events.interaction.command.GenericCommandInteractionEvent;
-import ti4.commands.cardsac.ACInfo_Legacy;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import ti4.generator.Mapper;
 import ti4.generator.PositionMapper;
 import ti4.helpers.Units.UnitKey;
@@ -27,7 +24,6 @@ import ti4.map.Player;
 import ti4.map.Tile;
 import ti4.map.UnitHolder;
 import ti4.message.MessageHelper;
-import ti4.model.FactionModel;
 import ti4.model.WormholeModel;
 
 public class FoWHelper {
@@ -59,7 +55,7 @@ public class FoWHelper {
 		}
 		if (activeGame == null) {
 			String gameName = channel.getName();
-			gameName = gameName.replace(ACInfo_Legacy.CARDS_INFO, "");
+			gameName = gameName.replace(Constants.CARDS_INFO_THREAD_PREFIX, "");
 			gameName = gameName.substring(0, gameName.indexOf("-"));
 			activeGame = GameManager.getInstance().getGame(gameName);
 			if (activeGame == null) {
@@ -184,23 +180,31 @@ public class FoWHelper {
 			return false;
 		}
 
-		List<String> hsIDs = new ArrayList<>();
-		if ("keleres".equals(faction)) {
-			hsIDs.add("92");
-			hsIDs.add("93");
-			hsIDs.add("94");
-		} else if ("ghost".equals(faction)) {
-			hsIDs.add("51");
-		} else {
-			FactionModel playerSetup = Mapper.getFaction(faction);
-			if (playerSetup != null) {
-				hsIDs.add(playerSetup.getHomeSystem());
-			}
-		}
 
 		for (Tile tile : activeGame.getTileMap().values()) {
-			if (hsIDs.contains(tile.getTileID()) && !tile.hasFog(viewingPlayer)) {
+			if (tile.getPosition().equalsIgnoreCase(player.getPlayerStatsAnchorPosition()) && !tile.hasFog(viewingPlayer)) {
+				if(ButtonHelper.isTileHomeSystem(tile)){
+					return true;
+				}
+			}
+			if(player.getPlanets().contains("creuss") && tile.getUnitHolders().get("creuss") != null && (faction.contains("ghost") || faction.contains("franken")) &&!tile.hasFog(viewingPlayer)){
 				return true;
+			}
+		}
+		if(!player.getFaction().contains("franken")){
+			Tile tile = activeGame.getTile(AliasHandler.resolveTile(player.getFaction()));
+			if(player.hasAbility("mobile_command") && ButtonHelper.getTilesOfPlayersSpecificUnits(activeGame, player, UnitType.Flagship).size() > 0){
+				tile = ButtonHelper.getTilesOfPlayersSpecificUnits(activeGame, player, UnitType.Flagship).get(0);
+			}
+			if (tile == null) {
+				tile = ButtonHelper.getTileOfPlanetWithNoTrait(player, activeGame);
+			}
+			if(tile != null){
+				if (tile.getPosition().equalsIgnoreCase(player.getPlayerStatsAnchorPosition()) && !tile.hasFog(viewingPlayer)) {
+					if(ButtonHelper.isTileHomeSystem(tile)){
+						return true;
+					}
+				}
 			}
 		}
 
@@ -209,13 +213,10 @@ public class FoWHelper {
 
 	private static boolean hasPlayersPromInPlayArea(@NotNull Player player, @NotNull Player viewingPlayer) {
 		boolean hasPromInPA = false;
-		String playerColor = player.getColor();
-		String playerFaction = player.getFaction();
+		Game activeGame = player.getGame();
 		List<String> promissoriesInPlayArea = viewingPlayer.getPromissoryNotesInPlayArea();
 		for (String prom_ : promissoriesInPlayArea) {
-			String promissoryNoteOwner = Mapper.getPromissoryNoteOwner(prom_);
-			if (playerColor != null && playerColor.equals(promissoryNoteOwner)
-				|| playerFaction != null && playerFaction.equals(promissoryNoteOwner)) {
+			if (activeGame.getPNOwner(prom_) == player){
 				hasPromInPA = true;
 				break;
 			}
@@ -618,7 +619,7 @@ public class FoWHelper {
 			if (p2 == player) {
 				continue;
 			}
-			if (FoWHelper.playerHasShipsInSystem(p2, tile)) {
+			if (playerHasShipsInSystem(p2, tile)) {
 				return true;
 			}
 		}
@@ -630,7 +631,7 @@ public class FoWHelper {
 			if (p2 == player) {
 				continue;
 			}
-			if (FoWHelper.playerHasUnitsInSystem(p2, tile)) {
+			if (playerHasUnitsInSystem(p2, tile)) {
 				return true;
 			}
 		}
@@ -645,7 +646,7 @@ public class FoWHelper {
 		Map<UnitKey, Integer> units = new HashMap<>(unitHolder.getUnits());
 
 		for (UnitKey unitKey : units.keySet()) {
-			if (unitKey != null && unitKey.getColorID().equals(colorID) && unitKey.getUnitType().equals(UnitType.Fighter)) {
+			if (unitKey != null && unitKey.getColorID().equals(colorID) && unitKey.getUnitType() == UnitType.Fighter) {
 				return true;
 			}
 		}
@@ -675,7 +676,7 @@ public class FoWHelper {
 		Map<UnitKey, Integer> units = new HashMap<>(unitHolder.getUnits());
 
 		for (UnitKey unitKey : units.keySet()) {
-			if (unitKey != null && unitKey.getColorID().equals(colorID) && unitKey.getUnitType().equals(UnitType.Infantry)) {
+			if (unitKey != null && unitKey.getColorID().equals(colorID) && unitKey.getUnitType() == UnitType.Infantry) {
 				return true;
 			}
 		}

@@ -7,7 +7,6 @@ import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import ti4.generator.Mapper;
 import ti4.helpers.Constants;
-import ti4.helpers.Helper;
 import ti4.map.Game;
 import ti4.message.MessageHelper;
 import ti4.model.PublicObjectiveModel;
@@ -32,7 +31,7 @@ public class RevealSpecificStage1 extends CustomSubcommandData {
             return;
         }
         PublicObjectiveModel po = Mapper.getPublicObjective(objective.getKey());
-        MessageHelper.sendMessageToChannel(event.getChannel(), Helper.getGamePing(event, activeGame) + " **Stage 1 Public Objective Revealed**");
+        MessageHelper.sendMessageToChannel(event.getChannel(), activeGame.getPing() + " **Stage 1 Public Objective Revealed**");
         event.getChannel().sendMessageEmbeds(po.getRepresentationEmbed()).queue(m -> m.pin().queue());
     }
 }

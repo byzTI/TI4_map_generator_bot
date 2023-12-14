@@ -19,7 +19,7 @@
         "factionName": "The Vuil'raith Cabal",
         "shortTag": "VRC",
         "homeSystem": "54",
-        "startingFleet": "dn,cv,cr,3 ff,3 inf a,csd a",
+        "startingFleet": "dn,cv,cr,3 ff,3 inf a,sd a",
         "commodities": 2,
         "factionTech": ["dt2", "vtx"],
         "startingTech": ["sar"],
@@ -41,7 +41,7 @@
         "homePlanets": ["thedark"],
         "abilities": ["voidborn", "aetherpassage", "dark_whispers"],
         "leaders": ["empyreanagent", "empyreancommander", "empyreanhero"],
-        "promissoryNotes": ["dark_pact"],
+        "promissoryNotes": ["dark_pact", "blood_pact"],
         "units": ["fighter", "destroyer", "cruiser", "carrier", "dreadnought", "empyrean_flagship", "infantry", "empyrean_mech", "pds", "spacedock"],
         "source": "pok"
     },
@@ -92,5 +92,21 @@
         "promissoryNotes": ["bmf"],
         "units": ["fighter", "destroyer", "cruiser", "carrier", "dreadnought", "naaz_flagship", "infantry", "naaz_mech", "naaz_mech_space", "pds", "spacedock"],
         "source": "pok"
-    }
+    },
+    {
+        "alias": "titans",
+        "factionName": "The Titans of Ul",
+        "shortTag": "UL",
+        "homeSystem": "55",
+        "startingFleet": "dn,2 cr,2 ff,3 inf elysium,sd elysium",
+        "commodities": 2,
+        "factionTech": ["ht2", "se2"],
+        "startingTech": ["amd", "sdn"],
+        "homePlanets": ["elysium"],
+        "abilities": ["terragenesis", "awaken", "coalescence"],
+        "leaders": ["titansagent", "titanscommander", "titanshero"],
+        "promissoryNotes": ["terraform"],
+        "units": ["fighter", "destroyer", "titans_cruiser", "carrier", "dreadnought", "titans_flagship", "infantry", "titans_mech", "titans_pds", "spacedock"],
+        "source": "pok"
+      }
 ]

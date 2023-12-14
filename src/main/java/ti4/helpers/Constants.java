@@ -1,6 +1,6 @@
 package ti4.helpers;
 
-import java.awt.*;
+import java.awt.Point;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -55,6 +55,7 @@ public class Constants {
     public static final String NAALU_AGENT = "naalu_agent";
     public static final String L1_HERO = "l1_hero";
     public static final String NOMAD_COIN = "nomad_coin";
+    public static final String PURGED_FRAGMENTS = "purged_fragment";
     public static final String DOMINUS_ORB = "dominus_orb";
     public static final String COMPONENT_ACTION = "component_action";
     public static final String JUST_PLAYED_COMPONENT_AC = "just_played_component_ac";
@@ -463,6 +464,7 @@ public class Constants {
     public static final String PLANET5 = "planet5";
     public static final String PLANET6 = "planet6";
     public static final String TECH = "tech";
+    public static final String SPENT_THINGS = "spent_things";
     public static final String TEAMMATE_IDS = "teammate_ids";
     public static final String TECH_EXHAUSTED = "tech_exhausted";
     public static final String TECH2 = "tech2";
@@ -475,8 +477,10 @@ public class Constants {
     public static final String TG = "trade_goods";
     public static final String ACTUAL_HITS = "actual_hits";
     public static final String EXPECTED_HITS_TIMES_10 = "expected_hits_times_10";
+    public static final String TOTAL_EXPENSES = "total_expenses";
     public static final String TURN_COUNT = "turn_count";
     public static final String COMMODITIES = "commodities";
+    public static final String PERSONAL_PING_INTERVAL = "personal_ping_interval";
     public static final String COMMODITIES_TOTAL = "commodities_total";
     public static final String STASIS_INFANTRY = "stasis_infantry";
     public static final String AUTO_SABO_PASS_MEDIAN = "auto_sabo_pass_median";
@@ -492,6 +496,7 @@ public class Constants {
     public static final String AC_DISCARDED = "action_cards_discarded";
     public static final String AC_PURGED = "action_cards_purged";
     public static final String SO = "secret_objectives";
+    public static final String PRODUCED_UNITS = "produced_units";
     public static final String MESSAGEID_FOR_SABOS = "messageid_for_sabos";
     public static final String SECRET_OBJECTIVE = "secret_objective";
     public static final String SO_DECK = "so_deck";
@@ -867,6 +872,7 @@ public class Constants {
     public static final String BENTOR_HAS_FOUND_HFRAG = "has_found_hfrag";
     public static final String BENTOR_HAS_FOUND_IFRAG = "has_found_ifrag";
     public static final String BENTOR_HAS_FOUND_UFRAG = "has_found_ufrag";
+    public static final String LANEFIR_ATS_COUNT = "ats_count";
     public static final String GLEDGE_CORE_PNG = "token_ds_gledgecore.png";
     public static final String DS_COMMAND = "ds";
     public static final String ZELIAN_HERO = "zelian_hero";
@@ -923,6 +929,7 @@ public class Constants {
     public static final String MOD_HAS_FRAGILE = "has_ability_fragile";
     public static final String MOD_OPPONENT_NO_CC_FLEET = "opponent_no_cc_fleet";
     public static final String MOD_UNITS_TWO_MATCHING_NOT_FF = "units_two_matching_not_ff";
+    public static final String MOD_OPPONENT_NON_FIGHTER_SHIP = "opponent_non_fighter_ship";
 
     public static final String MIGRATION_NAME = "migration_name";
     public static final String RUN_MANUAL_DATA_MIGRATION = "run_manual_data_migration";
@@ -993,4 +1000,10 @@ public class Constants {
     public static final String PLAYER_TEMP_MODS = "PLAYER_TEMP_MODS";
     public static final String PLAYER_NEW_TEMP_MODS = "PLAYER_NEW_TEMP_MODS";
     public static final String ARCHIVE_CHANNELS = "archive_channels";
+    public static final String MILTYMOD_MODE = "miltymod_mode";
+    public static final String SEARCH_FACTIONS = "factions";
+    public static final String SEARCH_EVENTS = "events";
+    public static final String EVENT_PLAY = "play";
+    public static final String SEARCH_EMOJIS = "emojis";
+    public static final String INCLUDE_RAW_STRING = "include_raw_string";
 }
