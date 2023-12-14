@@ -54,7 +54,7 @@ public class PublicObjectiveModel implements ModelInterface, EmbeddableModel {
         eb.setTitle(title);
 
         //DESCRIPTION
-        eb.setDescription(getText());
+        eb.setDescription("__**" + getPhase() + " Phase**__\n" + getText());
 
         //FOOTER
         StringBuilder footer = new StringBuilder();
@@ -74,10 +74,15 @@ public class PublicObjectiveModel implements ModelInterface, EmbeddableModel {
     }
 
     public boolean search(String searchString) {
-        return getAlias().toLowerCase().contains(searchString) || getName().toLowerCase().contains(searchString) || getSearchTags().contains(searchString);
+        return getAlias().toLowerCase().contains(searchString)
+            || getName().toLowerCase().contains(searchString)
+            || getText().toLowerCase().contains(searchString)
+            || getPhase().toLowerCase().contains(searchString)
+            || getSource().toString().contains(searchString)
+            || getSearchTags().contains(searchString);
     }
 
     public String getAutoCompleteName() {
-        return getName() + " (" + getSource() + ")";
+        return getName() + " [" + getSource() + "]";
     }
 }
