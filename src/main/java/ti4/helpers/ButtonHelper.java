@@ -8566,4 +8566,13 @@ public class ButtonHelper {
         MessageHelper.sendMessageToChannelWithButtons(event.getMessageChannel(), message, systemButtons);
     }
 
+    public static void startDraft(MessageChannel channel) {
+        MessageHelper.sendMessageToChannel(channel, "Starting Draft");
+    }
+
+    public static void offerDraftButton(MessageChannel channel) {
+        List<Button> buttons = new ArrayList<>();
+        buttons.add(Button.danger("startDraft", "Start a Draft"));
+        MessageHelper.sendMessageToChannel(channel, "You may conduct a draft via Discord, once pressed you can select a draft method such as milty, bag, etc", buttons);
+    }
 }

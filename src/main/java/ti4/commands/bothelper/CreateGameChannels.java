@@ -240,6 +240,8 @@ public class CreateGameChannels extends BothelperSubcommandData {
             "Please keep this channel clear of any chat with other players. Ideally this channel is a nice clean ledger of what has physically happened in the game.\n";
         MessageHelper.sendMessageToChannelAndPin(actionsChannel, actionsGetStartedMessage);
         ButtonHelper.offerPlayerSetupButtons(actionsChannel);
+        ButtonHelper.offerDraftButton(actionsChannel);
+
 
         // INTRODUCTION TO BOT-MAP THREAD
         String botGetStartedMessage = role.getAsMention() + " - bot/map channel\n" +

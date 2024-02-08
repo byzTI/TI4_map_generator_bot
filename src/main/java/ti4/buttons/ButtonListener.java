@@ -3744,6 +3744,7 @@ public class ButtonListener extends ListenerAdapter {
                         MessageHelper.sendMessageToChannel(actionsChannel, pF + " " + message);
                     }
                 }
+                case "startDraft" -> ButtonHelper.startDraft(actionsChannel);
                 case "startPlayerSetup" -> ButtonHelper.resolveSetupStep0(player, activeGame, event);
                 case "gain_1_comm_from_MahactInf" -> {
                     String message;
