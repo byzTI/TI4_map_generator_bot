@@ -4,8 +4,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import ti4.commands.milty.MiltyDraftManager;
-import ti4.commands.milty.StartMilty;
+
+import ti4.commands.draft.milty.MiltyDraftManager;
+import ti4.commands.draft.milty.StartMilty;
 import ti4.draft.items.*;
 import ti4.generator.Mapper;
 import ti4.map.Game;

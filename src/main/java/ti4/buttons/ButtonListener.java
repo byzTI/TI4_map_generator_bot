@@ -42,6 +42,7 @@ import ti4.commands.combat.StartCombat;
 import ti4.commands.custom.PeakAtStage1;
 import ti4.commands.custom.PeakAtStage2;
 import ti4.commands.draft.Draft;
+import ti4.commands.draft.milty.StartMilty;
 import ti4.commands.ds.TrapReveal;
 import ti4.commands.ds.ZelianHero;
 import ti4.commands.explore.DrawRelic;
@@ -3748,6 +3749,10 @@ public class ButtonListener extends ListenerAdapter {
                 case "startDraft" -> {
                     Draft draft = new Draft();
                     draft.execute(null);  
+                }
+                case "draftMilty" -> {
+                    StartMilty startMilty = new StartMilty();
+                    startMilty.execute(event);
                 }
                 case "startPlayerSetup" -> ButtonHelper.resolveSetupStep0(player, activeGame, event);
                 case "gain_1_comm_from_MahactInf" -> {

@@ -1,4 +1,4 @@
-package ti4.commands.milty;
+package ti4.commands.draft.milty;
 
 public enum TierList {
     high("high"),

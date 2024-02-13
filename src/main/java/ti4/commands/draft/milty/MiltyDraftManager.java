@@ -1,4 +1,4 @@
-package ti4.commands.milty;
+package ti4.commands.draft.milty;
 
 import ti4.map.Player;
 

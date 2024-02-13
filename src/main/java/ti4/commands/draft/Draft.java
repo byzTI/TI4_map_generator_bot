@@ -47,6 +47,7 @@ import ti4.message.BotLogger;
 import ti4.message.MessageHelper;
 import ti4.model.TileModel;
 import ti4.model.WormholeModel;
+import ti4.commands.draft.milty.*;
 
 public class Draft extends DraftSubcommandData {
 
@@ -60,7 +61,8 @@ public class Draft extends DraftSubcommandData {
     @Override
     public void execute(SlashCommandInteractionEvent event) {
         
-        Game activeGame = getActiveGame();
-        MessageHelper.sendMessageToChannel(event.getMessageChannel(), "Starting Draft");
+        List<Button> buttons = new ArrayList<>();
+        buttons.add(Button.primary("startDraft", "Start a Draft"));
+        MessageHelper.sendMessageToChannel(channel, "You may conduct a draft via Discord, once pressed you can select a draft method such as milty, bag, etc", buttons);
     }   
 }

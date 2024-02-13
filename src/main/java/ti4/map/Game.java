@@ -45,7 +45,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.Nullable;
 import ti4.AsyncTI4DiscordBot;
 import ti4.commands.cardsso.SOInfo;
-import ti4.commands.milty.MiltyDraftManager;
+import ti4.commands.draft.milty.MiltyDraftManager;
 import ti4.commands.planet.PlanetRemove;
 import ti4.draft.BagDraft;
 import ti4.generator.Mapper;
