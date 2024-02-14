@@ -70,23 +70,27 @@ public class DraftBag {
 
     public void openBagToPlayer(Player player) {
         ThreadChannel channel = getThread();
-        boolean playerAlreadyPresent = false;
-        for (var member : channel.getMembers()) {
-            if (member.getUser().getId().equals(player.getUserID())) {
-                playerAlreadyPresent = true;
-                continue;
+        channel.retrieveThreadMembers().onSuccess(threadMembers -> {
+            boolean playerIsCurrentMember = false;
+            for (var member : threadMembers) {
+                String id = member.getUser().getId();
+                if (id.equals(player.getUserID())) {
+                    playerIsCurrentMember = true;
+                    continue;
+                }
+                if (id.equals(channel.getOwner().getId())) {
+                    continue;
+                }
+                channel.removeThreadMember(member.getUser()).queue();
             }
-            if (member == channel.getOwner()) {
-                continue;
+            if (!playerIsCurrentMember) {
+                channel.addThreadMemberById(player.getUserID()).queue();
             }
-            channel.removeThreadMember(member).queue();
-        }
-        if (!playerAlreadyPresent) {
-            channel.addThreadMemberById(player.getUserID()).queue();
-        }
-        channel.retrieveStartMessage().onSuccess(message ->
-            message.editMessage("# " + Name + '\n' + "Currently held by: " + player.getPing()).queue()
-        ).queue();
+            channel.retrieveStartMessage().onSuccess(message ->
+                    message.editMessage("# " + Name + '\n' + "Currently held by: " + player.getPing()).queue()
+            ).queue();
+        }).queue();
+
     }
 
     @JsonIgnore

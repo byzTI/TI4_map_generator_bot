@@ -22,6 +22,9 @@ public class FrankenDraftCardsPhase extends DraftPhase {
     @JsonInclude
     private List<String> draftOrder = new ArrayList<>();
 
+    @JsonInclude
+    private String lastPassMessageId;
+
     @Override
     public void onPhaseEnd() {
 
@@ -30,6 +33,15 @@ public class FrankenDraftCardsPhase extends DraftPhase {
     @Override
     public void onPhaseStart() {
         generateBags();
+        openAllBags();
+        Draft.Game.getMainGameChannel().sendMessage("*Bags have been distributed. Please select 3 cards to draft. " +
+                "After this, you will select at most 2 cards each round.*").queue(message -> lastPassMessageId = message.getId());
+    }
+
+    public void passBags() {
+        PassCount++;
+        Draft.Game.getMainGameChannel().sendMessage("*Bags have been passed. Please select 2 cards to draft. " +
+                "This was the " + FrankenUtils.IntToOrdinal(PassCount) + " round of cards.*").queue(message -> lastPassMessageId = message.getId());
         openAllBags();
     }
 
@@ -87,12 +99,7 @@ public class FrankenDraftCardsPhase extends DraftPhase {
                 // ... and pull out the appropriate number of items from its collection...
                 for (int j = 0; j < categoryLimit; j++) {
                     // ... and add it to the bag.
-                    try {
-                        bag.Contents.add(draftableCollection.getValue().remove(0));
-                    }
-                    catch (Exception e) {
-                        boolean b = true;
-                    }
+                    bag.Contents.add(draftableCollection.getValue().remove(0));
                 }
             }
 

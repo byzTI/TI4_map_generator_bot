@@ -57,4 +57,12 @@ public class FrankenUtils {
         return allDraftableItems;
     }
 
+    public static String IntToOrdinal(int i) {
+        // Yeehaw Stackoverflow: https://stackoverflow.com/questions/6810336/is-there-a-way-in-java-to-convert-an-integer-to-its-ordinal-name
+        String[] suffixes = new String[] { "th", "st", "nd", "rd", "th", "th", "th", "th", "th", "th" };
+        return switch (i % 100) {
+            case 11, 12, 13 -> i + "th";
+            default -> i + suffixes[i % 10];
+        };
+    }
 }

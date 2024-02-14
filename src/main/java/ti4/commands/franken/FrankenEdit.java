@@ -7,6 +7,7 @@ import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import ti4.draft.DraftBag;
 import ti4.draft.DraftItem;
+import ti4.draft.phases.FrankenDraftCardsPhase;
 import ti4.helpers.Constants;
 import ti4.helpers.BagDraftHelper;
 import ti4.map.Game;
@@ -52,7 +53,10 @@ public class FrankenEdit extends FrankenSubcommandData {
         }
 
         if ("forceSwap".equals(command)) {
-            //BagDraftHelper.passBags(activeGame);
+            if (!(activeGame.getActiveBagDraft().CurrentPhase instanceof FrankenDraftCardsPhase phase)) {
+                return;
+            }
+            phase.passBags();
             GameSaveLoadManager.saveMap(activeGame, event);
             return;
         }
