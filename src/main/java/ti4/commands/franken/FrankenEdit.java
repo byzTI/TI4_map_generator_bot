@@ -8,7 +8,7 @@ import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import ti4.draft.DraftBag;
 import ti4.draft.DraftItem;
 import ti4.helpers.Constants;
-import ti4.helpers.FrankenDraftHelper;
+import ti4.helpers.BagDraftHelper;
 import ti4.map.Game;
 import ti4.map.GameSaveLoadManager;
 import ti4.map.Player;
@@ -52,7 +52,7 @@ public class FrankenEdit extends FrankenSubcommandData {
         }
 
         if ("forceSwap".equals(command)) {
-            FrankenDraftHelper.passBags(activeGame);
+            //BagDraftHelper.passBags(activeGame);
             GameSaveLoadManager.saveMap(activeGame, event);
             return;
         }

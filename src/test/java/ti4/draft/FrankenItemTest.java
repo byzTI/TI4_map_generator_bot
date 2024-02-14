@@ -3,7 +3,6 @@ package ti4.draft;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import ti4.draft.items.*;
 import ti4.generator.Mapper;
 import ti4.generator.PositionMapper;
 import ti4.generator.TileHelper;
@@ -13,6 +12,7 @@ import ti4.model.FactionModel;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
@@ -30,14 +30,14 @@ public class FrankenItemTest {
 
     @Test
     public void testAllCardsGenerateSuccessfully() {
-        var factions = FrankenDraft.getAllFrankenLegalFactions();
-        assertDoesNotThrow(() -> generateAllCards(factions));
+        var factions = FrankenUtils.getAllFrankenLegalFactions();
+        assertDoesNotThrow(() -> getAllCards(factions));
     }
 
     @Test
     public void testAllCardsHaveValidShortNames() {
-        var factions = FrankenDraft.getAllFrankenLegalFactions();
-        var cards = generateAllCards(factions);
+        var factions = FrankenUtils.getAllFrankenLegalFactions();
+        var cards = getAllCards(factions);
         for (var card: cards) {
             assert !card.getShortDescription().isEmpty() : card.getAlias();
         };
@@ -45,8 +45,8 @@ public class FrankenItemTest {
 
     @Test
     public void testAllCardsHaveValidLongNames() {
-        var factions = FrankenDraft.getAllFrankenLegalFactions();
-        var cards = generateAllCards(factions);
+        var factions = FrankenUtils.getAllFrankenLegalFactions();
+        var cards = getAllCards(factions);
         for (var card: cards) {
             try {
                 assert !card.getLongDescription().isEmpty() : card.getAlias();
@@ -60,8 +60,8 @@ public class FrankenItemTest {
 
     @Test
     public void testAllCardsHaveValidEmoji() {
-        var factions = FrankenDraft.getAllFrankenLegalFactions();
-        var cards = generateAllCards(factions);
+        var factions = FrankenUtils.getAllFrankenLegalFactions();
+        var cards = getAllCards(factions);
         for (var card: cards) {
             assert !card.getItemEmoji().isEmpty() : card.getAlias();
         };
@@ -69,8 +69,8 @@ public class FrankenItemTest {
 
     @Test
     public void errataFileSanityTest() {
-        var factions = FrankenDraft.getAllFrankenLegalFactions();
-        var cards = generateAllCards(factions);
+        var factions = FrankenUtils.getAllFrankenLegalFactions();
+        var cards = getAllCards(factions);
         for (var card: cards) {
             // PoK
             assert(!card.getAlias().equals("ABILITY:mitosis"));
@@ -90,21 +90,13 @@ public class FrankenItemTest {
         }
     }
 
-    private List<DraftItem> generateAllCards(List<FactionModel> factions) {
-        List<DraftItem> items = new ArrayList<>();
-        items.addAll(AbilityDraftItem.buildAllDraftableItems(factions));
-        items.addAll(TechDraftItem.buildAllDraftableItems(factions));
-        items.addAll(AgentDraftItem.buildAllDraftableItems(factions));
-        items.addAll(CommanderDraftItem.buildAllDraftableItems(factions));
-        items.addAll(HeroDraftItem.buildAllDraftableItems(factions));
-        items.addAll(HomeSystemDraftItem.buildAllDraftableItems(factions));
-        items.addAll(PNDraftItem.buildAllDraftableItems(factions));
-        items.addAll(CommoditiesDraftItem.buildAllDraftableItems(factions));
-        items.addAll(StartingTechDraftItem.buildAllDraftableItems(factions));
-        items.addAll(StartingFleetDraftItem.buildAllDraftableItems(factions));
-        items.addAll(FlagshipDraftItem.buildAllDraftableItems(factions));
-        items.addAll(MechDraftItem.buildAllDraftableItems(factions));
+    private List<DraftItem> getAllCards(List<FactionModel> factions) {
+        List<DraftItem> allCards = new ArrayList<>();
+        Map<DraftItem.Category, List<DraftItem>> cardsByCategory = FrankenUtils.generateAllCards(factions);
+        for (Map.Entry<DraftItem.Category, List<DraftItem>> entry : cardsByCategory.entrySet()) {
+            allCards.addAll(entry.getValue());
+        }
 
-        return items;
+        return allCards;
     }
 }

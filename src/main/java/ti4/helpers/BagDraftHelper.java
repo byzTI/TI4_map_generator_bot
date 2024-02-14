@@ -17,7 +17,7 @@ import ti4.map.GameSaveLoadManager;
 import ti4.map.Player;
 import ti4.message.MessageHelper;
 
-public class FrankenDraftHelper {
+public class BagDraftHelper {
 
     public static final String ActionName = "frankenDraftAction;";
 
@@ -44,9 +44,14 @@ public class FrankenDraftHelper {
         return buttons;
     }
 
-    public static void resolveFrankenDraftAction(Game activeGame, Player player, ButtonInteractionEvent event, String buttonID) {
+    public static void processDraftAction(Game activeGame, Player player, ButtonInteractionEvent event, String buttonID) {
         String action = buttonID.split(";")[1];
         BagDraft draft = activeGame.getActiveBagDraft();
+
+        /*
+        if (draft != null) {
+            draft.CurrentPhase.processCommandString(action);
+        }
 
         if (!action.contains(":")) {
             switch (action) {
@@ -250,5 +255,8 @@ public class FrankenDraftHelper {
             " cleared away when you pick, others may remain. Please just leave those buttons be and use any new buttons generated. Once you have made your 2 picks (3 in the first bag), the bags will automatically be passed once everyone is ready.");
 
         GameSaveLoadManager.saveMap(activeGame);
+    }
+
+         */
     }
 }

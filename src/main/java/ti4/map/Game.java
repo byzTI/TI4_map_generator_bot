@@ -462,6 +462,7 @@ public class Game {
 
     public void setBagDraft(BagDraft draft) {
         activeDraft = draft;
+        activeDraft.Game = this;
     }
 
     public void addActionCardDuplicates(List<String> ACs) {

@@ -1,43 +1,59 @@
 package ti4.draft;
 
+import java.util.ArrayList;
 import java.util.List;
-import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
-import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
-import net.dv8tion.jda.api.interactions.components.buttons.Button;
-import net.dv8tion.jda.api.requests.restaction.ThreadChannelAction;
-import ti4.AsyncTI4DiscordBot;
-import ti4.helpers.Constants;
-import ti4.helpers.FrankenDraftHelper;
-import ti4.map.Game;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import ti4.map.Player;
-import ti4.message.BotLogger;
-import ti4.message.MessageHelper;
 
-public abstract class BagDraft {
-    protected final Game owner;
+public class BagDraft {
 
-    public static BagDraft GenerateDraft(String draftType, Game game) {
-        if ("franken".equals(draftType)) {
-            return new FrankenDraft(game);
-        } else if ("powered_franken".equals(draftType)) {
-            return new PoweredFrankenDraft(game);
+    public static final String COMMAND_PREFIX = "bagDraft;";
+
+    @JsonIgnore
+    public ti4.map.Game Game;
+
+    @JsonManagedReference
+    public List<DraftPhase> UnstartedPhases = new ArrayList<>();
+    @JsonManagedReference
+    public DraftPhase CurrentPhase;
+    @JsonManagedReference
+    public List<DraftPhase> CompletedPhases = new ArrayList<>();
+
+    public void queuePhase(DraftPhase phase) {
+        UnstartedPhases.add(phase);
+        phase.Draft = this;
+    }
+
+    public boolean startNextPhase() {
+        if (CurrentPhase != null) {
+            CurrentPhase.onPhaseEnd();
+            CompletedPhases.add(CurrentPhase);
         }
 
-        return null;
+        if (UnstartedPhases.isEmpty()) {
+            CurrentPhase = null;
+            return false;
+        }
+
+        CurrentPhase = UnstartedPhases.remove(0);
+        CurrentPhase.onPhaseStart();
+        return true;
     }
 
-    public BagDraft(Game owner) {
-        this.owner = owner;
+    public String toSaveString() {
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            return mapper.writeValueAsString(this);
+        } catch (JsonProcessingException e) {
+            return "";
+        }
     }
 
-    public abstract int getItemLimitForCategory(DraftItem.Category category);
-
-    public abstract String getSaveString();
-
-    public abstract List<DraftBag> generateBags(Game game);
-
-    public abstract int getBagSize();
-
+/*
     public boolean isDraftStageComplete() {
         List<Player> players = owner.getRealPlayers();
         for (Player p : players) {
@@ -68,7 +84,7 @@ public abstract class BagDraft {
         }
         player.setReadyToPassBag(!newBagCanBeDraftedFrom);
         MessageHelper.sendMessageToChannelWithButtons(player.getCardsInfoThread(), player.getRepresentation(true, true) + " you have been passed a new draft bag!",
-            Button.secondary(FrankenDraftHelper.ActionName + "show_bag", "Click here to show your current bag"));
+            Button.secondary(BagDraftHelper.ActionName + "show_bag", "Click here to show your current bag"));
     }
 
     public boolean allPlayersReadyToPass() {
@@ -231,6 +247,7 @@ public abstract class BagDraft {
         }
         return null;
     }
+    */
 
     public boolean playerHasItemInQueue(Player p) {
         return !p.getDraftQueue().Contents.isEmpty();

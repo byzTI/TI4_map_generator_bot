@@ -65,9 +65,9 @@ import ti4.commands.status.RevealStage1;
 import ti4.commands.status.RevealStage2;
 import ti4.commands.status.ScorePublic;
 import ti4.commands.tokens.AddCC;
-import ti4.commands.uncategorized.CardsInfo;
 import ti4.commands.uncategorized.ShowGame;
 import ti4.commands.units.AddUnits;
+import ti4.draft.BagDraft;
 import ti4.generator.GenerateTile;
 import ti4.generator.Mapper;
 import ti4.helpers.AgendaHelper;
@@ -84,7 +84,7 @@ import ti4.helpers.CombatModHelper;
 import ti4.helpers.Constants;
 import ti4.helpers.Emojis;
 import ti4.helpers.FoWHelper;
-import ti4.helpers.FrankenDraftHelper;
+import ti4.helpers.BagDraftHelper;
 import ti4.helpers.Helper;
 import ti4.helpers.Units.UnitType;
 import ti4.map.Game;
@@ -2200,8 +2200,8 @@ public class ButtonListener extends ListenerAdapter {
             ButtonHelperFactionSpecific.replacePDSWithFS(buttonID, event, activeGame, player, ident);
         } else if (buttonID.startsWith("putSleeperOnPlanet_")) {
             ButtonHelperAbilities.putSleeperOn(buttonID, event, activeGame, player, ident);
-        } else if (buttonID.startsWith("frankenDraftAction;")) {
-            FrankenDraftHelper.resolveFrankenDraftAction(activeGame, player, event, buttonID);
+        } else if (buttonID.startsWith("frankenDraftAction;") || buttonID.startsWith(BagDraft.COMMAND_PREFIX)) {
+            BagDraftHelper.processDraftAction(activeGame, player, event, buttonID);
         } else if (buttonID.startsWith("presetEdynAgentStep1")) {
             ButtonHelperAgents.presetEdynAgentStep1(activeGame, player);
         } else if (buttonID.startsWith("presetEdynAgentStep2_")) {

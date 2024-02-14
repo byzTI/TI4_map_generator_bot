@@ -36,7 +36,6 @@ import org.jetbrains.annotations.Nullable;
 import ti4.commands.cardsac.ACInfo;
 import ti4.commands.cardspn.PNInfo;
 import ti4.commands.cardsso.SOInfo;
-import ti4.draft.BagDraft;
 import ti4.generator.PositionMapper;
 import ti4.helpers.ButtonHelper;
 import ti4.helpers.Constants;
@@ -604,7 +603,7 @@ public class GameSaveLoadManager {
         writer.write(Constants.EXPLORATION_DECK_ID + " " + activeGame.getExplorationDeckID());
         writer.write(System.lineSeparator());
 
-        writer.write(Constants.BAG_DRAFT + " " + (activeGame.getActiveBagDraft() == null ? "" : activeGame.getActiveBagDraft().getSaveString()));
+        writer.write(Constants.BAG_DRAFT + " " + (activeGame.getActiveBagDraft() == null ? "" : activeGame.getActiveBagDraft().toSaveString()));
         writer.write(System.lineSeparator());
 
         writer.write(Constants.STRATEGY_CARD_SET + " " + activeGame.getScSetID());
@@ -1846,7 +1845,7 @@ public class GameSaveLoadManager {
                 }
                 case Constants.BAG_DRAFT -> {
                     try {
-                        activeGame.setBagDraft(BagDraft.GenerateDraft(info, activeGame));
+                        //activeGame.setBagDraft(BagDraft.GenerateDraft(info, activeGame));
                     } catch (Exception e) {
                         //Do nothing
                     }
