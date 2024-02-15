@@ -761,6 +761,8 @@ public class Constants {
     public static final String ACTIONS_CHANNEL_SUFFIX = "-actions";
     public static final String CARDS_INFO_THREAD_PREFIX = "Cards Info-";
     public static final String BAG_INFO_THREAD_PREFIX = "Draft Bag-";
+
+    public static final String DRAFT_HAND_THREAD_PREFIX = "Draft Hand-";
     public static final String BOT_CHANNEL_SUFFIX = "-bot-map-updates";
     public static final String PING = "ping";
     public static final String PING_ACTIVE_PLAYER = "ping_active_player";

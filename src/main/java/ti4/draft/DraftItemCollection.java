@@ -1,13 +1,13 @@
 package ti4.draft;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
 import net.dv8tion.jda.api.requests.RestAction;
 import net.dv8tion.jda.api.requests.restaction.ThreadChannelAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import ti4.helpers.Constants;
 import ti4.map.Player;
 import ti4.message.BotLogger;
 
@@ -25,6 +25,9 @@ public abstract class DraftItemCollection {
     @JsonIgnore
     public Player CurrentHolder;
 
+    @JsonInclude
+    protected String headerMessageId;
+
 
     public String toStoreString()
     {
@@ -37,20 +40,13 @@ public abstract class DraftItemCollection {
         return sb.toString();
     }
 
-    @JsonIgnore
-    public int getCategoryCount(DraftItem.Category cat) {
-        int count = 0;
-        for (DraftItem item: Contents) {
-            if (item.ItemCategory == cat) {
-                count++;
-            }
-        }
-        return count;
-    }
-
-
     public RestAction<Void> addCardAsync(DraftItem card) {
         Contents.add(card);
+        return sendCardAsync(card);
+    }
+
+    @NotNull
+    private RestAction<Void> sendCardAsync(DraftItem card) {
         ThreadChannel thread = getThread();
         if (thread == null) {
             TextChannel primaryBotLogChannel = BotLogger.getPrimaryBotLogChannel();
@@ -65,7 +61,7 @@ public abstract class DraftItemCollection {
         } catch (Exception e) {
             sb.append("ERROR BUILDING DESCRIPTION FOR ").append(card.getAlias());
         }
-        return thread.sendMessage(sb.toString()).and(thread.getParentChannel().asTextChannel().sendTyping());
+        return thread.sendMessage(sb.toString()).onSuccess(message -> card.messageId = message.getId()).and(thread.getParentChannel().asTextChannel().sendTyping());
     }
 
     public RestAction<Void> removeCardAsync(DraftItem card) {
@@ -84,18 +80,9 @@ public abstract class DraftItemCollection {
     }
 
     private RestAction<Void> showAllCardsAsync(ThreadChannel channel) {
-        RestAction action = channel.sendMessage("# " + Name);
+        RestAction<Void> action = channel.sendMessage("# " + Name).onSuccess(message -> headerMessageId = message.getId()).and(channel.getParentChannel().asTextChannel().sendTyping());
         for (DraftItem item : Contents) {
-            StringBuilder sb = new StringBuilder();
-            try {
-                sb.append("### ").append(item.getItemEmoji()).append(" ");
-                sb.append(item.getShortDescription()).append("\n - ");
-                sb.append(item.getLongDescription());
-            } catch (Exception e) {
-                sb.append("ERROR BUILDING DESCRIPTION FOR ").append(item.getAlias());
-            }
-            action = action.and(channel.sendMessage(sb.toString()).onSuccess(message -> item.messageId = message.getId()));
-            action = action.and(channel.getParentChannel().asTextChannel().sendTyping());
+            action = action.and(sendCardAsync(item));
         }
 
         return action;
@@ -114,9 +101,11 @@ public abstract class DraftItemCollection {
             member.getThread().removeThreadMember(member.getUser()).queue();
             return true;
         }).thenAccept(x->
-            channel.addThreadMemberById(player.getUserID())
+            channel.addThreadMemberById(player.getUserID()).queue(unused -> afterBagOpen(player))
         );
     }
+
+    protected abstract void afterBagOpen(Player player);
 
     @JsonIgnore
     public ThreadChannel getThread() {
@@ -146,13 +135,16 @@ public abstract class DraftItemCollection {
         boolean isPrivateChannel = true;
         ThreadChannelAction threadCreationAction = actionsChannel.createThreadChannel(getChannelName(), isPrivateChannel);
         threadCreationAction.setInvitable(false);
-        threadCreationAction.setAutoArchiveDuration(ThreadChannel.AutoArchiveDuration.TIME_24_HOURS);
+        threadCreationAction.setAutoArchiveDuration(getArchiveDuration());
         return threadCreationAction;
     }
 
     @NotNull
     @JsonIgnore
-    private String getChannelName() {
-        return Constants.BAG_INFO_THREAD_PREFIX + Draft.Game.getName() + "-" + Name;
-    }
+    protected abstract ThreadChannel.AutoArchiveDuration getArchiveDuration();
+
+    @NotNull
+    @JsonIgnore
+    protected abstract String getChannelName();
+
 }

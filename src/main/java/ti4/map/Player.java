@@ -1638,7 +1638,7 @@ public class Player {
         return draftHand;
     }
 
-    public void setDraftHand(DraftItemCollection hand) {
+    public void setDraftHand(DraftHand hand) {
         draftHand = hand;
     }
 
@@ -1646,12 +1646,12 @@ public class Player {
         return currentDraftBag;
     }
 
-    public void setCurrentDraftBag(DraftItemCollection bag) {
+    public void setCurrentDraftBag(DraftBag bag) {
         currentDraftBag = bag;
     }
 
     public DraftItemCollection getDraftQueue() {
-        return draftItemQueue;
+        return new DraftBag();
     }
 
     public boolean hasTech(String techID) {
@@ -1687,7 +1687,7 @@ public class Player {
     }
 
     public void loadDraftHand(List<String> saveString) {
-        DraftItemCollection newBag = new DraftItemCollection();
+        DraftHand newBag = new DraftHand();
         for (String item : saveString) {
             newBag.Contents.add(DraftItem.GenerateFromAlias(item));
         }
@@ -1695,7 +1695,7 @@ public class Player {
     }
 
     public void loadCurrentDraftBag(List<String> saveString) {
-        DraftItemCollection newBag = new DraftItemCollection();
+        DraftBag newBag = new DraftBag();
         for (String item : saveString) {
             newBag.Contents.add(DraftItem.GenerateFromAlias(item));
         }
@@ -1707,15 +1707,15 @@ public class Player {
         for (String item : saveString) {
             items.add(DraftItem.GenerateFromAlias(item));
         }
-        draftItemQueue.Contents = items;
+        //draftItemQueue.Contents = items;
     }
 
     public void queueDraftItem(DraftItem item) {
-        draftItemQueue.Contents.add(item);
+
     }
 
     public void resetDraftQueue() {
-        draftItemQueue.Contents.clear();
+
     }
 
     @JsonIgnore

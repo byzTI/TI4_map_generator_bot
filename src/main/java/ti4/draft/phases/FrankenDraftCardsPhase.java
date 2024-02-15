@@ -1,14 +1,19 @@
 package ti4.draft.phases;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
+import net.dv8tion.jda.api.requests.RestAction;
 import ti4.commands.milty.MiltyDraftManager;
 import ti4.commands.milty.StartMilty;
 import ti4.draft.*;
 import ti4.draft.items.*;
+import ti4.map.GameManager;
+import ti4.map.GameSaveLoadManager;
 import ti4.map.Player;
 import ti4.message.MessageHelper;
 
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 
 public class FrankenDraftCardsPhase extends DraftPhase {
 
@@ -31,26 +36,37 @@ public class FrankenDraftCardsPhase extends DraftPhase {
     public void onPhaseStart() {
         generateBags();
 
+        Collection<RestAction<Void>> setupActions = new ArrayList<>();
         for (Player p : Draft.Game.getRealPlayers()) {
             DraftBag bag = Bags.get(p.getUserID());
 
+            RestAction<ThreadChannel> threadGenerator;
             if (bag.getExistingThread() != null) {
-                bag.getThread().delete().queue(unused -> {
-                    bag.createThread().queue((threadChannel -> {
-                        bag.populateBagThreadAsync().queue(u -> {
-                            openBagForPlayer(p);
-                        });
-                    }));
-                });
+                threadGenerator = bag.getThread().delete().flatMap(unused -> bag.createThread());
             }
             else {
-                bag.createThread().queue((threadChannel -> {
-                    bag.populateBagThreadAsync().queue(unused -> {
-                        openBagForPlayer(p);
-                    });
-                }));
+                threadGenerator = bag.createThread();
             }
+
+            RestAction<Void> bagPopulator = threadGenerator.flatMap(threadChannel -> bag.populateBagThreadAsync());
+            bagPopulator = bagPopulator.onSuccess(unused -> openBagForPlayer(p));
+            setupActions.add(bagPopulator);
+
+            DraftItemCollection draftHand = p.getDraftHand();
+            draftHand.Draft = Draft;
+            draftHand.Name = p.getUserName() + " Hand";
+            if (draftHand.getExistingThread() != null) {
+                threadGenerator = draftHand.getThread().delete().flatMap(unused -> draftHand.createThread());
+            }
+            else {
+                threadGenerator = draftHand.createThread();
+            }
+
+            RestAction<Void> handPopulator = threadGenerator.flatMap(threadChannel -> draftHand.populateBagThreadAsync());
+            handPopulator = handPopulator.onSuccess(unused -> openHandForPlayer(p));
+            setupActions.add(handPopulator);
         }
+        RestAction.allOf(setupActions).onSuccess(unused -> GameSaveLoadManager.saveMap(Draft.Game)).queue();
         Draft.Game.getMainGameChannel().sendMessage("*Bags are being distributed. Please select 3 cards to draft. " +
                 "After this, you will select at most 2 cards each round.*").queue(message -> lastPassMessageId = message.getId());
     }
@@ -75,6 +91,10 @@ public class FrankenDraftCardsPhase extends DraftPhase {
 
         String draftingBagId = draftOrder.get(bagIdx);
         Bags.get(draftingBagId).showBagToPlayer(player);
+    }
+
+    public void openHandForPlayer(Player player) {
+        player.getDraftHand().showBagToPlayer(player);
     }
 
     @Override
