@@ -1,21 +1,17 @@
 package ti4.helpers;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
+
 import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle;
 import ti4.draft.BagDraft;
-import ti4.draft.DraftBag;
 import ti4.draft.DraftItem;
 import ti4.map.Game;
-import ti4.map.GameSaveLoadManager;
 import ti4.map.Player;
-import ti4.message.MessageHelper;
 
 public class BagDraftHelper {
 

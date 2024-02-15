@@ -1,22 +1,14 @@
 package ti4.draft.phases;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import net.dv8tion.jda.api.requests.RestAction;
-import net.dv8tion.jda.api.requests.restaction.ThreadChannelAction;
 import ti4.commands.milty.MiltyDraftManager;
 import ti4.commands.milty.StartMilty;
-import ti4.draft.DraftBag;
-import ti4.draft.DraftItem;
-import ti4.draft.DraftPhase;
-import ti4.draft.FrankenUtils;
+import ti4.draft.*;
 import ti4.draft.items.*;
 import ti4.map.Player;
-import ti4.message.BotLogger;
 import ti4.message.MessageHelper;
 
 import java.util.*;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 public class FrankenDraftCardsPhase extends DraftPhase {
 
@@ -82,7 +74,7 @@ public class FrankenDraftCardsPhase extends DraftPhase {
         bagIdx %= draftOrder.size();
 
         String draftingBagId = draftOrder.get(bagIdx);
-        Bags.get(draftingBagId).openBagToPlayer(player);
+        Bags.get(draftingBagId).showBagToPlayer(player);
     }
 
     @Override

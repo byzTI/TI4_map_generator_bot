@@ -32,6 +32,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import ti4.AsyncTI4DiscordBot;
 import ti4.draft.DraftBag;
+import ti4.draft.DraftHand;
+import ti4.draft.DraftItemCollection;
 import ti4.draft.DraftItem;
 import ti4.generator.Mapper;
 import ti4.helpers.AliasHandler;
@@ -112,9 +114,8 @@ public class Player {
     @Getter
     @Setter
     private List<String> factionTechs = new ArrayList<>();
-    private DraftBag draftHand = new DraftBag();
+    private DraftHand draftHand = new DraftHand();
     private DraftBag currentDraftBag = new DraftBag();
-    private final DraftBag draftItemQueue = new DraftBag();
     private List<String> exhaustedTechs = new ArrayList<>();
     private List<String> planets = new ArrayList<>();
     private List<String> exhaustedPlanets = new ArrayList<>();
@@ -1633,23 +1634,23 @@ public class Player {
         return getFactionTechs().stream().filter(tech -> !hasTech(tech)).toList();
     }
 
-    public DraftBag getDraftHand() {
+    public DraftItemCollection getDraftHand() {
         return draftHand;
     }
 
-    public void setDraftHand(DraftBag hand) {
+    public void setDraftHand(DraftItemCollection hand) {
         draftHand = hand;
     }
 
-    public DraftBag getCurrentDraftBag() {
+    public DraftItemCollection getCurrentDraftBag() {
         return currentDraftBag;
     }
 
-    public void setCurrentDraftBag(DraftBag bag) {
+    public void setCurrentDraftBag(DraftItemCollection bag) {
         currentDraftBag = bag;
     }
 
-    public DraftBag getDraftQueue() {
+    public DraftItemCollection getDraftQueue() {
         return draftItemQueue;
     }
 
@@ -1686,7 +1687,7 @@ public class Player {
     }
 
     public void loadDraftHand(List<String> saveString) {
-        DraftBag newBag = new DraftBag();
+        DraftItemCollection newBag = new DraftItemCollection();
         for (String item : saveString) {
             newBag.Contents.add(DraftItem.GenerateFromAlias(item));
         }
@@ -1694,7 +1695,7 @@ public class Player {
     }
 
     public void loadCurrentDraftBag(List<String> saveString) {
-        DraftBag newBag = new DraftBag();
+        DraftItemCollection newBag = new DraftItemCollection();
         for (String item : saveString) {
             newBag.Contents.add(DraftItem.GenerateFromAlias(item));
         }

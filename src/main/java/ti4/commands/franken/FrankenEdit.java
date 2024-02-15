@@ -5,11 +5,10 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
-import ti4.draft.DraftBag;
+import ti4.draft.DraftItemCollection;
 import ti4.draft.DraftItem;
 import ti4.draft.phases.FrankenDraftCardsPhase;
 import ti4.helpers.Constants;
-import ti4.helpers.BagDraftHelper;
 import ti4.map.Game;
 import ti4.map.GameSaveLoadManager;
 import ti4.map.Player;
@@ -68,7 +67,7 @@ public class FrankenEdit extends FrankenSubcommandData {
         }
         Player editingPlayer = activeGame.getPlayer(playerOption.getAsUser().getId());
 
-        DraftBag editingBag = null;
+        DraftItemCollection editingBag = null;
         String bagName = "";
         if (command.contains("Bag")) {
             editingBag = editingPlayer.getCurrentDraftBag();
@@ -105,7 +104,7 @@ public class FrankenEdit extends FrankenSubcommandData {
         GameSaveLoadManager.saveMap(activeGame, event);
     }
 
-    private void dmPlayerBag(Game game, Player player, DraftBag bag, String bagName) {
+    private void dmPlayerBag(Game game, Player player, DraftItemCollection bag, String bagName) {
         StringBuilder sb = new StringBuilder();
         sb.append(game.getName()).append(" ").append(player.getUserName()).append(" Current ").append(bagName).append(":\n");
         for (DraftItem item : bag.Contents) {

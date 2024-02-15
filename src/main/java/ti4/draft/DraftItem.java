@@ -61,6 +61,8 @@ public abstract class DraftItem implements ModelInterface {
     @JsonIgnore
     public DraftErrataModel Errata;
 
+    public String messageId;
+
     public static DraftItem Generate(Category category, String itemId) {
         DraftItem item = null;
         switch (category) {

@@ -15,7 +15,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import org.apache.commons.lang3.StringUtils;
-import ti4.draft.DraftBag;
+import ti4.draft.DraftItemCollection;
 import ti4.draft.DraftItem;
 import ti4.generator.Mapper;
 import ti4.helpers.Constants;
@@ -686,7 +686,7 @@ public class DataMigrationManager {
         return true;
     }
 
-    private static void replaceFrankenItemsInBag_111223(DraftBag bag) {
+    private static void replaceFrankenItemsInBag_111223(DraftItemCollection bag) {
         for(int i = 0; i < bag.Contents.size(); i++) {
             DraftItem item = bag.Contents.get(i);
             if (item.ItemId.equals("keleres")){
@@ -744,7 +744,7 @@ public class DataMigrationManager {
         }
     }
 
-    private static void swapBagItem(DraftBag bag, int index, DraftItem newItem) {
+    private static void swapBagItem(DraftItemCollection bag, int index, DraftItem newItem) {
         BotLogger.log(String.format("Draft Bag replacing %s with %s", bag.Contents.get(index).getAlias(), newItem.getAlias()));
         bag.Contents.remove(index);
         bag.Contents.add(index, newItem);
