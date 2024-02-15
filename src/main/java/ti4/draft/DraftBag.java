@@ -1,12 +1,13 @@
 package ti4.draft;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
+import net.dv8tion.jda.api.requests.RestAction;
 import net.dv8tion.jda.api.requests.restaction.ThreadChannelAction;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import ti4.helpers.Constants;
-import ti4.map.Game;
 import ti4.map.Player;
 import ti4.message.MessageHelper;
 
@@ -46,15 +47,16 @@ public class DraftBag {
     }
 
     public void populateBagThread() {
-        ThreadChannel channel = getThread();
+        showAllCards(getThread());
+    }
 
-        channel.getIterableHistory().forEachAsync(message -> {
-            channel.deleteMessageById(message.getId()).queue();
-            return true;
-        });
+    public RestAction<Void> populateBagThreadAsync() {
+        return showAllCardsAsync(getThread());
+    }
 
-        MessageHelper.sendMessageToChannel(channel, "# " + Name);
 
+    private void showAllCards(ThreadChannel channel) {
+        channel.sendMessage("# " + Name).queue();
         for (DraftItem item : Contents) {
             StringBuilder sb = new StringBuilder();
             try {
@@ -68,49 +70,77 @@ public class DraftBag {
         }
     }
 
+    private RestAction<Void> showAllCardsAsync(ThreadChannel channel) {
+        RestAction action = channel.sendMessage("# " + Name);
+        for (DraftItem item : Contents) {
+            StringBuilder sb = new StringBuilder();
+            try {
+                sb.append("### ").append(item.getItemEmoji()).append(" ");
+                sb.append(item.getShortDescription()).append("\n - ");
+                sb.append(item.getLongDescription());
+            } catch (Exception e) {
+                sb.append("ERROR BUILDING DESCRIPTION FOR ").append(item.getAlias());
+            }
+            action = action.and(channel.sendMessage(sb.toString()));
+            action = action.and(channel.getParentChannel().asTextChannel().sendTyping());
+        }
+
+        return action;
+    }
+
     public void openBagToPlayer(Player player) {
         ThreadChannel channel = getThread();
-        channel.retrieveThreadMembers().onSuccess(threadMembers -> {
-            boolean playerIsCurrentMember = false;
-            for (var member : threadMembers) {
-                String id = member.getUser().getId();
-                if (id.equals(player.getUserID())) {
-                    playerIsCurrentMember = true;
-                    continue;
-                }
-                if (id.equals(channel.getOwner().getId())) {
-                    continue;
-                }
-                channel.removeThreadMember(member.getUser()).queue();
+        channel.retrieveThreadMembers().forEachAsync(member->{
+            String id = member.getUser().getId();
+            if (id.equals(player.getUserID())) {
+                return true;
             }
-            if (!playerIsCurrentMember) {
-                channel.addThreadMemberById(player.getUserID()).queue();
+            if (member.getThread().getOwnerThreadMember() == member) {
+                return true;
             }
-            channel.retrieveStartMessage().onSuccess(message ->
-                    message.editMessage("# " + Name + '\n' + "Currently held by: " + player.getPing()).queue()
-            ).queue();
-        }).queue();
-
+            member.getThread().removeThreadMember(member.getUser()).queue();
+            return true;
+        }).thenApply(x -> {
+            channel.addThreadMemberById(player.getUserID()).queue();
+            return true;
+        });
     }
 
     @JsonIgnore
     public ThreadChannel getThread() {
-        String channelName = Constants.BAG_INFO_THREAD_PREFIX + Draft.Game.getName() + "-" + Name;
+        ThreadChannel thread = getExistingThread();
+        if (thread != null) return thread;
 
+        return createThread().complete();
+    }
+
+    @Nullable
+    @JsonIgnore
+    public ThreadChannel getExistingThread() {
         TextChannel actionsChannel = Draft.Game.getMainGameChannel();
 
         List<ThreadChannel> allThreads = actionsChannel.getThreadChannels();
         for (ThreadChannel thread : allThreads) {
-            if (thread.getName().equals(channelName)){
+            if (thread.getName().equals(getChannelName())){
                 return thread;
             }
         }
+        return null;
+    }
 
+    @NotNull
+    public ThreadChannelAction createThread() {
+        TextChannel actionsChannel = Draft.Game.getMainGameChannel();
         boolean isPrivateChannel = true;
-        ThreadChannelAction threadCreationAction = actionsChannel.createThreadChannel(channelName, isPrivateChannel);
+        ThreadChannelAction threadCreationAction = actionsChannel.createThreadChannel(getChannelName(), isPrivateChannel);
         threadCreationAction.setInvitable(true);
         threadCreationAction.setAutoArchiveDuration(ThreadChannel.AutoArchiveDuration.TIME_24_HOURS);
+        return threadCreationAction;
+    }
 
-        return threadCreationAction.complete();
+    @NotNull
+    @JsonIgnore
+    private String getChannelName() {
+        return Constants.BAG_INFO_THREAD_PREFIX + Draft.Game.getName() + "-" + Name;
     }
 }

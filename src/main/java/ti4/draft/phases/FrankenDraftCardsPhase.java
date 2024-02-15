@@ -1,6 +1,8 @@
 package ti4.draft.phases;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import net.dv8tion.jda.api.requests.RestAction;
+import net.dv8tion.jda.api.requests.restaction.ThreadChannelAction;
 import ti4.commands.milty.MiltyDraftManager;
 import ti4.commands.milty.StartMilty;
 import ti4.draft.DraftBag;
@@ -9,9 +11,12 @@ import ti4.draft.DraftPhase;
 import ti4.draft.FrankenUtils;
 import ti4.draft.items.*;
 import ti4.map.Player;
+import ti4.message.BotLogger;
 import ti4.message.MessageHelper;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 public class FrankenDraftCardsPhase extends DraftPhase {
 
@@ -33,8 +38,28 @@ public class FrankenDraftCardsPhase extends DraftPhase {
     @Override
     public void onPhaseStart() {
         generateBags();
-        openAllBags();
-        Draft.Game.getMainGameChannel().sendMessage("*Bags have been distributed. Please select 3 cards to draft. " +
+
+        for (Player p : Draft.Game.getRealPlayers()) {
+            DraftBag bag = Bags.get(p.getUserID());
+
+            if (bag.getExistingThread() != null) {
+                bag.getThread().delete().queue(unused -> {
+                    bag.createThread().queue((threadChannel -> {
+                        bag.populateBagThreadAsync().queue(u -> {
+                            openBagForPlayer(p);
+                        });
+                    }));
+                });
+            }
+            else {
+                bag.createThread().queue((threadChannel -> {
+                    bag.populateBagThreadAsync().queue(unused -> {
+                        openBagForPlayer(p);
+                    });
+                }));
+            }
+        }
+        Draft.Game.getMainGameChannel().sendMessage("*Bags are being distributed. Please select 3 cards to draft. " +
                 "After this, you will select at most 2 cards each round.*").queue(message -> lastPassMessageId = message.getId());
     }
 
@@ -108,11 +133,5 @@ public class FrankenDraftCardsPhase extends DraftPhase {
             Queues.put(userID, new ArrayList<>());
             draftOrder.add(userID);
         }
-
-        for (var bag : Bags.values()) {
-            bag.populateBagThread();
-        }
-
-        MessageHelper.sendMessageToChannel(Draft.Game.getMainGameChannel(), "FrankenDraft bags have been generated. Good luck!");
     }
 }
