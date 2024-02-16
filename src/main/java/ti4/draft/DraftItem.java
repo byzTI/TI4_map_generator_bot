@@ -35,6 +35,25 @@ public abstract class DraftItem implements ModelInterface {
         return ItemCategory.toString()+":"+ItemId;
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+
+        if (obj.getClass() != this.getClass()) {
+            return false;
+        }
+
+        final DraftItem other = (DraftItem) obj;
+        return other.getAlias().equals(this.getAlias());
+    }
+
+    @Override
+    public int hashCode() {
+        return getAlias().hashCode();
+    }
+
     public enum Category{
         ABILITY,
         TECH,
@@ -60,8 +79,6 @@ public abstract class DraftItem implements ModelInterface {
 
     @JsonIgnore
     public DraftErrataModel Errata;
-
-    public String messageId;
 
     public static DraftItem Generate(Category category, String itemId) {
         DraftItem item = null;

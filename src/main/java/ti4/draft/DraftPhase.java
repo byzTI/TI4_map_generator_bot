@@ -1,6 +1,8 @@
 package ti4.draft;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import net.dv8tion.jda.api.interactions.callbacks.IReplyCallback;
+import ti4.map.Player;
 
 public abstract class DraftPhase {
 
@@ -10,5 +12,5 @@ public abstract class DraftPhase {
     public abstract void onPhaseEnd();
     public abstract void onPhaseStart();
 
-    public abstract boolean processCommandString(String command);
+    public abstract boolean processCommandString(Player player, String commandString, IReplyCallback replyCallback);
 }

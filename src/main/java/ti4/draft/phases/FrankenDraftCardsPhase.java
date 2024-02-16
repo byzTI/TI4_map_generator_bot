@@ -1,19 +1,19 @@
 package ti4.draft.phases;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
+import net.dv8tion.jda.api.interactions.callbacks.IReplyCallback;
 import net.dv8tion.jda.api.requests.RestAction;
 import ti4.commands.milty.MiltyDraftManager;
 import ti4.commands.milty.StartMilty;
 import ti4.draft.*;
 import ti4.draft.items.*;
-import ti4.map.GameManager;
 import ti4.map.GameSaveLoadManager;
 import ti4.map.Player;
 import ti4.message.MessageHelper;
 
 import java.util.*;
-import java.util.concurrent.ExecutionException;
 
 public class FrankenDraftCardsPhase extends DraftPhase {
 
@@ -26,6 +26,25 @@ public class FrankenDraftCardsPhase extends DraftPhase {
 
     @JsonInclude
     private String lastPassMessageId;
+
+    @Override
+    public boolean processCommandString (Player player, String commandString, IReplyCallback replyCallback) {
+        String[] splitCommand = commandString.split("_");
+        DraftBag bag = getCurrentlyDraftingBag(player);
+        switch (splitCommand[0]) {
+            case "queue":
+                if (bag.queueItemForDraft(splitCommand[1])) {
+                    bag.refreshDisplays(player).queue();
+                }
+                break;
+            case "dequeue":
+                if (bag.dequeueItemForDraft(splitCommand[1])) {
+                    bag.refreshDisplays(player).queue();
+                }
+                break;
+        }
+        return false;
+    }
 
     @Override
     public void onPhaseEnd() {
@@ -73,6 +92,7 @@ public class FrankenDraftCardsPhase extends DraftPhase {
 
     public void passBags() {
         PassCount++;
+        Bags.values().forEach(bag -> bag.QueueLimit = 2);
         Draft.Game.getMainGameChannel().sendMessage("*Bags have been passed. Please select 2 cards to draft. " +
                 "This was the " + FrankenUtils.IntToOrdinal(PassCount) + " round of cards.*").queue(message -> lastPassMessageId = message.getId());
         openAllBags();
@@ -85,23 +105,23 @@ public class FrankenDraftCardsPhase extends DraftPhase {
     }
 
     public void openBagForPlayer(Player player) {
+        DraftBag bag = getCurrentlyDraftingBag(player);
+        bag.showBagToPlayer(player).queue();
+    }
+
+    @JsonIgnore
+    private DraftBag getCurrentlyDraftingBag(Player player) {
         int bagIdx = draftOrder.indexOf(player.getUserID());
         bagIdx += PassCount;
         bagIdx %= draftOrder.size();
 
         String draftingBagId = draftOrder.get(bagIdx);
-        Bags.get(draftingBagId).showBagToPlayer(player);
+        return Bags.get(draftingBagId);
     }
 
     public void openHandForPlayer(Player player) {
-        player.getDraftHand().showBagToPlayer(player);
+        player.getDraftHand().showBagToPlayer(player).queue();
     }
-
-    @Override
-    public boolean processCommandString(String command) {
-        return false;
-    }
-
 
     private void generateBags() {
         MessageHelper.sendMessageToChannel(Draft.Game.getMainGameChannel(), "Setting up tiles...");
@@ -128,6 +148,7 @@ public class FrankenDraftCardsPhase extends DraftPhase {
             DraftBag bag = new DraftBag();
             bag.Name = player.getColor() + " bag";
             bag.Draft = Draft;
+            bag.QueueLimit = 3;
 
             // Walk through each type of draftable...
             for (Map.Entry<DraftItem.Category, List<DraftItem>> draftableCollection : allDraftItems.entrySet()) {

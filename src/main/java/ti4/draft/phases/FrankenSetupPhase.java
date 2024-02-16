@@ -1,6 +1,8 @@
 package ti4.draft.phases;
 
+import net.dv8tion.jda.api.interactions.callbacks.IReplyCallback;
 import ti4.draft.DraftPhase;
+import ti4.map.Player;
 
 public class FrankenSetupPhase extends DraftPhase {
     @Override
@@ -14,9 +16,7 @@ public class FrankenSetupPhase extends DraftPhase {
     }
 
     @Override
-    public boolean processCommandString(String command) {
-        return false;
-    }
+    public boolean processCommandString(Player player, String commandString, IReplyCallback replyCallback) { return false;}
 
     /**
      * Old rules:

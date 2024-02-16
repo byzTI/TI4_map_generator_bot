@@ -43,6 +43,11 @@ public class BagDraftHelper {
     public static void processDraftAction(Game activeGame, Player player, ButtonInteractionEvent event, String buttonID) {
         String action = buttonID.split(";")[1];
         BagDraft draft = activeGame.getActiveBagDraft();
+        if (draft.CurrentPhase.processCommandString(player, action, event)) {
+            if (!draft.startNextPhase()) {
+                activeGame.getMainGameChannel().sendMessage("Draft Complete!").queue();
+            }
+        }
 
         /*
         if (draft != null) {
