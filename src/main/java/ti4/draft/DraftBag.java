@@ -1,6 +1,7 @@
 package ti4.draft;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
 import net.dv8tion.jda.api.requests.RestAction;
 import org.jetbrains.annotations.NotNull;
@@ -24,29 +25,30 @@ public class DraftBag extends DraftItemCollection {
     public RestAction<Void> refreshDisplays(Player player) {
         ThreadChannel thread = getThread();
         RestAction<Void> action = new EmptyRestAction();
-        for (Display display : Messages) {
-            DraftItem item = display.Item;
-            boolean canDraft = queuedItems.size() < QueueLimit;
-            boolean isQueued = false;
-            for (DraftItem q : queuedItems) {
-                if (q.equals(item)){
-                    isQueued = true;
-                    break;
-                }
-            }
+        for (var item : Contents) {
+            action = action.and(refreshDisplayForItem(item, player));
+        }
+        return action;
+    }
 
-            RestAction r;
-            if (canDraft && !isQueued) {
-                r = display.updateStateAsync(Display.State.DRAFTABLE, thread);
-            } else if (isQueued) {
-                r = display.updateStateAsync(Display.State.QUEUED, thread);
-            } else {
-                r = display.updateStateAsync(Display.State.NOT_DRAFTABLE, thread);
-            }
-            action = action.and(r);
+    public RestAction<Void> refreshDisplayForItem(DraftItem item, Player player) {
+        ThreadChannel thread = getThread();
+        boolean canDraft = queuedItems.size() < QueueLimit;
+        boolean isQueued = queuedItems.contains(item);
+        Display display = Messages.get(item);
+        if (display == null) {
+            return this.sendCardAsync(item).flatMap(unused -> refreshDisplayForItem(item, player));
         }
 
-        return action;
+        Display.State state;
+        if (canDraft && !isQueued) {
+            state = Display.State.DRAFTABLE;
+        } else if (isQueued) {
+            state = Display.State.QUEUED;
+        } else {
+            state = Display.State.NOT_DRAFTABLE;
+        }
+        return display.updateStateAsync(state, thread).and(new EmptyRestAction());
     }
 
     @Override

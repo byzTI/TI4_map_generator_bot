@@ -17,9 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import ti4.map.Player;
 import ti4.message.BotLogger;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 public abstract class DraftItemCollection {
@@ -88,7 +86,7 @@ public abstract class DraftItemCollection {
     @JsonInclude
     protected String headerMessageId;
 
-    public List<Display> Messages = new ArrayList<>();
+    public Map<DraftItem, Display> Messages = new HashMap<>();
 
     public String toStoreString()
     {
@@ -107,7 +105,7 @@ public abstract class DraftItemCollection {
     }
 
     @NotNull
-    private RestAction<Void> sendCardAsync(DraftItem card) {
+    protected RestAction<Void> sendCardAsync(DraftItem card) {
         ThreadChannel thread = getThread();
         if (thread == null) {
             TextChannel primaryBotLogChannel = BotLogger.getPrimaryBotLogChannel();
@@ -126,7 +124,7 @@ public abstract class DraftItemCollection {
             Display display = new Display();
             display.Item = card;
             display.MessageId = message.getId();
-            Messages.add(display);
+            Messages.put(card, display);
         }).and(thread.getParentChannel().asTextChannel().sendTyping());
     }
 
@@ -138,10 +136,8 @@ public abstract class DraftItemCollection {
             return primaryBotLogChannel.sendMessage("Error removing " + card + " from draft item collection. Thread was null.").and(primaryBotLogChannel.sendTyping());
         }
 
-        for (Display d : Messages) {
-            if (d.Item.equals(card)) {
-                return thread.deleteMessageById(d.MessageId);
-            }
+        if (Messages.containsKey(card)){
+            return thread.deleteMessageById(Messages.get(card).MessageId);
         }
         return new EmptyRestAction();
     }

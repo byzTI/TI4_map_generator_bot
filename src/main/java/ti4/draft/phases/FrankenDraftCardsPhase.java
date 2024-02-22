@@ -34,12 +34,12 @@ public class FrankenDraftCardsPhase extends DraftPhase {
         switch (splitCommand[0]) {
             case "queue":
                 if (bag.queueItemForDraft(splitCommand[1])) {
-                    bag.refreshDisplays(player).queue();
+                    bag.refreshDisplayForItem(DraftItem.GenerateFromAlias(splitCommand[1]), player).flatMap(unused -> bag.refreshDisplays(player)).queue();
                 }
                 break;
             case "dequeue":
                 if (bag.dequeueItemForDraft(splitCommand[1])) {
-                    bag.refreshDisplays(player).queue();
+                    bag.refreshDisplayForItem(DraftItem.GenerateFromAlias(splitCommand[1]), player).flatMap(unused -> bag.refreshDisplays(player)).queue();
                 }
                 break;
         }
