@@ -1,92 +1,24 @@
 package ti4.draft;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.ThreadMember;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
-import net.dv8tion.jda.api.entities.emoji.Emoji;
-import net.dv8tion.jda.api.interactions.components.ActionRow;
-import net.dv8tion.jda.api.interactions.components.buttons.Button;
-import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle;
 import net.dv8tion.jda.api.requests.RestAction;
 import net.dv8tion.jda.api.requests.restaction.ThreadChannelAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import ti4.map.Player;
-import ti4.message.BotLogger;
 
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 
 public abstract class DraftItemCollection {
-    public class Display {
-        public enum State {
-            BLANK,
-            DRAFTABLE,
-            NOT_DRAFTABLE,
-            QUEUED
-        }
-
-        public String MessageId;
-        public DraftItem Item;
-        public State CurrentDisplayState;
-
-        public void updateState(State newState, ThreadChannel thread) {
-            updateStateAsync(newState, thread).queue();
-        }
-
-        public RestAction updateStateAsync(State newState, ThreadChannel thread) {
-            if (CurrentDisplayState == newState) {
-                return new EmptyRestAction();
-            }
-
-            CurrentDisplayState = newState;
-
-            if (CurrentDisplayState == State.BLANK) {
-                return thread.editMessageComponentsById(MessageId, new ArrayList<>());
-            }
-
-            ButtonStyle style = ButtonStyle.UNKNOWN;
-            String label = "";
-            String action = "";
-            switch (CurrentDisplayState) {
-                case DRAFTABLE -> {
-                    style = ButtonStyle.PRIMARY;
-                    label = "Draft " + Item.getShortDescription();
-                    action = "queue_" + Item.getAlias();
-                }
-                case QUEUED -> {
-                    style = ButtonStyle.DANGER;
-                    label = "Do not draft " + Item.getShortDescription();
-                    action = "dequeue_" + Item.getAlias();
-                }
-                case NOT_DRAFTABLE -> {
-                    style = ButtonStyle.SECONDARY;
-                    label = "Undraftable";
-                    action = "queue_" + Item.getAlias();
-                }
-            }
-
-            Button button = Button.of(style, BagDraft.COMMAND_PREFIX + action, label).withEmoji(Emoji.fromFormatted(Item.getItemEmoji()));
-            if (CurrentDisplayState == State.NOT_DRAFTABLE) {
-                button = button.asDisabled();
-            }
-            return thread.editMessageComponentsById(MessageId, ActionRow.of(button));
-        }
-    }
 
     public String Name;
     public List<DraftItem> Contents = new ArrayList<>();
 
     @JsonIgnore
     public BagDraft Draft;
-
-    @JsonInclude
-    protected String headerMessageId;
-
-    public Map<DraftItem, Display> Messages = new HashMap<>();
 
     public String toStoreString()
     {
@@ -99,63 +31,28 @@ public abstract class DraftItemCollection {
         return sb.toString();
     }
 
-    public RestAction<Void> addCardAsync(DraftItem card) {
+    public void addCard(DraftItem card) {
         Contents.add(card);
-        return sendCardAsync(card);
     }
 
-    @NotNull
-    protected RestAction<Void> sendCardAsync(DraftItem card) {
-        ThreadChannel thread = getThread();
-        if (thread == null) {
-            TextChannel primaryBotLogChannel = BotLogger.getPrimaryBotLogChannel();
-            return primaryBotLogChannel.sendMessage("Error adding " + card + " to draft item collection. Thread was null.").and(primaryBotLogChannel.sendTyping());
-        }
-
-        StringBuilder sb = new StringBuilder();
-        try {
-            sb.append("### ").append(card.getItemEmoji()).append(" ");
-            sb.append(card.getShortDescription()).append("\n - ");
-            sb.append(card.getLongDescription());
-        } catch (Exception e) {
-            sb.append("ERROR BUILDING DESCRIPTION FOR ").append(card.getAlias());
-        }
-        return thread.sendMessage(sb.toString()).onSuccess(message -> {
-            Display display = new Display();
-            display.Item = card;
-            display.MessageId = message.getId();
-            Messages.put(card, display);
-        }).and(thread.getParentChannel().asTextChannel().sendTyping());
+    public boolean removeCard(DraftItem card) {
+        return Contents.remove(card);
     }
 
-    public RestAction<Void> removeCardAsync(DraftItem card) {
-        Contents.remove(card);
-        ThreadChannel thread = getThread();
-        if (thread == null) {
-            TextChannel primaryBotLogChannel = BotLogger.getPrimaryBotLogChannel();
-            return primaryBotLogChannel.sendMessage("Error removing " + card + " from draft item collection. Thread was null.").and(primaryBotLogChannel.sendTyping());
-        }
-
-        if (Messages.containsKey(card)){
-            return thread.deleteMessageById(Messages.get(card).MessageId);
-        }
-        return new EmptyRestAction();
+    public int itemCountForCategory(DraftItem.Category category) {
+        return (int) Contents.stream().filter(item -> item.ItemCategory.equals(category)).count();
     }
 
-    public RestAction<Void> populateBagThreadAsync() {
-        return showAllCardsAsync(getThread());
+    public abstract RestAction<Void> createDisplay();
+    public abstract RestAction<Void> updateDisplay(Player viewer);
+    protected abstract RestAction<Void> destroyDisplay();
+
+    public RestAction<Void> deleteCollection() {
+        Contents.clear();
+        return destroyDisplay();
     }
 
-    private RestAction<Void> showAllCardsAsync(ThreadChannel channel) {
-        RestAction<Void> action = channel.sendMessage("# " + Name).onSuccess(message -> headerMessageId = message.getId()).and(channel.getParentChannel().asTextChannel().sendTyping());
-        for (DraftItem item : Contents) {
-            action = action.and(sendCardAsync(item));
-        }
-
-        return action;
-    }
-
-    public RestAction<Void> showBagToPlayer(Player player) {
+    public RestAction<Void> giveThreadToPlayer(Player player) {
         ThreadChannel channel = getThread();
         return channel.retrieveThreadMembers()
                 .flatMap(allMembers -> {
@@ -173,13 +70,8 @@ public abstract class DraftItemCollection {
                     }
                     return RestAction.allOf(removeActions);
                 })
-                .flatMap(unused -> beforeBagOpen(player))
-                .flatMap(unused -> channel.addThreadMemberById(player.getUserID()))
-                .flatMap(unused -> afterBagOpen(player));
+                .flatMap(unused -> channel.addThreadMemberById(player.getUserID()));
     }
-
-    protected abstract RestAction<Void> afterBagOpen(Player player);
-    protected abstract RestAction<Void> beforeBagOpen(Player player);
 
     @JsonIgnore
     public ThreadChannel getThread() {

@@ -2,7 +2,8 @@ package ti4.draft.phases;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.interactions.callbacks.IReplyCallback;
 import net.dv8tion.jda.api.requests.RestAction;
 import ti4.commands.milty.MiltyDraftManager;
@@ -15,12 +16,8 @@ import ti4.message.MessageHelper;
 
 import java.util.*;
 
-public class FrankenDraftCardsPhase extends DraftPhase {
+public class FrankenDraftCardsPhase extends ItemDraftPhase {
 
-    public Map<DraftItem.Category, Integer> CategoryLimits = new HashMap<>();
-    public Map<String, DraftBag> Bags = new HashMap<>();
-    public Map<String, List<DraftItem>> Queues = new HashMap<>();
-    public int PassCount;
     @JsonInclude
     private List<String> draftOrder = new ArrayList<>();
 
@@ -31,15 +28,16 @@ public class FrankenDraftCardsPhase extends DraftPhase {
     public boolean processCommandString (Player player, String commandString, IReplyCallback replyCallback) {
         String[] splitCommand = commandString.split("_");
         DraftBag bag = getCurrentlyDraftingBag(player);
+        DraftItem item = DraftItem.GenerateFromAlias(splitCommand[1]);
         switch (splitCommand[0]) {
             case "queue":
-                if (bag.queueItemForDraft(splitCommand[1])) {
-                    bag.refreshDisplayForItem(DraftItem.GenerateFromAlias(splitCommand[1]), player).flatMap(unused -> bag.refreshDisplays(player)).queue();
+                if (item != null && bag.queueItemForDraft(splitCommand[1])) {
+                    bag.updateCategoryDisplay(item.ItemCategory, player).flatMap(unused ->  bag.updateDisplay(player)).queue();
                 }
                 break;
             case "dequeue":
-                if (bag.dequeueItemForDraft(splitCommand[1])) {
-                    bag.refreshDisplayForItem(DraftItem.GenerateFromAlias(splitCommand[1]), player).flatMap(unused -> bag.refreshDisplays(player)).queue();
+                if (item != null && bag.dequeueItemForDraft(splitCommand[1])) {
+                    bag.updateCategoryDisplay(item.ItemCategory, player).flatMap(unused ->  bag.updateDisplay(player)).queue();
                 }
                 break;
         }
@@ -56,37 +54,16 @@ public class FrankenDraftCardsPhase extends DraftPhase {
         generateBags();
 
         Collection<RestAction<Void>> setupActions = new ArrayList<>();
+        TextChannel mainGameChannel = Draft.Game.getMainGameChannel();
         for (Player p : Draft.Game.getRealPlayers()) {
             DraftBag bag = Bags.get(p.getUserID());
 
-            RestAction<ThreadChannel> threadGenerator;
-            if (bag.getExistingThread() != null) {
-                threadGenerator = bag.getThread().delete().flatMap(unused -> bag.createThread());
-            }
-            else {
-                threadGenerator = bag.createThread();
-            }
-
-            RestAction<Void> bagPopulator = threadGenerator.flatMap(threadChannel -> bag.populateBagThreadAsync());
-            bagPopulator = bagPopulator.onSuccess(unused -> openBagForPlayer(p));
-            setupActions.add(bagPopulator);
-
-            DraftItemCollection draftHand = p.getDraftHand();
-            draftHand.Draft = Draft;
-            draftHand.Name = p.getUserName() + " Hand";
-            if (draftHand.getExistingThread() != null) {
-                threadGenerator = draftHand.getThread().delete().flatMap(unused -> draftHand.createThread());
-            }
-            else {
-                threadGenerator = draftHand.createThread();
-            }
-
-            RestAction<Void> handPopulator = threadGenerator.flatMap(threadChannel -> draftHand.populateBagThreadAsync());
-            handPopulator = handPopulator.onSuccess(unused -> openHandForPlayer(p));
-            setupActions.add(handPopulator);
+            RestAction<Void> createDisplayAction;
+            createDisplayAction = bag.createDisplay();
+            setupActions.add(createDisplayAction.flatMap(unused -> mainGameChannel.sendTyping()).flatMap(unused1 -> bag.updateDisplay(p)));
         }
         RestAction.allOf(setupActions).onSuccess(unused -> GameSaveLoadManager.saveMap(Draft.Game)).queue();
-        Draft.Game.getMainGameChannel().sendMessage("*Bags are being distributed. Please select 3 cards to draft. " +
+        mainGameChannel.sendMessage("*Bags are being distributed. Please select 3 cards to draft. " +
                 "After this, you will select at most 2 cards each round.*").queue(message -> lastPassMessageId = message.getId());
     }
 
@@ -106,7 +83,7 @@ public class FrankenDraftCardsPhase extends DraftPhase {
 
     public void openBagForPlayer(Player player) {
         DraftBag bag = getCurrentlyDraftingBag(player);
-        bag.showBagToPlayer(player).queue();
+        bag.giveThreadToPlayer(player).queue();
     }
 
     @JsonIgnore
@@ -117,10 +94,6 @@ public class FrankenDraftCardsPhase extends DraftPhase {
 
         String draftingBagId = draftOrder.get(bagIdx);
         return Bags.get(draftingBagId);
-    }
-
-    public void openHandForPlayer(Player player) {
-        player.getDraftHand().showBagToPlayer(player).queue();
     }
 
     private void generateBags() {
@@ -149,6 +122,7 @@ public class FrankenDraftCardsPhase extends DraftPhase {
             bag.Name = player.getColor() + " bag";
             bag.Draft = Draft;
             bag.QueueLimit = 3;
+            bag.draftPhase = this;
 
             // Walk through each type of draftable...
             for (Map.Entry<DraftItem.Category, List<DraftItem>> draftableCollection : allDraftItems.entrySet()) {
@@ -157,7 +131,7 @@ public class FrankenDraftCardsPhase extends DraftPhase {
                 // ... and pull out the appropriate number of items from its collection...
                 for (int j = 0; j < categoryLimit; j++) {
                     // ... and add it to the bag.
-                    bag.Contents.add(draftableCollection.getValue().remove(0));
+                    bag.addCard(draftableCollection.getValue().remove(0));
                 }
             }
 

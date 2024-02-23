@@ -9,12 +9,17 @@ import ti4.map.Player;
 
 public class DraftHand extends DraftItemCollection {
     @Override
-    protected RestAction<Void> afterBagOpen(Player player) {
+    public RestAction<Void> createDisplay() {
         return new EmptyRestAction();
     }
 
     @Override
-    protected RestAction<Void> beforeBagOpen(Player player) {
+    public RestAction<Void> updateDisplay(Player viewer) {
+        return new EmptyRestAction();
+    }
+
+    @Override
+    protected RestAction<Void> destroyDisplay() {
         return new EmptyRestAction();
     }
 

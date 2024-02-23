@@ -1,9 +1,17 @@
 package ti4.draft;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.core.JacksonException;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import ti4.draft.items.AbilityDraftItem;
 import ti4.draft.items.AgentDraftItem;
 import ti4.draft.items.BlueTileDraftItem;
@@ -83,7 +91,6 @@ public abstract class DraftItem implements ModelInterface {
     public static DraftItem Generate(Category category, String itemId) {
         DraftItem item = null;
         switch (category) {
-
             case ABILITY -> item =  new AbilityDraftItem(itemId);
             case TECH -> item =  new TechDraftItem(itemId);
             case AGENT -> item =  new AgentDraftItem(itemId);
@@ -99,6 +106,9 @@ public abstract class DraftItem implements ModelInterface {
             case BLUETILE -> item =  new BlueTileDraftItem(itemId);
             case REDTILE -> item =  new RedTileDraftItem(itemId);
             case DRAFTORDER -> item =  new SpeakerOrderDraftItem(itemId);
+            default -> {
+                return null;
+            }
         }
         item.Errata = Mapper.getFrankenErrata().get(item.getAlias());
         return item;
@@ -119,6 +129,74 @@ public abstract class DraftItem implements ModelInterface {
         }
 
         return alwaysInclude;
+    }
+
+    public static String CategoryDescriptionPlural(Category category) {
+        switch (category){
+            case ABILITY -> {
+                return "Faction Abilities";
+            }
+            case HERO -> {
+                return "Heroes";
+            }
+            case DRAFTORDER -> {
+                return "Table Positions";
+            }
+            default -> {
+                return CategoryDescription(category) + "s";
+            }
+        }
+    }
+
+    public static String CategoryDescription(Category category) {
+        switch (category) {
+            case ABILITY -> {
+                return "Faction Ability";
+            }
+            case TECH -> {
+                return "Faction Tech";
+            }
+            case AGENT -> {
+                return "Agent";
+            }
+            case COMMANDER -> {
+                return "Commander";
+            }
+            case HERO -> {
+                return "Hero";
+            }
+            case MECH -> {
+                return "Mech";
+            }
+            case FLAGSHIP -> {
+                return "Flagship";
+            }
+            case COMMODITIES -> {
+                return "Commodity Value";
+            }
+            case PN -> {
+                return "Faction Promissory Note";
+            }
+            case HOMESYSTEM -> {
+                return "Home System";
+            }
+            case STARTINGTECH -> {
+                return "Starting Tech";
+            }
+            case STARTINGFLEET -> {
+                return "Starting Fleet";
+            }
+            case BLUETILE -> {
+                return "Blue Tile";
+            }
+            case REDTILE -> {
+                return "Red Tile";
+            }
+            case DRAFTORDER -> {
+                return "Table Position/Speaker Order";
+            }
+            default -> throw new IllegalStateException("Unexpected value: " + category);
+        }
     }
 
     protected DraftItem(Category category, String itemId)
@@ -161,29 +239,32 @@ public abstract class DraftItem implements ModelInterface {
 
     @JsonIgnore
     public abstract String getItemEmoji();
-/*
-    public boolean isDraftable(Player player) {
-        BagDraft draftRules = player.getGame().getActiveBagDraft();
-        DraftBag draftHand = player.getDraftHand();
-        boolean isAtHandLimit = draftHand.getCategoryCount(ItemCategory) >= draftRules.getItemLimitForCategory(ItemCategory);
-        if (isAtHandLimit) {
-            return false;
-        }
-        boolean hasDraftedThisBag = player.getDraftQueue().getCategoryCount(ItemCategory) > 0;
 
-        boolean allOtherCategoriesAtHandLimit = true;
-        for (Category cat : Category.values()) {
-            if (ItemCategory == cat) {
-                continue;
-            }
-            allOtherCategoriesAtHandLimit &= draftHand.getCategoryCount(cat) >= draftRules.getItemLimitForCategory(cat);
+    public class Serializer extends StdSerializer<DraftItem> {
+
+        public Serializer() {
+            this(null);
         }
 
-        if (hasDraftedThisBag) {
-            return allOtherCategoriesAtHandLimit;
+        public Serializer(Class<DraftItem> t) {
+            super(t);
         }
-        return true;
-    }*/
 
+        @Override
+        public void serialize(DraftItem draftItem, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
+            jsonGenerator.writeString(draftItem.getAlias());
+        }
+    }
 
+    public class Deserializer extends StdDeserializer<DraftItem> {
+
+        protected Deserializer(Class<?> vc) {
+            super(vc);
+        }
+
+        @Override
+        public DraftItem deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException, JacksonException {
+            return DraftItem.GenerateFromAlias(jsonParser.readValueAs(String.class));
+        }
+    }
 }
