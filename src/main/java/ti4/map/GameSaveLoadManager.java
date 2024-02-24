@@ -36,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import ti4.commands.cardsac.ACInfo;
 import ti4.commands.cardspn.PNInfo;
 import ti4.commands.cardsso.SOInfo;
+import ti4.draft.BagDraft;
 import ti4.generator.PositionMapper;
 import ti4.helpers.ButtonHelper;
 import ti4.helpers.Constants;
@@ -1845,9 +1846,9 @@ public class GameSaveLoadManager {
                 }
                 case Constants.BAG_DRAFT -> {
                     try {
-                        //activeGame.setBagDraft(BagDraft.GenerateDraft(info, activeGame));
+                        activeGame.setBagDraft(new ObjectMapper().readValue(info, BagDraft.class));
                     } catch (Exception e) {
-                        //Do nothing
+                        activeGame.setBagDraft(null);
                     }
                 }
             }

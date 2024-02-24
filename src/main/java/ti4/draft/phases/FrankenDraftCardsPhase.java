@@ -18,6 +18,7 @@ import java.util.*;
 
 public class FrankenDraftCardsPhase extends ItemDraftPhase {
 
+    public FrankenDraftCardsPhase() {}
     @JsonInclude
     private List<String> draftOrder = new ArrayList<>();
 
@@ -32,26 +33,31 @@ public class FrankenDraftCardsPhase extends ItemDraftPhase {
         switch (splitCommand[0]) {
             case "queue":
                 if (item != null && bag.queueItemForDraft(splitCommand[1])) {
-                    bag.updateCategoryDisplay(item.ItemCategory, player).queue();
-                    bag.getFooterUpdateAction(player).queue();
+                    bag.updateCategoryDisplay(item.ItemCategory, player)
+                            .and(bag.getFooterUpdateAction(player))
+                            .onSuccess(unused -> GameSaveLoadManager.saveMap(Draft.Game))
+                            .queue();
                     if (bag.queuedItems.size() >= bag.QueueLimit) {
-                        bag.updateDisplay(player).queue();
+                        bag.updateDisplay(player).onSuccess(unused -> GameSaveLoadManager.saveMap(Draft.Game)).queue();
                     }
                 }
                 break;
             case "dequeue":
                 boolean wasAtLimit = bag.queuedItems.size() >= bag.QueueLimit;
                 if (item != null && bag.dequeueItemForDraft(splitCommand[1])) {
-                    bag.updateCategoryDisplay(item.ItemCategory, player).queue();
-                    bag.getFooterUpdateAction(player).queue();
+                    bag.updateCategoryDisplay(item.ItemCategory, player)
+                            .and(bag.getFooterUpdateAction(player))
+                            .onSuccess(unused -> GameSaveLoadManager.saveMap(Draft.Game))
+                            .queue();
                     if (wasAtLimit && bag.queuedItems.size() < bag.QueueLimit) {
-                        bag.updateDisplay(player).queue();
+                        bag.updateDisplay(player).onSuccess(unused -> GameSaveLoadManager.saveMap(Draft.Game)).queue();
                     }
                 }
                 break;
             case "reset_queue":
                 bag.resetDraftQueue();
-                bag.updateDisplay(player).queue();
+                bag.updateDisplay(player)
+                        .onSuccess(unused -> GameSaveLoadManager.saveMap(Draft.Game)).queue();
                 break;
             case "confirm_queue":
                 ReadyFlags.put(player.getUserID(), true);

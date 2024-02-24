@@ -272,6 +272,7 @@ public class Game {
     @JsonIgnore
     private List<SimpleEntry<String, String>> tileNameAutocompleteOptionsCache;
     private final ArrayList<String> runDataMigrations = new ArrayList<>();
+    @ExportableField
     private BagDraft activeDraft;
     @JsonIgnore
     @Getter
