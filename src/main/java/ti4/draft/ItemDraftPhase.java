@@ -11,6 +11,7 @@ public abstract class ItemDraftPhase extends DraftPhase {
     @JsonManagedReference
     public Map<String, DraftBag> Bags = new HashMap<>();
     public Map<String, List<DraftItem>> Queues = new HashMap<>();
+    public Map<String, Boolean> ReadyFlags = new HashMap<>();
 
     public Map<DraftItem.Category, Integer> CategoryLimits = new HashMap<>();
     public int PassCount;

@@ -32,16 +32,37 @@ public class FrankenDraftCardsPhase extends ItemDraftPhase {
         switch (splitCommand[0]) {
             case "queue":
                 if (item != null && bag.queueItemForDraft(splitCommand[1])) {
-                    bag.updateCategoryDisplay(item.ItemCategory, player).flatMap(unused ->  bag.updateDisplay(player)).queue();
+                    bag.updateCategoryDisplay(item.ItemCategory, player).queue();
+                    bag.getFooterUpdateAction(player).queue();
+                    if (bag.queuedItems.size() >= bag.QueueLimit) {
+                        bag.updateDisplay(player).queue();
+                    }
                 }
                 break;
             case "dequeue":
+                boolean wasAtLimit = bag.queuedItems.size() >= bag.QueueLimit;
                 if (item != null && bag.dequeueItemForDraft(splitCommand[1])) {
-                    bag.updateCategoryDisplay(item.ItemCategory, player).flatMap(unused ->  bag.updateDisplay(player)).queue();
+                    bag.updateCategoryDisplay(item.ItemCategory, player).queue();
+                    bag.getFooterUpdateAction(player).queue();
+                    if (wasAtLimit && bag.queuedItems.size() < bag.QueueLimit) {
+                        bag.updateDisplay(player).queue();
+                    }
                 }
+                break;
+            case "reset_queue":
+                bag.resetDraftQueue();
+                bag.updateDisplay(player).queue();
+                break;
+            case "confirm_queue":
+                ReadyFlags.put(player.getUserID(), true);
+                tryPass();
                 break;
         }
         return false;
+    }
+
+    private void tryPass() {
+
     }
 
     @Override
@@ -58,9 +79,10 @@ public class FrankenDraftCardsPhase extends ItemDraftPhase {
         for (Player p : Draft.Game.getRealPlayers()) {
             DraftBag bag = Bags.get(p.getUserID());
 
-            RestAction<Void> createDisplayAction;
-            createDisplayAction = bag.createDisplay();
-            setupActions.add(createDisplayAction.flatMap(unused -> mainGameChannel.sendTyping()).flatMap(unused1 -> bag.updateDisplay(p)));
+            setupActions.add(bag.createDisplay()
+                    .flatMap(unused -> mainGameChannel.sendTyping())
+                    .flatMap(unused -> bag.giveThreadToPlayer(p))
+                    .flatMap(unused1 -> bag.updateDisplay(p)));
         }
         RestAction.allOf(setupActions).onSuccess(unused -> GameSaveLoadManager.saveMap(Draft.Game)).queue();
         mainGameChannel.sendMessage("*Bags are being distributed. Please select 3 cards to draft. " +
@@ -138,6 +160,7 @@ public class FrankenDraftCardsPhase extends ItemDraftPhase {
             String userID = player.getUserID();
             Bags.put(userID, bag);
             Queues.put(userID, new ArrayList<>());
+            ReadyFlags.put(userID, false);
             draftOrder.add(userID);
         }
     }

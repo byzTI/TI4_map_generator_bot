@@ -11,6 +11,7 @@ import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle;
 import net.dv8tion.jda.api.requests.RestAction;
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
+import net.dv8tion.jda.api.utils.messages.MessageEditBuilder;
 import org.jetbrains.annotations.NotNull;
 import ti4.helpers.Constants;
 import ti4.map.Player;
@@ -39,7 +40,28 @@ public class DraftBag extends DraftItemCollection {
         if (existingThread != null) {
             action = action.flatMap(unused -> existingThread.delete());
         }
-        return action.flatMap(unused -> createThread()).flatMap(unused -> Draft.Game.getMainGameChannel().sendTyping());
+        return action.flatMap(unused -> createThread()).flatMap(unused -> Draft.Game.getMainGameChannel().sendTyping()).flatMap(unused -> setupThreadPosts());
+    }
+
+    private RestAction<Void> setupThreadPosts() {
+        Map<DraftItem.Category, List<DraftItem>> sortedItems = new HashMap<>();
+        for (DraftItem item : Contents) {
+            if (!sortedItems.containsKey(item.ItemCategory)) {
+                sortedItems.put(item.ItemCategory, new ArrayList<>());
+            }
+            sortedItems.get(item.ItemCategory).add(item);
+        }
+
+        ThreadChannel thread = getThread();
+        RestAction<Void> combinedUpdateAction = getHeaderUpdateAction().and(thread.sendTyping());
+
+        for (var entry : sortedItems.entrySet()) {
+            combinedUpdateAction = combinedUpdateAction.flatMap(unused -> updateCategoryDisplay(entry.getKey(), null)).flatMap(unused -> thread.sendTyping());
+        }
+
+        combinedUpdateAction = combinedUpdateAction.flatMap(unused -> getFooterUpdateAction(null)).and(thread.sendTyping());
+
+        return combinedUpdateAction;
     }
 
     @Override
@@ -53,8 +75,72 @@ public class DraftBag extends DraftItemCollection {
         }
 
         ThreadChannel thread = getThread();
-        RestAction<Void> combinedUpdateAction = new EmptyRestAction();
 
+        getHeaderUpdateAction().queue();
+        getFooterUpdateAction(viewer).queue();
+        for (var entry : sortedItems.entrySet()) {
+            updateCategoryDisplay(entry.getKey(), viewer).and(thread.sendTyping()).queue();
+        }
+
+        return new EmptyRestAction();
+    }
+
+    @NotNull
+    @JsonIgnore
+    public RestAction<Message> getFooterUpdateAction(Player viewer) {
+        ThreadChannel thread = getThread();
+        RestAction<Message> footerUpdateAction;
+        StringBuilder footerText = new StringBuilder();
+        footerText.append("# Please select ");
+        if (queuedItems.isEmpty()) {
+            footerText.append(QueueLimit).append(" items to draft.");
+        }
+        else {
+            footerText.append(QueueLimit - queuedItems.size()).append(" more items.\n");
+            footerText.append("**You are currently drafting:**\n");
+            for(DraftItem item:queuedItems) {
+                footerText.append("- ");
+                footerText.append(item.getItemEmoji()).append(" ");
+                footerText.append(item.getShortDescription());
+                footerText.append("\n");
+            }
+        }
+
+        Button resetButton = Button.of(ButtonStyle.DANGER, BagDraft.COMMAND_PREFIX + "reset_queue", "Reset")
+                .withEmoji(Emoji.fromUnicode("U+267B"));
+
+        Button confirmButton = Button.of(ButtonStyle.SUCCESS, BagDraft.COMMAND_PREFIX + "confirm_queue", "Confirm Draft and Pass")
+                .withEmoji(Emoji.fromUnicode("U+1F44D"));
+
+        List<Button> buttons = new ArrayList<>();
+        if (!isAnythingDraftable(viewer)) {
+            buttons.add(resetButton);
+        }
+        if (!queuedItems.isEmpty()) {
+            buttons.add(confirmButton);
+        }
+
+        if (footerMessageId == null) {
+            MessageCreateBuilder builder = new MessageCreateBuilder().addContent(footerText.toString());
+            if (!buttons.isEmpty()) {
+                builder.setActionRow(buttons);
+            }
+            footerUpdateAction = thread.sendMessage(builder.build());
+        }
+        else {
+            MessageEditBuilder builder = new MessageEditBuilder().setContent(footerText.toString());
+            if (!buttons.isEmpty()) {
+                builder.setActionRow(buttons);
+            }
+            footerUpdateAction = thread.editMessageById(footerMessageId, builder.build());
+        }
+        return footerUpdateAction.onSuccess(message -> footerMessageId = message.getId());
+    }
+
+    @NotNull
+    @JsonIgnore
+    private RestAction<Message> getHeaderUpdateAction() {
+        ThreadChannel thread = getThread();
         RestAction<Message> headerUpdateAction;
         String headerContent = "# " + this.Name;
         if (headerMessageId == null) {
@@ -63,47 +149,7 @@ public class DraftBag extends DraftItemCollection {
         else {
             headerUpdateAction = thread.editMessageById(headerMessageId, headerContent);
         }
-
-        combinedUpdateAction = combinedUpdateAction.flatMap(unused -> headerUpdateAction.onSuccess(message -> headerMessageId = message.getId()).and(thread.sendTyping()));
-
-        ArrayList<RestAction<Void>> allUpdates = new ArrayList<>();
-        for (var entry : sortedItems.entrySet()) {
-            DraftItem.Category category = entry.getKey();
-            RestAction<Void> update = updateCategoryDisplay(category, viewer).onSuccess(message ->{
-                    itemMessages.put(category, message.getId());
-                    System.out.println(message.getId());
-            }).and(thread.sendTyping());
-            allUpdates.add(update);
-        }
-        combinedUpdateAction = combinedUpdateAction.flatMap(unused -> RestAction.allOf(allUpdates)).flatMap(unused -> thread.sendTyping());
-
-        RestAction<Message> footerUpdateAction;
-        StringBuilder footerBuilder = new StringBuilder();
-        footerBuilder.append("Please select ");
-        if (queuedItems.isEmpty()) {
-            footerBuilder.append(QueueLimit).append(" items to draft.");
-        }
-        else {
-            footerBuilder.append(QueueLimit - queuedItems.size()).append(" more items.\n");
-            footerBuilder.append("You are currently drafting:\n");
-            for(DraftItem item:queuedItems) {
-                footerBuilder.append("- ");
-                footerBuilder.append(item.getItemEmoji());
-                footerBuilder.append(item.getShortDescription());
-                footerBuilder.append("\n");
-            }
-        }
-        if (footerMessageId == null) {
-            footerUpdateAction = thread.sendMessage(footerBuilder.toString());
-        }
-        else {
-            footerUpdateAction = thread.editMessageById(footerMessageId, footerBuilder.toString());
-        }
-
-        combinedUpdateAction = combinedUpdateAction.flatMap(unused ->footerUpdateAction.onSuccess(message -> footerMessageId = message.getId()).and(thread.sendTyping()));
-        combinedUpdateAction = combinedUpdateAction.flatMap(unused -> giveThreadToPlayer(viewer));
-
-        return combinedUpdateAction;
+        return headerUpdateAction.onSuccess(message -> headerMessageId = message.getId());
     }
 
     public RestAction<Message> updateCategoryDisplay(DraftItem.Category category, Player viewer){
@@ -116,7 +162,7 @@ public class DraftBag extends DraftItemCollection {
 
         for (DraftItem item : itemList) {
             boolean itemDraftable = isItemDraftable(item, viewer);
-            boolean itemQueued = isItemQueued(item, viewer);
+            boolean itemQueued = isItemQueued(item);
 
             messageContentBuilder.append("- ");
             if (itemQueued) {
@@ -162,20 +208,22 @@ public class DraftBag extends DraftItemCollection {
         ThreadChannel thread = getThread();
         RestAction<Message> postOrEditAction;
         if (itemMessages.containsKey(category)) {
-            postOrEditAction = thread.editMessageById(itemMessages.get(category), messageContent)
-                    .flatMap(message -> thread.editMessageComponentsById(message.getId(), row));
+            MessageEditBuilder b = new MessageEditBuilder().setContent(messageContent).setComponents(row);
+            postOrEditAction = thread.editMessageById(itemMessages.get(category), b.build());
         }
         else {
             var messageBuilder = new MessageCreateBuilder().addContent(messageContent);
             messageBuilder.addComponents(row);
             postOrEditAction = thread.sendMessage(messageBuilder.build());
         }
-        return postOrEditAction;
+        return thread.sendTyping().flatMap(unused -> postOrEditAction).onSuccess(message -> {
+            itemMessages.put(category, message.getId());
+        });
     }
 
     @Override
     public RestAction<Void> destroyDisplay() {
-        return getExistingThread().delete().onSuccess(unused -> System.out.println("Deleted"));
+        return getExistingThread().delete();
     }
 
     public boolean queueItemForDraft(String itemAlias) {
@@ -206,7 +254,19 @@ public class DraftBag extends DraftItemCollection {
         return false;
     }
 
+    public void resetDraftQueue() {
+        queuedItems.clear();
+    }
+
     private boolean isItemDraftable(DraftItem item, Player player) {
+        if (player == null) {
+            return false;
+        }
+
+        if(queuedItems.size() >= QueueLimit) {
+            return false;
+        }
+
         DraftItemCollection draftHand = player.getDraftHand();
 
         // Can't draft more than you're allowed
@@ -223,7 +283,11 @@ public class DraftBag extends DraftItemCollection {
         return true;
     }
 
-    private boolean isItemQueued(DraftItem item, Player player) {
+    public boolean isAnythingDraftable(Player player) {
+        return Contents.stream().anyMatch(item -> isItemDraftable(item, player));
+    }
+
+    private boolean isItemQueued(DraftItem item) {
         return queuedItems.contains(item);
     }
 
