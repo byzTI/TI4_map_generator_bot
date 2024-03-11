@@ -1,5 +1,12 @@
 package ti4.map_ttpg;
 
+import com.fasterxml.jackson.core.JacksonException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -10,19 +17,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import com.fasterxml.jackson.core.JacksonException;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
-import com.fasterxml.jackson.databind.SerializationFeature;
-
 import ti4.commands.tokens.AddToken;
 import ti4.generator.Mapper;
 import ti4.helpers.AliasHandler;
@@ -39,7 +37,7 @@ import ti4.message.BotLogger;
 
 public class ConvertTTPGtoAsync {
 
-    private static final List<String> validColours = new ArrayList<>() {
+    private static final List<String> validColors = new ArrayList<>() {
         {
             add("W"); //White
             add("B"); //Blue
@@ -197,7 +195,7 @@ public class ConvertTTPGtoAsync {
         // }
 
         //EMPTY MAP FOR <AgendaName, Faction> to add Laws later
-        HashMap<String, String> electedPlayers = new HashMap<>();
+        Map<String, String> electedPlayers = new HashMap<>();
 
         //PLAYER ORDER MAPPING
         // TTPG player array starts in bottom right and goes clockwise
@@ -468,7 +466,7 @@ public class ConvertTTPGtoAsync {
         List<String> ttpgExploreHazardousDiscards = ttpgMap.getDecks().getCardExplorationHazardous().getDiscard();
         List<String> ttpgExploreIndustrialDiscards = ttpgMap.getDecks().getCardExplorationIndustrial().getDiscard();
         List<String> ttpgExploreFrontierDiscards = ttpgMap.getDecks().getCardExplorationFrontier().getDiscard();
-        ArrayList<String> exploreDiscards = new ArrayList<>() {
+        List<String> exploreDiscards = new ArrayList<>() {
             {
                 if (Objects.nonNull(ttpgExploreCulturalDiscards)) addAll(ttpgExploreCulturalDiscards);
                 if (Objects.nonNull(ttpgExploreHazardousDiscards)) addAll(ttpgExploreHazardousDiscards);
@@ -637,7 +635,7 @@ public class ConvertTTPGtoAsync {
                         String attachmentResolved = AliasHandler.resolveTTPGAttachment(attachment_proper);
                         System.out.println("          - " + attachment + ": " + attachmentResolved);
 
-                        String attachmentFileName = Mapper.getAttachmentID(attachmentResolved);
+                        String attachmentFileName = Mapper.getAttachmentImagePath(attachmentResolved);
                         String tokenFileName = Mapper.getTokenID(attachmentResolved);
 
                         if (tokenFileName != null && regionIsPlanet) {
@@ -664,7 +662,7 @@ public class ConvertTTPGtoAsync {
                 }
             }
 
-            String colour = "";
+            String color = "";
             Integer regionCount = 1;
 
             //DECODE REGION STRING, CHAR BY CHAR
@@ -672,28 +670,28 @@ public class ConvertTTPGtoAsync {
                 char chr = regionContents.charAt(i);
                 String str = Character.toString(chr);
 
-                if (validColours.contains(str)) { //is a new Color, signify a new set of player's units //MAY ALSO BE AN ATTACHMENT???
-                    //reset colour & count
-                    colour = AliasHandler.resolveColor(str.toLowerCase());
+                if (validColors.contains(str)) { //is a new Color, signify a new set of player's units //MAY ALSO BE AN ATTACHMENT???
+                    //reset color & count
+                    color = AliasHandler.resolveColor(str.toLowerCase());
                     regionCount = 1;
 
-                    System.out.println("            player: " + colour);
+                    System.out.println("            player: " + color);
 
                 } else if (Character.isDigit(chr)) { // is a count, signify a new group of units
                     System.out.println("                count: " + str);
                     regionCount = Integer.valueOf(str);
 
                 } else if (Character.isLowerCase(chr) && validUnits.contains(str)) { // is a unit, control_token, or CC
-                    if (!"".equals(colour)) { //colour hasn't shown up yet, so probably just tokens in space, skip unit crap
+                    if (!"".equals(color)) { //color hasn't shown up yet, so probably just tokens in space, skip unit crap
                         if ("t".equals(str)) { //CC
-                            tile.addCC(Mapper.getCCID(colour));
+                            tile.addCC(Mapper.getCCID(color));
                         } else if ("o".equals(str)) { //control_token
-                            tile.addToken(Mapper.getControlID(colour), AliasHandler.resolvePlanet(planetAlias));
+                            tile.addToken(Mapper.getControlID(color), AliasHandler.resolvePlanet(planetAlias));
                         } else { // is a unit
                             System.out.println("                unit:  " + AliasHandler.resolveTTPGUnit(str));
                             String unit = AliasHandler.resolveTTPGUnit(str);
 
-                            UnitKey unitID = Mapper.getUnitKey(unit, colour);
+                            UnitKey unitID = Mapper.getUnitKey(unit, color);
                             String unitCount = String.valueOf(regionCount);
 
                             if (regionIsSpace) {
@@ -789,7 +787,7 @@ public class ConvertTTPGtoAsync {
         return generateString(node, false);
     }
 
-    public static String generatePrettyString(JsonNode node, Boolean prettyPrint) throws JsonProcessingException {
+    public static String generatePrettyString(JsonNode node) throws JsonProcessingException {
         return generateString(node, true);
     }
 

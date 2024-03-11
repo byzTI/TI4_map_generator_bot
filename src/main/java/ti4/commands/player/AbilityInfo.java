@@ -1,17 +1,20 @@
 package ti4.commands.player;
 
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
-import java.util.StringTokenizer;
 
+import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.events.interaction.GenericInteractionCreateEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import ti4.commands.uncategorized.CardsInfoHelper;
 import ti4.generator.Mapper;
 import ti4.helpers.Constants;
 import ti4.helpers.Helper;
 import ti4.map.Game;
 import ti4.map.Player;
-import ti4.message.BotLogger;
 import ti4.message.MessageHelper;
+import ti4.model.AbilityModel;
 
 public class AbilityInfo extends PlayerSubcommandData {
     public AbilityInfo() {
@@ -31,54 +34,22 @@ public class AbilityInfo extends PlayerSubcommandData {
         sendAbilityInfo(activeGame, player, event);
     }
 
-    public static void sendAbilityInfo(Game activeGame, Player player, SlashCommandInteractionEvent event) {
-        String headerText = Helper.getPlayerRepresentation(player, activeGame) + " used `" + event.getCommandString() + "`";
+    public static void sendAbilityInfo(Game activeGame, Player player, GenericInteractionCreateEvent event) {
+        String headerText = player.getRepresentation() + CardsInfoHelper.getHeaderText(event);
         MessageHelper.sendMessageToPlayerCardsInfoThread(player, activeGame, headerText);
         sendAbilityInfo(activeGame, player);
     }
 
     public static void sendAbilityInfo(Game activeGame, Player player) {
-        //ABILITY INFO
-        MessageHelper.sendMessageToPlayerCardsInfoThread(player, activeGame, getAbilityInfoText(player));
+        MessageHelper.sendMessageEmbedsToCardsInfoThread(activeGame, player, "_ _\n__**Abilities:**__", getAbilityMessageEmbeds(player));
     }
 
-    private static String getAbilityInfoText(Player player) {
-        List<String> playerAbilities = player.getAbilities().stream().sorted().toList();
-        StringBuilder sb = new StringBuilder("__**Ability Info**__\n");
-        if (playerAbilities.isEmpty() || playerAbilities.get(0).isBlank()) {
-            sb.append("> No Abilities");
-            return sb.toString();
+    private static List<MessageEmbed> getAbilityMessageEmbeds(Player player) {
+        List<MessageEmbed> messageEmbeds = new ArrayList<>();
+        for (AbilityModel model : player.getAbilities().stream().map(Mapper::getAbility).sorted(Comparator.comparing(AbilityModel::getAlias)).toList()) {
+            MessageEmbed representationEmbed = model.getRepresentationEmbed();
+            messageEmbeds.add(representationEmbed);
         }
-        int index = 1;
-        for (String abilityID : playerAbilities) {
-            sb.append("`").append(index).append(".` ");
-            sb.append(getAbilityRepresentation(abilityID)).append("\n");
-            index++;
-        }
-        return sb.toString();
-    }
-
-    public static String getAbilityRepresentation(String abilityID) {
-        HashMap<String, String> abilityInfo = Mapper.getFactionAbilities();
-        String abilityRawText = abilityInfo.get(abilityID);
-        StringTokenizer tokenizer = new StringTokenizer(abilityRawText, "|");
-        int expectedTokenCount = 5;
-        if (tokenizer.countTokens() != expectedTokenCount) {
-            BotLogger.log("Ability info raw text is incorrectly formatted (needs " + (expectedTokenCount - 1) + " | to split properly):\n> " + abilityRawText);
-            return abilityRawText;
-        }
-        String abilityName = tokenizer.nextToken();
-        String abilitySourceFaction = tokenizer.nextToken();
-        String abilityRawModifier = tokenizer.nextToken();
-        String abilityWindow = tokenizer.nextToken();
-        String abilityText = tokenizer.nextToken();
-
-        StringBuilder sb = new StringBuilder();
-        sb.append(Helper.getFactionIconFromDiscord(abilitySourceFaction)).append("__**").append(abilityName).append("**__");
-        if (!abilityRawModifier.isBlank()) sb.append(": ").append(abilityRawModifier);
-        if (!abilityWindow.isBlank() || !abilityText.isBlank()) sb.append("\n> *").append(abilityWindow).append("*:\n> ").append(abilityText);
-
-
-        return sb.toString();
+        return messageEmbeds;
     }
 }

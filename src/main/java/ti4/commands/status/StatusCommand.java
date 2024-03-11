@@ -1,25 +1,22 @@
 package ti4.commands.status;
 
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction;
-import net.dv8tion.jda.api.utils.FileUpload;
 import ti4.commands.Command;
 import ti4.commands.cardsac.ACCardsCommand;
-import ti4.generator.GenerateMap;
+import ti4.generator.MapGenerator;
 import ti4.helpers.Constants;
 import ti4.map.Game;
 import ti4.map.GameManager;
 import ti4.map.GameSaveLoadManager;
 import ti4.message.MessageHelper;
-
-import java.io.File;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 public class StatusCommand implements Command {
 
@@ -45,7 +42,7 @@ public class StatusCommand implements Command {
             activeGame = "Active map: " + userActiveGame.getName();
         }
         String commandExecuted = "User: " + userName + " executed command. " + activeGame + "\n" +
-                event.getName() + " " + event.getInteraction().getSubcommandName() + " " + event.getOptions().stream()
+            event.getName() + " " + event.getInteraction().getSubcommandName() + " " + event.getOptions().stream()
                 .map(option -> option.getName() + ":" + getOptionValue(option))
                 .collect(Collectors.joining(" "));
 
@@ -87,10 +84,9 @@ public class StatusCommand implements Command {
         Game activeGame = GameManager.getInstance().getUserActiveGame(userID);
         GameSaveLoadManager.saveMap(activeGame, event);
 
-        FileUpload fileUpload = GenerateMap.getInstance().saveImage(activeGame, event);
-        MessageHelper.replyToMessage(event, fileUpload, false, message, message != null);
+        MapGenerator.saveImage(activeGame, event)
+                .thenAccept(fileUpload -> MessageHelper.replyToMessage(event, fileUpload, false, message, message != null));
     }
-
 
     protected String getActionDescription() {
         return "Status phase";
@@ -110,13 +106,16 @@ public class StatusCommand implements Command {
         subcommands.add(new SCTradeGoods());
         subcommands.add(new ListTurnOrder());
         subcommands.add(new ListTurnStats());
+        subcommands.add(new ListDiceLuck());
+        subcommands.add(new ListSpends());
+        subcommands.add(new POInfo());
         return subcommands;
     }
 
     @Override
     public void registerCommands(CommandListUpdateAction commands) {
         commands.addCommands(
-                Commands.slash(getActionID(), getActionDescription())
-                        .addSubcommands(getSubcommands()));
+            Commands.slash(getActionID(), getActionDescription())
+                .addSubcommands(getSubcommands()));
     }
 }

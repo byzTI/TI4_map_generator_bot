@@ -15,20 +15,9 @@
         "faction": "bentor",
         "type": "agent",
         "name": "C.O.O. Mgur",
-        "title": "Daft Tradesman",
+        "title": "Deft Tradesman",
         "abilityWindow": "ACTION:",
         "abilityText": "Exhaust this card and choose 1 player. For each Fragment token on your faction sheet, that player gains 1 commodity. For each commodity they would gain in excess of their commodity value, they gain 1 trade good instead.",
-        "unlockCondition": "Always Unlocked",
-        "source": "ds"
-    },
-    {
-        "id": "blexagent",
-        "faction": "blex",
-        "type": "agent",
-        "name": "Tox",
-        "title": "Fleshcrafter",
-        "abilityWindow": "After a player activates a system:",
-        "abilityText": "You may exhaust this card to increase the capacity value of 1 of their ships by 2, or allow that ship to gain a capacity value of 2, until the end of this tactical action.",
         "unlockCondition": "Always Unlocked",
         "source": "ds"
     },
@@ -93,8 +82,8 @@
         "type": "agent",
         "name": "Cordo Haved",
         "title": "Friendly Diplomat",
-        "abilityWindow": "At the end of a player's turn:",
-        "abilityText": "You may exhaust this card to allow that player to exhaust 1 planet they control. If they do, they may choose and resolve the ability of 1 legendary planet ability card that is in a player's play area, without exhausting that card.",
+        "abilityWindow": "",
+        "abilityText": "While ready, this card has the text ability of each legendary planet ability card any player controls, even if that card is exhausted. You may allow another player to use this card's ability.",
         "unlockCondition": "Always Unlocked",
         "source": "ds"
     },
@@ -407,17 +396,6 @@
         "source": "ds"
     },
     {
-        "id": "blexcommander",
-        "faction": "blex",
-        "type": "commander",
-        "name": "Silas Deriga",
-        "title": "Necrosage",
-        "abilityWindow": "Once per round of ground combat on a planet you control in a system that contains a Blight token",
-        "abilityText": "When you would destroy 1 of your opponent's infantry, you may instead replace that unit with 1 from your reinforcements.",
-        "unlockCondition": "Have 6 infantry and 6 fighters on the game board.",
-        "source": "ds"
-    },
-    {
         "id": "celdauricommander",
         "faction": "celdauri",
         "type": "commander",
@@ -425,7 +403,7 @@
         "title": "Starbase Commander",
         "abilityWindow": "After you activate a system that contains 1 or more of your space docks",
         "abilityText": "Gain 1 commodity. Your ships may treat systems that contain 1 or more of your space docks as adjacent to each other.",
-        "unlockCondition": "Have 1 space dock on the game board that is not adjacent to your home system.",
+        "unlockCondition": "Have 1 space dock on the game board that is not in or adjacent to your home system.",
         "source": "ds"
     },
     {
@@ -512,7 +490,7 @@
         "name": "Ceie Doleegueaunm",
         "title": "Abyssal Queen",
         "abilityWindow": "After you activate a system",
-        "abilityText": "You may treat each system that contains no planets as adjacent to each other system that contains no planets during this tactical action.",
+        "abilityText": "You may treat systems that contain no planets as adjacent to each other during this tactical action.",
         "unlockCondition": "Have units in 3 systems that do not contain planets.",
         "source": "ds"
     },
@@ -544,8 +522,8 @@
         "type": "commander",
         "name": "Sdallari Tvungovot",
         "title": "Marshal Engineer",
-        "abilityWindow": "After you roll dice during the first round of a combat:",
-        "abilityText": "Reroll the combat dice of up to 4 of your fighters or infantry, applying +1 to the results - the Kjalengard player captures any units that reroll dice this way and do not produce at least 1 hit.",
+        "abilityWindow": "When researching a unit upgrade technology",
+        "abilityText": "Each of your unit upgrade technologies may satisfy 1 prerequisite it shares with the technology you are researching",
         "unlockCondition": "Have 2 Glory tokens on the game board.",
         "source": "ds"
     },
@@ -621,7 +599,7 @@
         "type": "commander",
         "name": "Hkot Tokal",
         "title": "Crystal Druid",
-        "abilityWindow": "At the start of invasion:",
+        "abilityWindow": "At the start of invasion in a system that contains 1 or more planets:",
         "abilityText": "You may place 1 infantry unit from your reinforcements in the active system's space area if you have unused capacity in that system.",
         "unlockCondition": "Win a ground combat on a planet you do not control.",
         "source": "ds"
@@ -645,7 +623,7 @@
         "title": "Vibrant Blue",
         "abilityWindow": "At the start of a space combat while you are not the active player:",
         "abilityText": "Choose 1 of your non-fighter ships in the active system to gain SUSTAIN DAMAGE until the end of combat.",
-        "unlockCondition": "Have ships in 3 systems not adjacent to your home system.",
+        "unlockCondition": "Have ships in 3 systems not adjacent to or including your home system",
         "source": "ds"
     },
     {
@@ -666,7 +644,7 @@
         "name": "Thussad Krath",
         "title": "High Inquisitor",
         "abilityWindow": "During combat:",
-        "abilityText": "Your damaged ships roll 1 additional combat die during combat.",
+        "abilityText": "When 1 or more of your damaged units make a combat roll, up to 2 of those units may roll an additional combat die.",
         "unlockCondition": "Have units in 2 different non-home anomalies.",
         "source": "ds"
     },
@@ -794,18 +772,6 @@
         "source": "ds"
     },
     {
-        "id": "blexhero",
-        "faction": "blex",
-        "type": "hero",
-        "name": "Speygh",
-        "title": "Blightmaster",
-        "abilityName": "Brikk Strain - Galactic Blight",
-        "abilityWindow": "ACTION:",
-        "abilityText": "Attach this card to 1 of your strategy cards. Its initiative value is 9. Non-Blex Players may only resolve 1 clause of this strategy card's primary ability and must spend 1 additional command token from their strategy pool to resolve the secondary ability of this strategy card.",
-        "unlockCondition": "Have 3 scored objectives",
-        "source": "ds"
-    },
-    {
         "id": "celdaurihero",
         "faction": "celdauri",
         "type": "hero",
@@ -813,7 +779,7 @@
         "title": "Councilman",
         "abilityName": "Trader Mobilization Act - Merchant Rearmament",
         "abilityWindow": "After a player activates a system other than Mecatol Rex:",
-        "abilityText": "You may place 1 space dock on a planet you control in the active system, if able, replenish your commodities, and use the PRODUCTION ability of each of your units in the active system. Then, purge this card.",
+        "abilityText": "You may place 1 space dock on a planet you control in the active system, convert each of your commodities to a trade good, and use the PRODUCTION ability of each of your units in the active system. Then, purge this card.",
         "unlockCondition": "Have 3 scored objectives.",
         "source": "ds"
     },
@@ -981,7 +947,7 @@
         "title": "Grandmaster of the Order",
         "abilityName": "Coil Overcharge - Streaks in the Night",
         "abilityWindow": "ACTION:",
-        "abilityText": "Place this card near the game board. During this game round, after you perform a component action, you may use 1 of your unit's SPACE CANNON against ships in or adjacent to that unit's system, without rolling additional dice. At the end of this game round, purge this card.",
+        "abilityText": "Place this card near the game board. During this game round, at the end of a component action you perform, you may use 1 of your unit's SPACE CANNON against ships in or adjacent to that unit's system, without rolling additional dice. At the end of this game round, purge this card.",
         "unlockCondition": "Have 3 scored objectives.",
         "source": "ds"
     },
@@ -1004,8 +970,8 @@
         "name": "Speygh",
         "title": "Blightmaster",
         "abilityName": "Brikk Strain - Galactic Blight",
-        "abilityWindow": "ACTION:",
-        "abilityText": "Attach this card to 1 of your strategy cards. Its initiative value is 9. Non-Kyro Players may only resolve 1 clause of this strategy card’s primary ability.",
+        "abilityWindow": "At the start of the status phase",
+        "abilityText": "You may attach this card to 1 of your strategy cards. Its initiative value is 9. Non-Kyro Players may only resolve 1 clause of this strategy card’s primary ability. The Kyro player gains any trade goods placed on this card.",
         "unlockCondition": "Have 3 scored objectives.",
         "source": "ds"
     },

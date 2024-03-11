@@ -24,7 +24,7 @@ public class ChangeColor extends PlayerSubcommandData {
         Game activeGame = getActiveGame();
 
         String newColor = AliasHandler.resolveColor(event.getOption(Constants.COLOR).getAsString().toLowerCase());
-        if (!Mapper.isColorValid(newColor)) {
+        if (!Mapper.isValidColor(newColor)) {
             sendMessage("Color not valid");
             return;
         }
@@ -36,7 +36,7 @@ public class ChangeColor extends PlayerSubcommandData {
             return;
         }
 
-        LinkedHashMap<String, Player> players = activeGame.getPlayers();
+        Map<String, Player> players = activeGame.getPlayers();
         for (Player playerInfo : players.values()) {
             if (playerInfo != player) {
                 if (newColor.equals(playerInfo.getColor())) {
@@ -54,9 +54,9 @@ public class ChangeColor extends PlayerSubcommandData {
         String newColorID = Mapper.getColorID(newColor);
 
         for (Player playerInfo : players.values()) {
-            LinkedHashMap<String, Integer> promissoryNotes = playerInfo.getPromissoryNotes();
+            Map<String, Integer> promissoryNotes = playerInfo.getPromissoryNotes();
 
-            LinkedHashMap<String, Integer> promissoryNotesChanged = new LinkedHashMap<>();
+            Map<String, Integer> promissoryNotesChanged = new LinkedHashMap<>();
             for (Map.Entry<String, Integer> pn : promissoryNotes.entrySet()) {
                 String key = pn.getKey();
                 Integer value = pn.getValue();
@@ -99,7 +99,7 @@ public class ChangeColor extends PlayerSubcommandData {
         }
 
         Set<String> ownedPromissoryNotes = player.getPromissoryNotesOwned();
-        HashSet<String> ownedPromissoryNotesChanged = new HashSet<>();
+        Set<String> ownedPromissoryNotesChanged = new HashSet<>();
         for (String pn : ownedPromissoryNotes) {
             String newKey = pn;
             if (pn.startsWith(oldColorKey)) {
@@ -133,21 +133,23 @@ public class ChangeColor extends PlayerSubcommandData {
         Map<UnitKey, Integer> unitDamage = new HashMap<>(unitHolder.getUnitDamage());
         for (Map.Entry<UnitKey, Integer> unitDmg : unitDamage.entrySet()) {
             UnitKey unitKey = unitDmg.getKey();
-            if (unitKey.getColorID().equals(oldColorID)) continue;
-            Integer value = unitDmg.getValue();
-            UnitKey replacedKey = Mapper.getUnitKey(unitKey.asyncID(), newColorID);
-            unitHolder.removeUnitDamage(unitKey, value);
-            unitHolder.addUnitDamage(replacedKey, value);
+            if (unitKey.getColorID().equals(oldColorID)) {
+                Integer value = unitDmg.getValue();
+                UnitKey replacedKey = Mapper.getUnitKey(unitKey.asyncID(), newColorID);
+                unitHolder.removeUnitDamage(unitKey, value);
+                unitHolder.addUnitDamage(replacedKey, value);
+            }
         }
 
         Map<UnitKey, Integer> units = new HashMap<>(unitHolder.getUnits());
         for (Map.Entry<UnitKey, Integer> unit : units.entrySet()) {
             UnitKey unitKey = unit.getKey();
-            if (unitKey.getColorID().equals(oldColorID)) continue;
-            Integer value = unit.getValue();
-            UnitKey replacedKey = Mapper.getUnitKey(unitKey.asyncID(), newColorID);
-            unitHolder.removeUnit(unitKey, value);
-            unitHolder.addUnit(replacedKey, value);
+            if (unitKey.getColorID().equals(oldColorID)) {
+                Integer value = unit.getValue();
+                UnitKey replacedKey = Mapper.getUnitKey(unitKey.asyncID(), newColorID);
+                unitHolder.removeUnit(unitKey, value);
+                unitHolder.addUnit(replacedKey, value);
+            }
         }
 
         Set<String> controlList = new HashSet<>(unitHolder.getControlList());

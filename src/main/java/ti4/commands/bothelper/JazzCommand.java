@@ -2,16 +2,15 @@ package ti4.commands.bothelper;
 
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import ti4.AsyncTI4DiscordBot;
-import ti4.helpers.AgendaHelper;
+//import ti4.helpers.AgendaHelper;
+import ti4.helpers.ButtonHelper;
 import ti4.message.MessageHelper;
+
+import java.util.*;
 
 public class JazzCommand extends BothelperSubcommandData {
     public JazzCommand() {
         super("jazz_command", "jazzxhands");
-        // addOptions(new OptionData(OptionType.INTEGER, "num_dice", "description", true).setRequiredRange(0, 1000));
-        // addOptions(new OptionData(OptionType.INTEGER, "threshold", "description", true).setRequiredRange(1, 10));
-        // addOptions(new OptionData(OptionType.INTEGER, "num_dice_2", "description", true).setRequiredRange(0, 1000));
-        // addOptions(new OptionData(OptionType.INTEGER, "threshold_2", "description", true).setRequiredRange(1, 10));
     }
 
     @Override
@@ -26,6 +25,31 @@ public class JazzCommand extends BothelperSubcommandData {
             }
         }
 
-        AgendaHelper.rollIxthian(getActiveGame());
+        List<String> colorsToCheck = List.of("gray", "black", "blue", "green", "orange", "pink", "purple", "red", "yellow", "petrol", "brown", "tan", "forest", "chrome", "sunset", "turquoise", "gold",
+            "lightgray", "teal", "bloodred", "emerald", "navy", "rose", "lime", "lavender", "spring", "chocolate", "rainbow", "ethereal", "orca", "splitred", "splitblue", "splitgreen", "splitpurple",
+            "splitorange", "splityellow", "splitpink", "splitgold", "splitlime", "splittan", "splitteal", "splitturquoise", "splitbloodred", "splitchocolate", "splitemerald", "splitnavy",
+            "splitpetrol", "splitrainbow");
+
+        StringBuilder sb2 = new StringBuilder("\t");
+        for (String c : colorsToCheck) {
+            sb2.append(c).append("\t");
+        }
+        sb2.append("\n");
+
+        Map<String, Map<String, Double>> contrastMap = new HashMap<>();
+        for (int i = 0; i < colorsToCheck.size(); i++) {
+            String c1 = colorsToCheck.get(i);
+            sb2.append(c1);
+
+            for (String c2 : colorsToCheck) {
+                double contrast = ButtonHelper.colorContrast(c1, c2);
+                sb2.append(String.format("\t%f", contrast));
+
+                contrastMap.computeIfAbsent(c1, k -> new HashMap<>());
+                contrastMap.get(c1).put(c2, contrast);
+            }
+            sb2.append("\n");
+        }
+        MessageHelper.sendMessageToChannel(event.getChannel(), sb2.toString());
     }
 }

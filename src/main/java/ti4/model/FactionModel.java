@@ -1,17 +1,21 @@
 package ti4.model;
 
+import java.awt.Color;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.MessageEmbed;
+import ti4.helpers.AliasHandler;
+import ti4.helpers.Emojis;
+import ti4.model.Source.ComponentSource;
+
 import org.apache.commons.lang3.StringUtils;
 
-import net.dv8tion.jda.api.entities.MessageEmbed;
-import ti4.generator.Mapper;
-import ti4.generator.TileHelper;
-import ti4.message.BotLogger;
+import lombok.Data;
 
-import java.util.ArrayList;
-
+@Data
 public class FactionModel implements ModelInterface, EmbeddableModel {
     private String alias;
     private String factionName;
@@ -26,7 +30,9 @@ public class FactionModel implements ModelInterface, EmbeddableModel {
     private List<String> leaders;
     private List<String> promissoryNotes;
     private List<String> units;
-    private String source;
+    private ComponentSource source;
+    private String homebrewReplacesID;
+    private String factionSheetURL;
 
     public boolean isValid() {
         return alias != null
@@ -39,45 +45,17 @@ public class FactionModel implements ModelInterface, EmbeddableModel {
             && abilities != null
             && leaders != null
             && promissoryNotes != null
-            && units != null;
+            && units != null
+            && source != null;
     }
 
-    public void validationWarnings() {
-        validateAbilities();
-        validateFactionTech();
-        validateHomePlanets();
-        validateStartingTech();
-        validateLeaders();
-        validatePromissoryNotes();
-        validateUnits();
-    }
-
-    public String getAlias() {
-        return alias;
-    }
-
-    public String getFactionName() {
-        return factionName;
+    public String getFactionEmoji() {
+        if (homebrewReplacesID != null) return Emojis.getFactionIconFromDiscord(homebrewReplacesID);
+        return Emojis.getFactionIconFromDiscord(getAlias());
     }
 
     public String getShortTag() {
-        return Optional.ofNullable(shortTag).orElse(StringUtils.left(getAlias(), 3).toUpperCase());
-    }
-
-    public String getHomeSystem() {
-        return homeSystem;
-    }
-
-    public String getStartingFleet() {
-        return startingFleet;
-    }
-
-    public int getCommodities() {
-        return commodities;
-    }
-
-    public String getSource() {
-        return source;
+        return StringUtils.left(Optional.ofNullable(shortTag).orElse(getAlias()), 3).toUpperCase();
     }
 
     public List<String> getFactionTech() {
@@ -108,98 +86,68 @@ public class FactionModel implements ModelInterface, EmbeddableModel {
         return new ArrayList<>(units);
     }
 
-    private boolean validateLeaders() {
-        if (Mapper.getLeaders().keySet().containsAll(getLeaders())) return true;
-        List<String> invalidLeaderIDs = new ArrayList<>();
-        for (String leaderID : getLeaders()) {
-            if (!Mapper.getLeaders().containsKey(leaderID)) invalidLeaderIDs.add(leaderID);
-        }
-
-        BotLogger.log("Faction **" + getAlias() + "** failed validation due to invalid leader IDs: `" + invalidLeaderIDs + "`");
-        return false;
+    public Optional<String> getHomebrewReplacesID() {
+        return Optional.ofNullable(homebrewReplacesID);
     }
 
-    private boolean validateUnits() {
-        if (Mapper.getUnits().keySet().containsAll(getUnits())) return true;
-        List<String> invalidUnitIDs = new ArrayList<>();
-        for (String unitID : getUnits()) {
-            if (!Mapper.getUnits().containsKey(unitID)) invalidUnitIDs.add(unitID);
-        }
-
-        BotLogger.log("Faction **" + getAlias() + "** failed validation due to invalid unit IDs: `" + invalidUnitIDs + "`");
-        return false;
-    }
-
-    private boolean validatePromissoryNotes() {
-        if (Mapper.getPromissoryNotes().keySet().containsAll(getPromissoryNotes())) return true;
-        List<String> invalidPromissoryNoteIDs = new ArrayList<>();
-        for (String promissoryNoteID : getPromissoryNotes()) {
-            if (!Mapper.getPromissoryNotes().containsKey(promissoryNoteID)) invalidPromissoryNoteIDs.add(promissoryNoteID);
-        }
-
-        BotLogger.log("Faction **" + getAlias() + "** failed validation due to invalid promissory note IDs: `" + invalidPromissoryNoteIDs + "`");
-        return false;
-    }
-
-    private boolean validateAbilities() {
-        if (Mapper.getFactionAbilities().keySet().containsAll(getAbilities())) return true;
-        List<String> invalidAbilityIDs = new ArrayList<>();
-        for (String abilityID : getAbilities()) {
-            if (!Mapper.getFactionAbilities().containsKey(abilityID)) invalidAbilityIDs.add(abilityID);
-        }
-
-        BotLogger.log("Faction **" + getAlias() + "** failed validation due to invalid ability IDs: `" + invalidAbilityIDs + "`");
-        return false;
-    }
-
-    private boolean validateHomePlanets() {
-        if (TileHelper.getAllPlanets().keySet().containsAll(getHomePlanets())) return true;
-        List<String> invalidPlanetIDs = new ArrayList<>();
-        for (String planetID : getHomePlanets()) {
-            if (!TileHelper.getAllPlanets().containsKey(planetID)) invalidPlanetIDs.add(planetID);
-        }
-
-        BotLogger.log("Faction **" + getAlias() + "** failed validation due to invalid home planet IDs: `" + invalidPlanetIDs + "`");
-        return false;
-    }
-
-    private boolean validateStartingTech() {
-        if (Mapper.getTechs().keySet().containsAll(getStartingTech())) return true;
-        List<String> invalidStartingTechIDs = new ArrayList<>();
-        for (String startingTechID : getStartingTech()) {
-            if (!Mapper.getTechs().containsKey(startingTechID)) invalidStartingTechIDs.add(startingTechID);
-        }
-
-        BotLogger.log("Faction **" + getAlias() + "** failed validation due to invalid starting tech IDs: `" + invalidStartingTechIDs + "`");
-        return false;
-    }
-
-    private boolean validateFactionTech() {
-        if (Mapper.getTechs().keySet().containsAll(getFactionTech())) return true;
-        List<String> invalidFactionTechIDs = new ArrayList<>();
-        for (String factionTechID : getFactionTech()) {
-            if (!Mapper.getTechs().containsKey(factionTechID)) invalidFactionTechIDs.add(factionTechID);
-        }
-
-        BotLogger.log("Faction **" + getAlias() + "** failed validation due to invalid faction tech IDs: `" + invalidFactionTechIDs + "`");
-        return false;
+    public Optional<String> getFactionSheetURL() {
+        return Optional.ofNullable(factionSheetURL);
     }
 
     @Override
     public MessageEmbed getRepresentationEmbed() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getRepresentationEmbed'");
+        return getRepresentationEmbed(false, false);
+    }
+
+    public MessageEmbed getRepresentationEmbed(boolean includeID, boolean includeAliases) {
+        EmbedBuilder eb = new EmbedBuilder();
+
+        //TITLE
+        String title = getFactionEmoji() +
+            " __**" + getFactionName() + "**__" +
+            getSource().emoji();
+        eb.setTitle(title);
+
+        // Emoji emoji = Emoji.fromFormatted(getFactionEmoji());
+        // if (emoji instanceof CustomEmoji customEmoji) {
+        //     eb.setThumbnail(customEmoji.getImageUrl());
+        // }
+
+        //DESCRIPTION
+        StringBuilder description = new StringBuilder();
+        eb.setDescription(description.toString());
+
+        //FIELDS
+        // eb.addField("title", "contents", true);      
+
+        if (getFactionSheetURL().isPresent()) eb.setImage(getFactionSheetURL().get());
+
+        //FOOTER
+        StringBuilder footer = new StringBuilder();
+        if (includeID) footer.append("ID: ").append(getAlias()).append("    Source: ").append(getSource());
+        if (includeAliases) footer.append("\nAliases: ").append(AliasHandler.getFactionAliasEntryList(getAlias()));
+        eb.setFooter(footer.toString());
+
+        eb.setColor(Color.black);
+        return eb.build();
     }
 
     @Override
     public boolean search(String searchString) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'search'");
+        searchString = searchString.toLowerCase();
+        return getFactionName().contains(searchString)
+            || getAlias().contains(searchString)
+            || getShortTag().contains(searchString)
+            || getSource().toString().contains(searchString)
+            || getAlias().equals(AliasHandler.resolveFaction(searchString));
     }
 
     @Override
     public String getAutoCompleteName() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getAutoCompleteName'");
+        return getFactionName() + " [" + source + "]";
+    }
+
+    public String getFactionNameWithSourceEmoji() {
+        return getFactionName() + getSource().emoji();
     }
 }

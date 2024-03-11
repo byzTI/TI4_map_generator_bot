@@ -1,7 +1,14 @@
 package ti4.helpers;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
+import org.jetbrains.annotations.NotNull;
+import ti4.map.Game;
+import ti4.map.Leader;
 
 public class Emojis {
     // FACTIONS
@@ -37,6 +44,7 @@ public class Emojis {
     public static final String axis = "<:axis:1082705549092737044>";
     public static final String bentor = "<:bentor:1082705559897264199>";
     public static final String blex = "<:blex:1082705569351204995>";
+    public static final String kyro = "<:blex:1082705569351204995>";
     public static final String celdauri = "<:celdauri:1082705576691253288>";
     public static final String cheiran = "<:cheiran:1082705584886915204>";
     public static final String cymiae = "<:cymiae:1082705596836487238>";
@@ -70,7 +78,7 @@ public class Emojis {
 
     // FACTIONS - OTHER
     public static final String AdminsFaction = "<:Admins:1084476380584083527>";
-    public static final String Qulane = "<:Qulane:1154064455580262440>";
+    public static final String Qulane = "<:qulane:1165445638096420895>";
 
     // EXPLORATION
     public static final String HFrag = "<:HFrag:1053857012766752788>";
@@ -113,6 +121,7 @@ public class Emojis {
     public static final String HazardousCard = "<:HazardousCard:1147194829479100557>";
     public static final String IndustrialCard = "<:IndustrialCard:1147194830762545183>";
     public static final String FrontierCard = "<:FrontierCard:1147194828417929397>";
+    public static final String EventCard = "";
 
     // OBJECTIVES
     public static final String SecretObjective = "<:Secretobjective:1054660535544729670>";
@@ -124,6 +133,7 @@ public class Emojis {
 
     // COMPONENTS
     public static final String tg = "<:tg:1053857635570553024>";
+    public static final String nomadcoin = "<:nomadcoin:1107100093791879178>";
     public static final String comm = "<:comm:1053857614028607538>";
     public static final String Sleeper = "<:Sleeper:1047871121451663371>";
     public static final String SleeperB = "<:SleeperB:1047871220831506484>";
@@ -303,8 +313,6 @@ public class Emojis {
     public static final String Influence_9 = "<:I9:864278934509322300>";
 
     // PLANETS
-    public static final String MecatolRex = "<:MecatolRex:1072083209250152489>";
-
     public static final String SemLor = "<:SemLor:1072075882618961930>";
     public static final String SemLord = "<:SemLord:1072076401462738965>";
     public static final String SemiLor = "<:SemiLor:1072076567053869106>";
@@ -413,8 +421,145 @@ public class Emojis {
     public static final String Zohbat = "<:Zohbat:1159528246166167586>";
     // END OF EMOJI FARM 8
 
+    // EMOJI FARM 11 - DS PLANETS
+    public static final String Derbrae = "<:Derbrae:1171623488746958890>";
+    public static final String Detic = "<:Detic:1171623490516963360>";
+    public static final String Domna = "<:Domna:1171623492106596424>";
+    public static final String Dorvok = "<:Dorvok:1171623493381669004>";
+    public static final String Echo = "<:Echo:1171623494577041438>";
+    public static final String EtirV = "<:EtirV:1171623515506622545>";
+    public static final String Fakrenn = "<:Fakrenn:1171623517507289149>";
+    public static final String Gwiyun = "<:Gwiyun:1171623518442627083>";
+    public static final String Inan = "<:Inan:1171623519289888828>";
+    public static final String Larred = "<:Larred:1171623520422346782>";
+    public static final String Lliot = "<:Lliot:1171623538067779585>";
+    public static final String Lodran = "<:Lodran:1171623539380584458>";
+    public static final String Mandle = "<:Mandle:1171623540370460813>";
+    public static final String Moln = "<:Moln:1171623541330952333>";
+    public static final String Nairb = "<:Nairb:1171623542194974901>";
+    public static final String Prism = "<:Prism:1171623558225608856>";
+    public static final String Qaak = "<:Qaak:1171623559647465532>";
+    public static final String Regnem = "<:Regnem:1171623560477937826>";
+    public static final String Rysaa = "<:Rysaa:1171623561086128179>";
+    public static final String Salin = "<:Salin:1171623562633814037>";
+    public static final String Sanvit = "<:Sanvit:1171623578614120489>";
+    public static final String Sierpen = "<:Sierpen:1171623579541049419>";
+    public static final String Silence = "<:Silence:1171623580946141226>";
+    public static final String Swog = "<:Swog:1171623581667557407>";
+    public static final String Tarrock = "<:Tarrock:1171623583479509104>";
+    public static final String Troac = "<:Troac:1171623597387812876>";
+    public static final String Vioss = "<:Vioss:1171623598650302566>";
+    // END OF EMOJI FARM 11
+
     // LIST OF SEM-LORES
     public static final List<String> SemLores = Arrays.asList(SemLor, SemLord, SemiLor, SemLore);
+
+    // EMOJI FARM 9 - SC COLORS
+    public static final String sc_1_1 = "<:sc_1_1:1164316518390190140>";
+    public static final String sc_1_2 = "<:sc_1_2:1164316520986464267>";
+    public static final String sc_1_3 = "<:sc_1_3:1164316522689339392>";
+    public static final String sc_1_4 = "<:sc_1_4:1164316525021380729>";
+    public static final String sc_1_5 = "<:sc_1_5:1164316526501965864>";
+    public static final String sc_1_6 = "<:sc_1_6:1164316528024494130>";
+    public static final String SC1Mention = sc_1_1 + sc_1_2 + sc_1_3 + sc_1_4 + sc_1_5 + sc_1_6;
+    public static final String sc_2_1 = "<:sc_2_1:1164316530025177108>";
+    public static final String sc_2_2 = "<:sc_2_2:1164316530926948383>";
+    public static final String sc_2_3 = "<:sc_2_3:1164316532533366935>";
+    public static final String sc_2_4 = "<:sc_2_4:1164316534982840422>";
+    public static final String sc_2_5 = "<:sc_2_5:1164316536266309684>";
+    public static final String sc_2_6 = "<:sc_2_6:1164316539789529108>";
+    public static final String SC2Mention = sc_2_1 + sc_2_2 + sc_2_3 + sc_2_4 + sc_2_5 + sc_2_6;
+    public static final String sc_3_1 = "<:sc_3_1:1164316650233942037>";
+    public static final String sc_3_2 = "<:sc_3_2:1164316651823579177>";
+    public static final String sc_3_3 = "<:sc_3_3:1164316653748764703>";
+    public static final String sc_3_4 = "<:sc_3_4:1164316654948323378>";
+    public static final String sc_3_5 = "<:sc_3_5:1164316657783689297>";
+    public static final String SC3Mention = sc_3_1 + sc_3_2 + sc_3_3 + sc_3_4 + sc_3_5;
+    public static final String sc_4_1 = "<:sc_4_1:1164316658970660998>";
+    public static final String sc_4_2 = "<:sc_4_2:1164316660358991893>";
+    public static final String sc_4_3 = "<:sc_4_3:1164316662510661715>";
+    public static final String sc_4_4 = "<:sc_4_4:1164316663857021039>";
+    public static final String sc_4_5 = "<:sc_4_5:1164335083440836708>";
+    public static final String sc_4_6 = "<:sc_4_6:1164335085902909440>";
+    public static final String sc_4_7 = "<:sc_4_7:1164316057448742995>";
+    public static final String SC4Mention = sc_4_1 + sc_4_2 + sc_4_3 + sc_4_4 + sc_4_5 + sc_4_6 + sc_4_7;
+    public static final String sc_5_1 = "<:sc_5_1:1164335087068926122>";
+    public static final String sc_5_2 = "<:sc_5_2:1164335088348168232>";
+    public static final String sc_5_3 = "<:sc_5_3:1164335090021716060>";
+    public static final String sc_5_4 = "<:sc_5_4:1164335091682648074>";
+    public static final String SC5Mention = sc_5_1 + sc_5_2 + sc_5_3 + sc_5_4;
+    public static final String sc_6_1 = "<:sc_6_1:1164335092739604632>";
+    public static final String sc_6_2 = "<:sc_6_2:1164335095352655882>";
+    public static final String sc_6_3 = "<:sc_6_3:1164335097307201617>";
+    public static final String sc_6_4 = "<:sc_6_4:1164335101111451648>";
+    public static final String sc_6_5 = "<:sc_6_5:1164335103191818300>";
+    public static final String SC6Mention = sc_6_1 + sc_6_2 + sc_6_3 + sc_6_4 + sc_6_5;
+    public static final String sc_7_1 = "<:sc_7_1:1164335106073296956>";
+    public static final String sc_7_2 = "<:sc_7_2:1164335107922989086>";
+    public static final String sc_7_3 = "<:sc_7_3:1164335364824113164>";
+    public static final String sc_7_4 = "<:sc_7_4:1164335111832096889>";
+    public static final String sc_7_5 = "<:sc_7_5:1164335367500071062>";
+    public static final String sc_7_6 = "<:sc_7_6:1164335116970098759>";
+    public static final String SC7Mention = sc_7_1 + sc_7_2 + sc_7_3 + sc_7_4 + sc_7_5 + sc_7_6;
+    public static final String sc_8_1 = "<:sc_8_1:1164335119046299748>";
+    public static final String sc_8_2 = "<:sc_8_2:1164335243688423454>";
+    public static final String sc_8_3 = "<:sc_8_3:1164335245210947644>";
+    public static final String sc_8_4 = "<:sc_8_4:1164335122355597402>";
+    public static final String sc_8_5 = "<:sc_8_5:1164335247429730365>";
+    public static final String SC8Mention = sc_8_1 + sc_8_2 + sc_8_3 + sc_8_4 + sc_8_5;
+    // END EMOJI FARM 9
+
+    // EMOJI FARM 10 - COLOR UNITS
+    public static final String black = "<:black:1165031264743600250>";
+    public static final String bloodred = "<:bloodred:1165031267532804277>";
+    public static final String blue = "<:blue:1165031268950482974>";
+    public static final String brown = "<:brown:1165031271253164182>";
+    public static final String chocolate = "<:chocolate:1165031272515645490>";
+    public static final String chrome = "<:chrome:1165031273715212318>";
+    public static final String rainbow = "<:clr_rainbow:1165031518738055298>";
+    public static final String rose = "<:clr_rose:1165031523045621870>";
+    public static final String emerald = "<:emerald:1165031276126937150>";
+    public static final String ethereal = "<:ethereal:1165036998814355497>";
+    public static final String forest = "<:forest:1165031277917909033>";
+    public static final String gold = "<:gold:1165031280577085450>";
+    public static final String gray = "<:gray:1165031281755693136>";
+    public static final String green = "<:green:1165031343227404438>";
+    public static final String lavender = "<:lavender:1165031345479753770>";
+    public static final String lightgray = "<:lightgray:1165031347107143680>";
+    public static final String lime = "<:lime:1165031349493706872>";
+    public static final String navy = "<:navy:1165031350731018311>";
+    public static final String orange = "<:orange:1165031351628611678>";
+    public static final String orca = "<:orca:1165031354430406726>";
+    public static final String petrol = "<:petrol:1165031356074569768>";
+    public static final String pink = "<:pink:1165031358226239570>";
+    public static final String purple = "<:purple:1165031359933321366>";
+    public static final String red = "<:red:1165031520969437224>";
+    public static final String spring = "<:spring:1165031606227050616>";
+    public static final String sunset = "<:sunset:1165031608538120242>";
+    public static final String tan = "<:tan:1165031610308120706>";
+    public static final String teal = "<:teal:1165031612933746800>";
+    public static final String turquoise = "<:turquoise:1165031614779232286>";
+    public static final String yellow = "<:yellow:1165036996557807676>";
+    public static final String splitbloodred = "<:splitbloodred:1165031525927104512>";
+    public static final String splitblue = "<:splitblue:1165031527353168083>";
+    public static final String splitchocolate = "<:splitchocolate:1165031529827807262>";
+    public static final String splitemerald = "<:splitemerald:1165031531346145330>";
+    public static final String splitgold = "<:splitgold:1165031534525419592>";
+    public static final String splitgreen = "<:splitgreen:1165031536526110750>";
+    public static final String splitlime = "<:splitlime:1165031538761674814>";
+    public static final String splitnavy = "<:splitnavy:1165031600795439154>";
+    public static final String splitorange = "<:splitorange:1165031603307819008>";
+    public static final String splitpetrol = "<:splitpetrol:1165037000127160341>";
+    public static final String splitpink = "<:splitpink:1165031604784205935>";
+    public static final String splitpurple = "<:splitpurple:1165037001465155795>";
+    public static final String splitrainbow = "<:splitrainbow:1165037003671351356>";
+    public static final String splitred = "<:splitred:1165037005479096370>";
+    public static final String splittan = "<:splittan:1165037008666775572>";
+    public static final String splitteal = "<:splitteal:1165037010910728242>";
+    public static final String splittorquoise = "<:splittorquoise:1165037013486022726>";
+    public static final String splityellow = "<:splityellow:1165037014995963965>";
+
+    // END EMOJI FARM 10
 
     // ANOMOLIES
     public static final String Supernova = "<:supernova:1137029705946640445>";
@@ -423,19 +568,19 @@ public class Emojis {
     public static final String Nebula = "<:nebula:1137029690004090900>";
 
     // TECHNOLOGY
-    public static final String PropulsionTech = "<:Propulsiontech:947250608145068074>";
+    public static final String PropulsionTech = "<:propulsion:1120031660025577533>";
     public static final String PropulsionDisabled = "<:propulsionDisabled:1120031664458960896>";
     public static final String Propulsion2 = "<:propulsion2:1120031821304959098>";
     public static final String Propulsion3 = "<:propulsion3:1120031823569895584>";
-    public static final String BioticTech = "<:Biotictech:947250608107315210>";
+    public static final String BioticTech = "<:biotic:1120031648151523369>";
     public static final String BioticDisabled = "<:bioticDisabled:1120031652299681963>";
     public static final String Biotic2 = "<:biotic2:1120031649732771841>";
     public static final String Biotic3 = "<:biotic3:1120031651167227944>";
-    public static final String CyberneticTech = "<:Cybernetictech:947250608149245972>";
+    public static final String CyberneticTech = "<:cybernetic:1120031653432139896>";
     public static final String CyberneticDisabled = "<:cyberneticDisabled:1120031658582737047>";
     public static final String Cybernetic2 = "<:cybernetic2:1120031655374102718>";
     public static final String Cybernetic3 = "<:cybernetic3:1120031656766619658>";
-    public static final String WarfareTech = "<:Warfaretech:947250607855644743>";
+    public static final String WarfareTech = "<:warfare:1120031666241536082>";
     public static final String WarfareDisabled = "<:warfareDisabled:1120031828384956446>";
     public static final String Warfare2 = "<:warfare2:1120031824891093113>";
     public static final String Warfare3 = "<:warfare3:1120031825851584523>";
@@ -465,6 +610,46 @@ public class Emojis {
     public static final String EightToes = "<:EightToes:1082312762572685352>";
     public static final String NineToes = "<:NineToes:1082312788241817661>";
 
+    // FRANKEN
+    public static final String Franken1 = "<:Franken1:1180167512965533726>";
+    public static final String Franken2 = "<:Franken2:1180167515276582992>";
+    public static final String Franken3 = "<:Franken3:1180167516392276048>";
+    public static final String Franken4 = "<:Franken4:1180167517608615936>";
+    public static final String Franken5 = "<:Franken5:1180167519114383460>";
+    public static final String Franken6 = "<:Franken6:1180167520079065239>";
+    public static final String Franken7 = "<:Franken7:1180167520821452931>";
+    public static final String Franken8 = "<:Franken8:1180167522176213062>";
+
+    // PBD2000 FACTIONS
+    public static final String echoes = "<:echoes:1189668215413026968>";
+    public static final String enclave = "<:enclave:1189668216478367744>";
+    public static final String raven = "<:raven:1189668203580887121>";
+    public static final String syndicate = "<:syndicate:1189668205355073667>";
+    public static final String terminator = "<:terminator:1189668214125363231>";
+
+    // DICE
+    public static final String d10green_0 = "<:d10green_0:1180170565819039916>";
+    public static final String d10green_1 = "<:d10green_1:1180170567337386026>";
+    public static final String d10green_2 = "<:d10green_2:1180170568381763605>";
+    public static final String d10green_3 = "<:d10green_3:1180170569526825092>";
+    public static final String d10green_4 = "<:d10green_4:1180170570533441576>";
+    public static final String d10green_5 = "<:d10green_5:1180170571896606770>";
+    public static final String d10green_6 = "<:d10green_6:1189667939222290434>";
+    public static final String d10green_7 = "<:d10green_7:1189667941407543378>";
+    public static final String d10green_8 = "<:d10green_8:1189667942326079618>";
+    public static final String d10green_9 = "<:d10green_9:1189667944125435924>";
+    public static final String d10red_0 = "<:d10red_0:1189667965600280676>";
+    public static final String d10red_1 = "<:d10red_1:1189667967349301358>";
+    public static final String d10red_2 = "<:d10red_2:1189667968427249754>";
+    public static final String d10red_3 = "<:d10red_3:1189667969597452369>";
+    public static final String d10red_4 = "<:d10red_4:1189667971270979796>";
+    public static final String d10red_5 = "<:d10red_5:1189667992557076661>";
+    public static final String d10red_6 = "<:d10red_6:1189667994025066686>";
+    public static final String d10red_7 = "<:d10red_7:1189667994977181796>";
+    public static final String d10red_8 = "<:d10red_8:1189667995883143279>";
+    public static final String d10red_9 = "<:d10red_9:1189667996852039800>";
+
+
     // OTHER
     public static final String WHalpha = "<:WHalpha:1056593618250518529>";
     public static final String WHbeta = "<:WHbeta:1056593596012302366>";
@@ -482,24 +667,684 @@ public class Emojis {
     public static final String winemaking = "<:winemaking:1064244730000584754>";
     public static final String BortWindow = "<:bortwindow:1032312829585399880>";
     public static final String SpoonAbides = "<:TheSpoonAbides:1003482035953860699>";
-    public static final String Absol = "<:Absol:1079473959248068701>";
-    public static final String DiscordantStars = "<:DS:1081308924084506706>";
     public static final String AsyncTI4Logo = "<:asyncti4:959703535258333264>";
     public static final String TIGL = "<:TIGL:1111086048974475305>";
     public static final String RollDice = "<a:rolldice:1131416916330811392>";
     public static final String BLT = "<:BLT:1080954650339065866>";
+    public static final String PinkHeart = "<:PinkHeart:1197584926359425145>";
 
-    // HOMEBREW
-    public static final String ActionDeck2 = "<:actiondeck2:1156988842331623506>"; //Symbol for Will's Action Deck 2 mod
-    public static final String Eronous = "<:eronous:1157307622920290444>"; //Symbol for Eronous' stuff
+    // SOURCE ICONS
+    public static final String TI4BaseGame = "<:TI4BaseGame:1181341816688222378>";
+    public static final String TI4PoK = "<:TI4PoK:1181341818676334683>";
+    public static final String Absol = "<:Absol:1180154956372783177>"; // Symbol for Absol's stuff https://discord.com/channels/743629929484386395/1023681580989939712
+    public static final String DiscordantStars = "<:DS:1180154970381754409>"; // Symbol for Discordant Stars https://discord.com/channels/743629929484386395/990061481238364160
+    public static final String ActionDeck2 = "<:ActionDeck2:1180154984743063572>"; // Symbol for Will's Action Deck 2 mod https://discord.com/channels/743629929484386395/1111799687184396338
+    public static final String Eronous = "<:eronous:1180154997359509504>"; // Symbol for Eronous' stuff https://discord.com/channels/743629929484386395/1096820095470272582
+    public static final String IgnisAurora = "<:IgnisAurora:1180155010206683218>"; // Symbol for Ignis Aurora's stuff
+    public static final String KeleresPlus = "<:KeleresPlus:1180158340295299192>"; // Symbol for Keleres Plus https://discord.com/channels/743629929484386395/1027385712821149706
+    public static final String ProjectPi = "";
+    public static final String MiltyMod = "<:MiltyMod:1181981333694722178>"; //Symbol for Milty's mod https://discord.com/channels/743629929484386395/1087435266249207869
 
     // LIST OF SYMBOLS FOR FOG STUFF
-    public static final List<String> symbols =
-        Arrays.asList(
-            warsun, spacedock, pds, mech, infantry, flagship, fighter, dreadnought, destroyer, carrier, cruiser, HFrag,
-            CFrag, IFrag, UFrag, Relic, Cultural, Industrial, Hazardous, Frontier, SecretObjective, Public1, Public2,
-            tg, comm, Sleeper, influence, resources, SemLord, ActionCard, Agenda, PN, NoToes, CyberneticTech,
-            PropulsionTech, BioticTech, WarfareTech, WHalpha, WHbeta, WHgamma, LegendaryPlanet, SpeakerToken,
-            BortWindow
-        );
+    public static final List<String> symbols = Arrays.asList(
+        warsun, spacedock, pds, mech, infantry, flagship, fighter, dreadnought, destroyer, carrier, cruiser, HFrag,
+        CFrag, IFrag, UFrag, Relic, Cultural, Industrial, Hazardous, Frontier, SecretObjective, Public1, Public2,
+        tg, comm, Sleeper, influence, resources, SemLord, ActionCard, Agenda, PN, NoToes, CyberneticTech,
+        PropulsionTech, BioticTech, WarfareTech, WHalpha, WHbeta, WHgamma, LegendaryPlanet, SpeakerToken,
+        BortWindow);
+
+    // private static List<String> testingEmoji = Arrays.asList("🐷","🙉","💩","👺","🥵","🤯","😜","👀","🦕","🐦","🦏","🐸");
+
+    @NotNull
+    public static String getRandomizedEmoji(int value, String messageID) {
+        List<String> symbols = new ArrayList<>(Emojis.symbols);
+        // symbols = new ArrayList<>(testingEmoji);
+        Random seed = messageID == null ? ThreadLocalRandom.current() : new Random(messageID.hashCode());
+        Collections.shuffle(symbols, seed);
+        value = value % symbols.size();
+        return symbols.get(value);
+    }
+
+    public static String getRandomSemLore() {
+        List<String> semLores = new ArrayList<>(SemLores);
+        Random seed = ThreadLocalRandom.current();
+        Collections.shuffle(semLores, seed);
+        return semLores.get(0);
+    }
+
+    public static String getRandomGoodDog() {
+        List<String> goodDogs = new ArrayList<>(GoodDogs);
+        Random seed = ThreadLocalRandom.current();
+        Collections.shuffle(goodDogs, seed);
+        return goodDogs.get(0);
+    }
+
+    @NotNull
+    public static String getFactionIconFromDiscord(String faction) {
+        if (faction == null) {
+            return getRandomizedEmoji(0, null);
+        }
+        return switch (faction.toLowerCase()) {
+            case "arborec" -> Arborec;
+            case "argent" -> Argent;
+            case "cabal" -> Cabal;
+            case "empyrean" -> Empyrean;
+            case "ghost", "creuss" -> Ghost;
+            case "hacan" -> Hacan;
+            case "jolnar" -> Jolnar;
+            case "l1z1x" -> L1Z1X;
+            case "letnev" -> Letnev;
+            case "yssaril" -> Yssaril;
+            case "mahact" -> Mahact;
+            case "mentak" -> Mentak;
+            case "muaat" -> Muaat;
+            case "naalu" -> Naalu;
+            case "naaz" -> Naaz;
+            case "nekro" -> Nekro;
+            case "nomad" -> Nomad;
+            case "saar" -> Saar;
+            case "sardakk" -> Sardakk;
+            case "sol" -> Sol;
+            case "titans" -> Titans;
+            case "winnu" -> Winnu;
+            case "xxcha" -> Xxcha;
+            case "yin" -> Yin;
+
+            case "lazax" -> Lazax;
+
+            case "keleres", "keleresx", "keleresm", "keleresa" -> Keleres;
+
+            case "augers" -> augers;
+            case "axis" -> axis;
+            case "bentor" -> bentor;
+            case "blex", "kyro" -> blex;
+            case "celdauri" -> celdauri;
+            case "cheiran" -> cheiran;
+            case "cymiae" -> cymiae;
+            case "dihmohn" -> dihmohn;
+            case "edyn" -> edyn;
+            case "florzen" -> florzen;
+            case "freesystems" -> freesystems;
+            case "ghemina" -> ghemina;
+            case "ghoti" -> ghoti;
+            case "gledge" -> gledge;
+            case "khrask" -> khrask;
+            case "kjalengard" -> kjalengard;
+            case "kollecc" -> kollecc;
+            case "kolume" -> kolume;
+            case "kortali" -> kortali;
+            case "lanefir" -> lanefir;
+            case "lizho" -> lizho;
+            case "mirveda" -> mirveda;
+            case "mortheus" -> mortheus;
+            case "mykomentori" -> mykomentori;
+            case "nivyn" -> nivyn;
+            case "nokar" -> nokar;
+            case "olradin" -> olradin;
+            case "rohdhna" -> rohdhna;
+            case "tnelis" -> tnelis;
+            case "vaden" -> vaden;
+            case "vaylerian" -> vaylerian;
+            case "veldyr" -> veldyr;
+            case "zealots" -> zealots;
+            case "zelian" -> zelian;
+
+            case "admins" -> AdminsFaction;
+            case "qulane" -> Qulane;
+
+            case "franken1" -> Franken1;
+            case "franken2" -> Franken2;
+            case "franken3" -> Franken3;
+            case "franken4" -> Franken4;
+            case "franken5" -> Franken5;
+            case "franken6" -> Franken6;
+            case "franken7" -> Franken7;
+            case "franken8" -> Franken8;
+
+            case "echoes" -> echoes;
+            case "enclave" -> enclave;
+            case "raven" -> raven;
+            case "syndicate" -> syndicate;
+            case "terminator" -> terminator;
+
+            default -> getRandomizedEmoji(0, null);
+        };
+    }
+
+    public static String getPlanetEmoji(String planet) {
+        return switch (planet.toLowerCase()) {
+            case "0.0.0" -> Planet000;
+            case "abaddon" -> Abaddon;
+            case "abyz" -> Abyz;
+            case "accoen" -> Accoen;
+            case "acheron" -> Acheron;
+            case "alioprima" -> AlioPrima;
+            case "ang" -> Ang;
+            case "arcprime" -> ArcPrime;
+            case "archonren", "archonrenk" -> ArchonRen;
+            case "archontau", "archontauk" -> ArchonTau;
+            case "archonvail" -> ArchonVail;
+            case "arcturus" -> Arcturus;
+            case "arinam" -> Arinam;
+            case "arnor" -> Arnor;
+            case "arretze" -> Arretze;
+            case "ashtroth" -> Ashtroth;
+            case "atlas" -> Atlas;
+            case "avar", "avark" -> Avar;
+            case "bakal" -> Bakal;
+            case "bereg" -> Bereg;
+            case "cealdri" -> Cealdri;
+            case "centauri" -> Centauri;
+            case "cormund" -> Cormund;
+            case "corneeq" -> Corneeq;
+            case "creuss" -> Creuss;
+            case "dalbootha" -> DalBootha;
+            case "darien" -> Darien;
+            case "druaa" -> Druaa;
+            case "elysium" -> Elysium;
+            case "everra" -> Everra;
+            case "fria" -> Fria;
+            case "gral" -> Gral;
+            case "hercant" -> Hercant;
+            case "hopesend" -> HopesEnd;
+            case "ixth" -> Ixth;
+            case "jeolir" -> JeolIr;
+            case "jol" -> Jol;
+            case "jord" -> Jord;
+            case "kamdorn" -> Kamdorn;
+            case "kraag" -> Kraag;
+            case "lazar" -> Lazar;
+            case "lirtaiv" -> LirtaIV;
+            case "lisis" -> Lisis;
+            case "lisisii" -> LisisII;
+            case "lodor" -> Lodor;
+            case "loki" -> Loki;
+            case "lor" -> Lor;
+            case "maaluuk" -> Maaluuk;
+            case "mallice" -> Mallice;
+            case "mr" -> Mecatol;
+            case "meer" -> Meer;
+            case "meharxull" -> MeharXull;
+            case "mellon" -> Mellon;
+            case "mollprimus", "mollprimusk" -> MollPrimus;
+            case "mordai" -> Mordai;
+            case "muaat" -> PlanetMuaat;
+            case "naazir" -> Naazir;
+            case "nar" -> Nar;
+            case "nestphar" -> Nestphar;
+            case "newalbion" -> NewAlbion;
+            case "perimeter" -> Perimeter;
+            case "primor" -> Primor;
+            case "quann" -> Quann;
+            case "qucenn" -> Qucenn;
+            case "quinarra" -> Quinarra;
+            case "rahg" -> Rahg;
+            case "rarron" -> Rarron;
+            case "resculon" -> Resculon;
+            case "retillon" -> Retillon;
+            case "rigeli" -> RigelI;
+            case "rigelii" -> RigelII;
+            case "rigeliii" -> RigelIII;
+            case "rokha" -> Rokha;
+            case "sakulag" -> Sakulag;
+            case "saudor" -> Saudor;
+            case "semlore" -> getRandomSemLore();
+            case "shalloq" -> Shalloq;
+            case "siig" -> Siig;
+            case "starpoint" -> Starpoint;
+            case "tarmann" -> Tarmann;
+            case "tequran" -> Tequran;
+            case "thedark" -> TheDark;
+            case "thibah" -> Thibah;
+            case "torkan" -> Torkan;
+            case "trenlak" -> Trenlak;
+            case "valk", "valkk" -> Valk;
+            case "vefut" -> Vefut;
+            case "vegamajor" -> VegaMajor;
+            case "vegaminor" -> VegaMinor;
+            case "velnor" -> Velnor;
+            case "vorhal" -> Vorhal;
+            case "wellon" -> Wellon;
+            case "winnu" -> PlanetWinnu;
+            case "wrenterra" -> WrenTerra;
+            case "xanhact" -> Xanhact;
+            case "xxehan" -> Xxehan;
+            case "ylir", "ylirk" -> Ylir;
+            case "zohbat" -> Zohbat;
+
+            case "derbrae", "debrbrae" -> Derbrae;
+            case "detic" -> Detic;
+            case "domna" -> Domna;
+            case "dorvok" -> Dorvok;
+            case "echo" -> Echo;
+            case "etirv" -> EtirV;
+            case "fakrenn" -> Fakrenn;
+            case "gwiyun" -> Gwiyun;
+            case "inan" -> Inan;
+            case "larred" -> Larred;
+            case "lliot" -> Lliot;
+            case "lodran" -> Lodran;
+            case "mandle" -> Mandle;
+            case "moln" -> Moln;
+            case "nairb" -> Nairb;
+            case "prism" -> Prism;
+            case "qaak" -> Qaak;
+            case "regnem" -> Regnem;
+            case "rysaa" -> Rysaa;
+            case "salin" -> Salin;
+            case "sanvit" -> Sanvit;
+            case "sierpen" -> Sierpen;
+            case "silence" -> Silence;
+            case "swog" -> Swog;
+            case "tarrock" -> Tarrock;
+            case "troac" -> Troac;
+            case "vioss" -> Vioss;
+
+            default -> SemLore;
+        };
+    }
+
+    public static String getColorEmojiWithName(String color) {
+        return switch (color) {
+            case "gray" -> gray + "**Gray**";
+            case "black" -> black + "**Black**";
+            case "blue" -> blue + "**Blue**";
+            case "green" -> green + "**Green**";
+            case "orange" -> orange + "**Orange**";
+            case "pink" -> pink + "**Pink**";
+            case "purple" -> purple + "**Purple**";
+            case "red" -> red + "**Red**";
+            case "yellow" -> yellow + "**Yellow**";
+            case "petrol" -> petrol + "**Petrol**";
+            case "brown" -> brown + "**Brown**";
+            case "tan" -> tan + "**Tan**";
+            case "forest" -> forest + "**Forest**";
+            case "chrome" -> chrome + "**Chrome**";
+            case "sunset" -> sunset + "**Sunset**";
+            case "turquoise" -> turquoise + "**Turquoise**";
+            case "gold" -> gold + "**Gold**";
+            case "lightgray" -> lightgray + "**LightGray**";
+            case "teal" -> teal + "**Teal**";
+            case "bloodred" -> bloodred + "**BloodRed**";
+            case "emerald" -> emerald + "**Emerald**";
+            case "navy" -> navy + "**Navy**";
+            case "rose" -> rose + "**Rose**";
+            case "lime" -> lime + "**Lime**";
+            case "lavender" -> lavender + "**Lavender**";
+            case "spring" -> spring + "**Spring**";
+            case "chocolate" -> chocolate + "**Chocolate**";
+            case "rainbow" -> rainbow + "**Rainbow**";
+            case "ethereal" -> ethereal + "**Ethereal**";
+            case "orca" -> orca + "**Orca**";
+            case "splitred" -> splitred + "**SplitRed**";
+            case "splitblue" -> splitblue + "**SplitBlue**";
+            case "splitgreen" -> splitgreen + "**SplitGreen**";
+            case "splitpurple" -> splitpurple + "**SplitPurple**";
+            case "splitorange" -> splitorange + "**SplitOrange**";
+            case "splityellow" -> splityellow + "**SplitYellow**";
+            case "splitpink" -> splitpink + "**SplitPink**";
+            case "splitgold" -> splitgold + "**SplitGold**";
+            case "splitlime" -> splitlime + "**SplitLime**";
+            case "splittan" -> splittan + "**SplitTan**";
+            case "splitteal" -> splitteal + "**SplitTeal**";
+            case "splitturquoise" -> splittorquoise + "**SplitTurquoise**";
+            case "splitbloodred" -> splitbloodred + "**SplitBloodRed**";
+            case "splitchocolate" -> splitchocolate + "**SplitChocolate**";
+            case "splitemerald" -> splitemerald + "**SplitEmerald**";
+            case "splitnavy" -> splitnavy + "**SplitNavy**";
+            case "splitpetrol" -> splitpetrol + "**SplitPetrol**";
+            case "splitrainbow" -> splitrainbow + "**SplitRainbow**";
+            default -> color;
+        };
+    }
+
+    public static String getColorEmoji(String color) {
+        return switch (color) {
+            case "gray" -> gray;
+            case "black" -> black;
+            case "blue" -> blue;
+            case "green" -> green;
+            case "orange" -> orange;
+            case "pink" -> pink;
+            case "purple" -> purple;
+            case "red" -> red;
+            case "yellow" -> yellow;
+            case "petrol" -> petrol;
+            case "brown" -> brown;
+            case "tan" -> tan;
+            case "forest" -> forest;
+            case "chrome" -> chrome;
+            case "sunset" -> sunset;
+            case "turquoise" -> turquoise;
+            case "gold" -> gold;
+            case "lightgray" -> lightgray;
+            case "teal" -> teal;
+            case "bloodred" -> bloodred;
+            case "emerald" -> emerald;
+            case "navy" -> navy;
+            case "rose" -> rose;
+            case "lime" -> lime;
+            case "lavender" -> lavender;
+            case "spring" -> spring;
+            case "chocolate" -> chocolate;
+            case "rainbow" -> rainbow;
+            case "ethereal" -> ethereal;
+            case "orca" -> orca;
+            case "splitred" -> splitred;
+            case "splitblue" -> splitblue;
+            case "splitgreen" -> splitgreen;
+            case "splitpurple" -> splitpurple;
+            case "splitorange" -> splitorange;
+            case "splityellow" -> splityellow;
+            case "splitpink" -> splitpink;
+            case "splitgold" -> splitgold;
+            case "splitlime" -> splitlime;
+            case "splittan" -> splittan;
+            case "splitteal" -> splitteal;
+            case "splitturquoise" -> splittorquoise;
+            case "splitbloodred" -> splitbloodred;
+            case "splitchocolate" -> splitchocolate;
+            case "splitemerald" -> splitemerald;
+            case "splitnavy" -> splitnavy;
+            case "splitpetrol" -> splitpetrol;
+            case "splitrainbow" -> splitrainbow;
+
+            default -> getRandomGoodDog();
+        };
+    }
+
+    public static String getInfluenceEmoji(int count) {
+        return switch (count) {
+            case 0 -> Influence_0;
+            case 1 -> Influence_1;
+            case 2 -> Influence_2;
+            case 3 -> Influence_3;
+            case 4 -> Influence_4;
+            case 5 -> Influence_5;
+            case 6 -> Influence_6;
+            case 7 -> Influence_7;
+            case 8 -> Influence_8;
+            case 9 -> Influence_9;
+            default -> influence + count;
+        };
+    }
+
+    public static String getResourceEmoji(int count) {
+        return switch (count) {
+            case 0 -> Resources_0;
+            case 1 -> Resources_1;
+            case 2 -> Resources_2;
+            case 3 -> Resources_3;
+            case 4 -> Resources_4;
+            case 5 -> Resources_5;
+            case 6 -> Resources_6;
+            case 7 -> Resources_7;
+            case 8 -> Resources_8;
+            case 9 -> Resources_9;
+            default -> resources + count;
+        };
+    }
+
+    public static String getToesEmoji(int count) {
+        return switch (count) {
+            case 0 -> NoToes;
+            case 1 -> OneToe;
+            case 2 -> TwoToes;
+            case 3 -> ThreeToes;
+            case 4 -> FourToes;
+            case 5 -> FiveToes;
+            case 6 -> SixToes;
+            case 7 -> SevenToes;
+            case 8 -> EightToes;
+            case 9 -> NineToes;
+            default -> NoToes + count;
+        };
+    }
+
+    public static String getFactionLeaderEmoji(Leader leader) {
+        return getEmojiFromDiscord(leader.getId());
+    }
+
+    /**
+     * Takes an emoji's name string and returns its full name including ID.
+     * 
+     * @emojiName the name of the emoji as entered on the Emoji section of the server
+     * @return the name of the emoji including ID
+     */
+    public static String getEmojiFromDiscord(String emojiName) {
+        return switch (emojiName.toLowerCase()) {
+            // EXPLORATION
+            case "hfrag" -> HFrag;
+            case "cfrag" -> CFrag;
+            case "ifrag" -> IFrag;
+            case "ufrag" -> UFrag;
+            case "relic" -> Relic;
+            case "cultural" -> Cultural;
+            case "industrial" -> Industrial;
+            case "hazardous" -> Hazardous;
+            case "frontier" -> Frontier;
+
+            // CARDS
+            case "sc1" -> SC1;
+            case "sc2" -> SC2;
+            case "sc3" -> SC3;
+            case "sc4" -> SC4;
+            case "sc5" -> SC5;
+            case "sc6" -> SC6;
+            case "sc7" -> SC7;
+            case "sc8" -> SC8;
+            case "sc1back" -> SC1Back;
+            case "sc2back" -> SC2Back;
+            case "sc3back" -> SC3Back;
+            case "sc4back" -> SC4Back;
+            case "sc5back" -> SC5Back;
+            case "sc6back" -> SC6Back;
+            case "sc7back" -> SC7Back;
+            case "sc8back" -> SC8Back;
+            case "actioncard" -> ActionCard;
+            case "agenda" -> Agenda;
+            case "pn" -> PN;
+
+            // OBJECTIVES
+            case "secretobjective" -> SecretObjective;
+            case "public1" -> Public1;
+            case "public2" -> Public2;
+            case "public1alt" -> Public1alt;
+            case "public2alt" -> Public2alt;
+            case "secretobjectivealt" -> SecretObjectiveAlt;
+
+            // COMPONENTS
+            case "tg" -> tg;
+            case "comm" -> comm;
+            case "sleeper" -> Sleeper;
+            case "sleeperb" -> SleeperB;
+
+            // UNITS
+            case "warsun" -> warsun;
+            case "spacedock" -> spacedock;
+            case "pds" -> pds;
+            case "mech" -> mech;
+            case "infantry" -> infantry;
+            case "flagship" -> flagship;
+            case "lady" -> flagship;
+            case "cavalry" -> flagship;
+            case "tyrantslament" -> flagship;
+            case "fighter" -> fighter;
+            case "dreadnought" -> dreadnought;
+            case "destroyer" -> destroyer;
+            case "carrier" -> carrier;
+            case "cruiser" -> cruiser;
+            case "plenaryorbital"-> spacedock;
+
+            // LEADERS - AGENTS
+            case "arborecagent" -> ArborecAgent;
+            case "argentagent" -> ArgentAgent;
+            case "cabalagent" -> CabalAgent;
+            case "ghostagent", "creussagent" -> CreussAgent;
+            case "empyreanagent" -> EmpyreanAgent;
+            case "hacanagent" -> HacanAgent;
+            case "jolnaragent" -> JolNarAgent;
+            case "keleresagent" -> KeleresAgent;
+            case "l1z1xagent" -> L1Z1XAgent;
+            case "letnevagent" -> LetnevAgent;
+            case "mahactagent" -> MahactAgent;
+            case "mentakagent" -> MentakAgent;
+            case "muaatagent" -> MuaatAgent;
+            case "naaluagent" -> NaaluAgent;
+            case "naazagent" -> NaazAgent;
+            case "nekroagent" -> NekroAgent;
+            case "nomadagentartuno" -> NomadAgentArtuno;
+            case "nomadagentmercer" -> NomadAgentMercer;
+            case "nomadagentthundarian" -> NomadAgentThundarian;
+            case "sardakkagent" -> SardakkAgent;
+            case "saaragent" -> SaarAgent;
+            case "solagent" -> SolAgent;
+            case "titansagent" -> TitansAgent;
+            case "winnuagent" -> WinnuAgent;
+            case "xxchaagent" -> XxchaAgent;
+            case "yinagent" -> YinAgent;
+            case "yssarilagent" -> YssarilAgent;
+
+            // LEADERS - COMMANDERS
+            case "arboreccommander" -> ArborecCommander;
+            case "argentcommander" -> ArgentCommander;
+            case "cabalcommander" -> CabalCommander;
+            case "ghostcommander", "creusscommander" -> CreussCommander;
+            case "empyreancommander" -> EmpyreanCommander;
+            case "hacancommander" -> HacanCommander;
+            case "jolnarcommander" -> JolNarCommander;
+            case "kelerescommander" -> MentakAgent;
+            case "l1z1xcommander" -> L1Z1XCommander;
+            case "letnevcommander" -> LetnevCommander;
+            case "mahactcommander" -> MahactCommander;
+            case "mentakcommander" -> MentakCommander;
+            case "muaatcommander" -> MuaatCommander;
+            case "naalucommander" -> NaaluCommander;
+            case "naazcommander" -> NaazCommander;
+            case "nekrocommander" -> NekroCommander;
+            case "nomadcommander" -> NomadCommander;
+            case "sardakkcommander" -> SardakkCommander;
+            case "saarcommander" -> SaarCommander;
+            case "solcommander" -> SolCommander;
+            case "titanscommander" -> TitansCommander;
+            case "winnucommander" -> WinnuCommander;
+            case "xxchacommander" -> XxchaCommander;
+            case "yincommander" -> YinCommander;
+            case "yssarilcommander" -> YssarilCommander;
+
+            // LEADERS - HEROES
+            case "arborechero" -> ArborecHero;
+            case "argenthero" -> ArgentHero;
+            case "cabalhero" -> CabalHero;
+            case "ghosthero", "creusshero" -> CreussHero;
+            case "empyreanhero" -> EmpyreanHero;
+            case "hacanhero" -> HacanHero;
+            case "jolnarhero" -> JolNarHero;
+            case "keleresherokuuasi" -> KeleresHeroKuuasi;
+            case "keleresheroodlynn" -> KeleresHeroOdlynn;
+            case "keleresheroharka" -> KeleresHeroHarka;
+            case "l1z1xhero" -> L1Z1XHero;
+            case "letnevhero" -> LetnevHero;
+            case "mahacthero" -> MahactHero;
+            case "mentakhero" -> MentakHero;
+            case "muaathero" -> MuaatHero;
+            case "naaluhero" -> NaaluHero;
+            case "naazhero" -> NaazHero;
+            case "nekrohero" -> NekroHero;
+            case "nomadhero" -> NomadHero;
+            case "sardakkhero" -> SardakkHero;
+            case "saarhero" -> SaarHero;
+            case "solhero" -> SolHero;
+            case "titanshero" -> TitansHero;
+            case "winnuhero" -> WinnuHero;
+            case "xxchahero" -> XxchaHero;
+            case "yinhero" -> YinHero;
+            case "yssarilhero" -> YssarilHero;
+
+            // DS LEADERS
+            case "augersagent" -> AugersAgent;
+            case "augerscommander" -> AugersCommander;
+            case "augershero" -> AugersHero;
+            case "axisagent" -> AxisAgent;
+            case "axiscommander" -> AxisCommander;
+            case "axishero" -> AxisHero;
+            case "bentoragent" -> BentorAgent;
+            case "bentorcommander" -> BentorCommander;
+            case "bentorhero" -> BentorHero;
+            case "blexagent" -> BlexAgent;
+            case "blexcommander" -> BlexCommander;
+            case "blexhero" -> BlexHero;
+            case "celdauriagent" -> CeldauriAgent;
+            case "celdauricommander" -> CeldauriCommander;
+            case "celdaurihero" -> CeldauriHero;
+            case "cheiranagent" -> CheiranAgent;
+            case "cheirancommander" -> CheiranCommander;
+            case "cheiranhero" -> CheiranHero;
+            case "gheminaagent" -> GheminaAgent;
+            case "gheminacommander" -> GheminaCommander;
+            case "gheminaherolady" -> GheminaHeroLady;
+            case "gheminaherolord" -> GheminaHeroLord;
+            case "cymiaeagent" -> CymiaeAgent;
+            case "cymiaecommander" -> CymiaeCommander;
+            case "cymiaehero" -> CymiaeHero;
+            case "dihmohnagent" -> DihmohnAgent;
+            case "dihmohncommander" -> DihmohnCommander;
+            case "dihmohnhero" -> DihmohnHero;
+            case "edynagent" -> EdynAgent;
+            case "edyncommander" -> EdynCommander;
+            case "edynhero" -> EdynHero;
+            case "florzenagent" -> FlorzenAgent;
+            case "florzencommander" -> FlorzenCommander;
+            case "florzenhero" -> FlorzenHero;
+            case "freesystemcommander" -> FreesystemCommander;
+            case "freesystemhero" -> FreesystemHero;
+            case "freesystemsagent" -> FreesystemsAgent;
+            case "ghotiagent" -> GhotiAgent;
+            case "ghoticommander" -> GhotiCommander;
+            case "ghotihero" -> GhotiHero;
+            case "gledgeagent" -> GledgeAgent;
+            case "gledgecommander" -> GledgeCommander;
+            case "gledgehero" -> GledgeHero;
+            case "khraskagent" -> KhraskAgent;
+            case "khraskcommander" -> KhraskCommander;
+            case "khraskhero" -> KhraskHero;
+            case "kjalengardagent" -> KjalengardAgent;
+            case "kjalengardcommander" -> KjalengardCommander;
+            case "kjalengardhero" -> KjalengardHero;
+
+            // OTHER
+            case "whalpha" -> WHalpha;
+            case "grift" -> GravityRift;
+            case "whbeta" -> WHbeta;
+            case "whgamma" -> WHgamma;
+            case "creussalpha" -> CreussAlpha;
+            case "creussbeta" -> CreussBeta;
+            case "creussgamma" -> CreussGamma;
+            case "influence" -> influence;
+            case "resources" -> resources;
+            case "legendaryplanet" -> LegendaryPlanet;
+            case "cybernetictech" -> CyberneticTech;
+            case "propulsiontech" -> PropulsionTech;
+            case "biotictech" -> BioticTech;
+            case "warfaretech" -> WarfareTech;
+            case "unitupgradetech" -> UnitUpgradeTech;
+
+            default -> getRandomGoodDog();
+        };
+    }
+
+    public static String getSCEmojiFromInteger(Integer strategy_card) {
+        String scEmojiName = "SC" + strategy_card;
+        return getEmojiFromDiscord(scEmojiName);
+    }
+
+    public static String getSCBackEmojiFromInteger(Integer strategy_card) {
+        String scEmojiName = "SC" + strategy_card + "Back";
+        return getEmojiFromDiscord(scEmojiName);
+    }
+
+    public static String getTGorNomadCoinEmoji(Game activeGame) {
+        if (activeGame == null) return tg;
+        return activeGame.getNomadCoin() ? nomadcoin : tg;
+    }
 }

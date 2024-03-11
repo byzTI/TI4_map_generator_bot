@@ -1,0 +1,849 @@
+[
+    {
+        "alias": "plus3_1combat_all",
+        "type": "DIE_MOD",
+        "value": "+3",
+        "scope": "",
+        "forCombatAbility": "combatround",
+        "persistenceType": "ONE_COMBAT",
+        "related": [
+            {
+                "type": "action_cards",
+                "alias": "close_quarters"
+            }
+        ]
+    },
+    {
+        "alias": "plus3_1combat_all_opponent",
+        "type": "DIE_MOD",
+        "value": "+3",
+        "scope": "",
+        "forCombatAbility": "combatround",
+        "applyToOpponent": true,
+        "persistenceType": "ONE_COMBAT",
+        "related": [
+            {
+                "type": "action_cards",
+                "alias": "close_quarters"
+            }
+        ]
+    },
+    {
+        "alias": "minus4_bombard",
+        "type": "DIE_MOD",
+        "value": "-4",
+        "scope": "",
+        "forCombatAbility": "bombardment",
+        "applyToOpponent": true,
+        "persistenceType": "ONE_TACTICAL_ACTION",
+        "related": [
+            {
+                "type": "action_cards",
+                "alias": "bunker"
+            }
+        ]
+    },
+    {
+        "alias": "plus1_1tacticalaction_all",
+        "type": "DIE_MOD",
+        "value": "+1",
+        "scope": "",
+        "forCombatAbility": "combatround",
+        "persistenceType": "ONE_TACTICAL_ACTION",
+        "related": [
+            {
+                "type": "leader",
+                "alias": "vaylerianhero"
+            }
+        ]
+    },
+    
+    {
+        "alias": "plus1_roll_mechs_naaz_flagship",
+        "type": "extrarolls",
+        "value": "+1",
+        "applyEachForQuantity": true,
+        "persistenceType": "CONDITIONAL",
+        "scope": "mf",
+        "forCombatAbility": "combatround",
+        "condition": "naazFS",
+        "related": [
+            {
+                "type": "custom",
+                "alias": "custom",
+                "message": "Naaz Mechs get +1 die due to Flagship"
+            }
+        ]
+
+    },
+    {
+        "alias": "plus1_1round_all",
+        "type": "DIE_MOD",
+        "value": "+1",
+        "scope": "",
+        "forCombatAbility": "combatround",
+        "persistenceType": "ONE_ROUND",
+        "related": [
+            {
+                "type": "tech",
+                "alias": "sc"
+            },
+            {
+                "type": "action_cards",
+                "alias": "morale_boost_ds"
+            },
+            {
+                "type": "action_cards",
+                "alias": "mb1"
+            },
+            {
+                "type": "action_cards",
+                "alias": "mb2"
+            },
+            {
+                "type": "action_cards",
+                "alias": "mb3"
+            },
+            {
+                "type": "action_cards",
+                "alias": "mb4"
+            }
+        ]
+    },
+    {
+        "alias": "plus1_1round_fighter",
+        "type": "DIE_MOD",
+        "value": "+2",
+        "scope": "ff",
+        "forCombatAbility": "combatround",
+        "persistenceType": "ONE_ROUND",
+        "related": [
+            {
+                "type": "action_cards",
+                "alias": "f_prototype"
+            }
+        ]
+    },
+    {
+        "alias": "minus_1_opponent_tekklar_player_owner",
+        "type": "mods",
+        "value": "-1",
+        "persistenceType": "CONDITIONAL",
+        "condition": "opponent_tekklar_player_owner",
+        "scope": "",
+        "related": [
+            {
+                "type": "custom",
+                "alias": "custom",
+                "message": "If your opponent is the N'orr player, apply -1 to the result of each of their unit's combat rolls during this combat."
+            }
+        ],
+        "forCombatAbility": "combatround"
+    },
+    {
+        "alias": "plus1_1invasion_combat",
+        "type": "DIE_MOD",
+        "value": "+1",
+        "scope": "_groundforce_",
+        "forCombatAbility": "combatround",
+        "persistenceType": "ONE_COMBAT",
+        "related": [
+            {
+                "type": "promissory_notes",
+                "alias": "tekklar"
+            }
+        ]
+    },
+    {
+        "alias": "plus1_1combat_fighter",
+        "type": "DIE_MOD",
+        "value": "+1",
+        "scope": "ff",
+        "forCombatAbility": "combatround",
+        "persistenceType": "ONE_COMBAT",
+        "related": [
+            {
+                "type": "promissory_notes",
+                "alias": "dspnkjal"
+            }
+        ]
+    },
+    {
+        "alias": "minus1_mod_pds_off_opponent_antimatter",
+        "type": "mods",
+        "value": "-1",
+        "persistenceType": "ALWAYS",
+        "scope": "",
+        "forCombatAbility": "SpaceCannonOffence",
+        "related": [
+            {
+                "type": "opponent_tech",
+                "alias": "amd"
+            },
+            {
+                "type": "opponent_tech",
+                "alias": "absol_amd"
+            }
+        ]
+    },
+    {
+        "alias": "jolnar_bonus_hits_9_10",
+        "type": "bonus_hits",
+        "value": "+1",
+        "valueScalingType": "raw_rolls_gt_8",
+        "persistenceType": "ALWAYS",
+        "scope": "fs",
+        "forCombatAbility": "combatround",
+        "related": [
+            {
+                "type": "unit",
+                "alias": "jolnar_flagship"
+            }
+        ]
+    },
+    {
+        "alias": "plus1_roll_plasmascoring_spacecannon_off",
+        "type": "extrarolls",
+        "value": "+1",
+        "persistenceType": "ALWAYS",
+        "scope": "_best_",
+        "related": [
+            {
+                "type": "tech",
+                "alias": "ps"
+            },
+            {
+                "type": "tech",
+                "alias": "absol_ps"
+            }
+        ],
+        "forCombatAbility": "SpaceCannonOffence"
+    },
+    {
+        "alias": "minus1_mod_pds_def_opponent_antimatter",
+        "type": "mods",
+        "value": "-1",
+        "persistenceType": "ALWAYS",
+        "scope": "",
+        "forCombatAbility": "SpaceCannonDefence",
+        "related": [
+            {
+                "type": "opponent_tech",
+                "alias": "amd"
+            },
+            {
+                "type": "opponent_tech",
+                "alias": "absol_amd"
+            }
+        ]
+    },
+    {
+        "alias": "plus1_roll_plasmascoring_spacecannon_def",
+        "type": "extrarolls",
+        "value": "+1",
+        "persistenceType": "ALWAYS",
+        "scope": "_best_",
+        "related": [
+            {
+                "type": "tech",
+                "alias": "ps"
+            },
+            {
+                "type": "tech",
+                "alias": "absol_ps"
+            }
+        ],
+        "forCombatAbility": "SpaceCannonDefence"
+    },
+    {
+        "alias": "plus1_roll_in_nebula",
+        "type": "mods",
+        "value": "+1",
+        "persistenceType": "CONDITIONAL",
+        "condition": "nebula_defender",
+        "scope": "_ship_",
+        "forCombatAbility": "combatround",
+        "related": [
+            {
+                "type": "custom",
+                "alias": "custom",
+                "message": ":shield: Defenders get +1 to ship rolls in a nebula."
+            }
+        ]
+    },
+    {
+        "alias": "nivyn_commander",
+        "type": "extrarolls",
+        "value": "+1",
+        "valueScalingType": "damaged_units_same_type",
+        "persistenceType": "CONDITIONAL",
+        "condition": "nivyn_commander_damaged",
+        "scope": "_ship_",
+        "forCombatAbility": "combatround",
+        "related": [
+            {
+                "type": "custom",
+                "alias": "custom",
+                "message": "> Nivyn Commander Grants an Extra Die To Sustained Ships\n"
+            }
+        ]
+    },
+    {
+        "alias": "lizho_commander",
+        "type": "extrarolls",
+        "value": "+1",
+        "persistenceType": "CONDITIONAL",
+        "condition": "lizho_commander_particular",
+        "scope": "_best_",
+        "forCombatAbility": "combatround",
+        "related": [
+            {
+                "type": "custom",
+                "alias": "custom",
+                "message": "> Lizho Commander Grants an Extra Die\n"
+            }
+        ]
+    },
+    {
+        "alias": "plus1_vaylerian_hero",
+        "type": "mods",
+        "value": "+1",
+        "persistenceType": "CONDITIONAL",
+        "condition": "vaylerianhero",
+        "scope": "_ship_",
+        "forCombatAbility": "combatround",
+        "related": [
+            {
+                "type": "custom",
+                "alias": "custom",
+                "message": "Vaylerian Ships get +1 to combat rolls due to Hero"
+            }
+        ]
+    },
+    {
+        "alias": "letnev_agent",
+        "type": "extrarolls",
+        "value": "+1",
+        "persistenceType": "CONDITIONAL",
+        "condition": "letnevagent",
+        "scope": "_best_",
+        "forCombatAbility": "combatround",
+        "related": [
+            {
+                "type": "custom",
+                "alias": "custom",
+                "message": "Letnev Agent gives +1 die to best ship"
+            }
+        ]
+    },
+    {
+        "alias": "sol_agent",
+        "type": "extrarolls",
+        "value": "+1",
+        "persistenceType": "CONDITIONAL",
+        "condition": "solagent",
+        "scope": "_best_",
+        "forCombatAbility": "combatround",
+        "related": [
+            {
+                "type": "custom",
+                "alias": "custom",
+                "message": "Sol Agent gives +1 die to best ground force"
+            }
+        ]
+    },
+    {
+        "alias": "plus1_thalnos",
+        "type": "mods",
+        "value": "+1",
+        "persistenceType": "CONDITIONAL",
+        "condition": "thalnosPlusOne",
+        "scope": "",
+        "forCombatAbility": "combatround",
+        "related": [
+            {
+                "type": "custom",
+                "alias": "custom",
+                "message": "Units get +1 to combat rolls due to Thalnos"
+            }
+        ]
+    },
+    {
+        "alias": "plus1_roll_argent_commander_afb",
+        "type": "extrarolls",
+        "value": "+1",
+        "persistenceType": "ALWAYS",
+        "scope": "_best_",
+        "related": [
+            {
+                "type": "leader",
+                "alias": "argentcommander"
+            }
+        ],
+        "forCombatAbility": "AFB"
+    },
+    {
+        "alias": "plus1_roll_argent_commander_bombard",
+        "type": "extrarolls",
+        "value": "+1",
+        "persistenceType": "ALWAYS",
+        "scope": "_best_",
+        "related": [
+            {
+                "type": "leader",
+                "alias": "argentcommander"
+            }
+        ],
+        "forCombatAbility": "bombardment"
+    },
+    {
+        "alias": "plus1_roll_argent_commander_spacecannonoffence",
+        "type": "extrarolls",
+        "value": "+1",
+        "persistenceType": "ALWAYS",
+        "scope": "_best_",
+        "related": [
+            {
+                "type": "leader",
+                "alias": "argentcommander"
+            }
+        ],
+        "forCombatAbility": "SpaceCannonOffence"
+    },
+    {
+        "alias": "plus1_roll_argent_commander_spacecannondefence",
+        "type": "extrarolls",
+        "value": "+1",
+        "persistenceType": "ALWAYS",
+        "scope": "_best_",
+        "related": [
+            {
+                "type": "leader",
+                "alias": "argentcommander"
+            }
+        ],
+        "forCombatAbility": "SpaceCannonDefence"
+    },
+    {
+        "alias": "plus1_roll_plasmascoring",
+        "type": "extrarolls",
+        "value": "+1",
+        "persistenceType": "ALWAYS",
+        "scope": "_best_",
+        "related": [
+            {
+                "type": "tech",
+                "alias": "ps"
+            },
+            {
+                "type": "tech",
+                "alias": "absol_ps"
+            }
+        ],
+        "forCombatAbility": "bombardment"
+    },
+    {
+        "alias": "minus1_always_all",
+        "type": "mods",
+        "value": "-1",
+        "persistenceType": "ALWAYS",
+        "scope": "",
+        "related": [
+            {
+                "type": "ability",
+                "alias": "fragile"
+            }
+        ],
+        "forCombatAbility": "combatround"
+    },
+    {
+        "alias": "plus1_always_all",
+        "type": "mods",
+        "value": "+1",
+        "persistenceType": "ALWAYS",
+        "scope": "",
+        "related": [
+            {
+                "type": "ability",
+                "alias": "unrelenting"
+            },
+            {
+                "type": "relic",
+                "alias": "absol_thalnos"
+            }
+        ],
+        "forCombatAbility": "combatround"
+    },
+    {
+        "alias": "plus2_2_matching_non_ff",
+        "type": "mods",
+        "value": "+2",
+        "persistenceType": "CONDITIONAL",
+        "condition": "units_two_matching_not_ff",
+        "scope": "_ship_",
+        "related": [
+            {
+                "type": "ability",
+                "alias": "rule_of_two"
+            }
+        ],
+        "forCombatAbility": "combatround"
+    },
+    {
+        "alias": "plus1_always_fighter",
+        "type": "mods",
+        "value": "+1",
+        "scope": "ff",
+        "persistenceType": "ALWAYS",
+        "related": [
+            {
+                "type": "agenda",
+                "alias": "prophecy"
+            }
+        ],
+        "forCombatAbility": "combatround"
+    },
+    {
+        "alias": "plus1_always_fighter_lomega",
+        "type": "mods",
+        "value": "+1",
+        "scope": "ff",
+        "persistenceType": "ALWAYS",
+        "related": [
+            {
+                "type": "agenda",
+                "alias": "little_omega_prophecy"
+            }
+        ],
+        "forCombatAbility": "combatround"
+    },
+    {
+        "alias": "plus_x_frag_always_flagship",
+        "type": "mods",
+        "value": "+1",
+        "valueScalingType": "fragment",
+        "persistenceType": "ALWAYS",
+        "scope": "fs",
+        "related": [
+            {
+                "type": "unit",
+                "alias": "bentor_flagship"
+            }
+        ],
+        "forCombatAbility": "combatround"
+    },
+    {
+        "alias": "plus_x_law_always_flagship",
+        "type": "mods",
+        "value": "+1",
+        "valueScalingType": "law",
+        "persistenceType": "ALWAYS",
+        "scope": "fs",
+        "related": [
+            {
+                "type": "unit",
+                "alias": "edyn_flagship"
+            }
+        ],
+        "forCombatAbility": "combatround"
+    },
+    {
+        "alias": "plus_x_po_others_scored_always_mech",
+        "type": "mods",
+        "value": "+1",
+        "valueScalingType": "po_opponent_exclusively_scored",
+        "persistenceType": "ALWAYS",
+        "scope": "mf",
+        "related": [
+            {
+                "type": "unit",
+                "alias": "kyro_mech"
+            }
+        ],
+        "forCombatAbility": "combatround"
+    },
+    {
+        "alias": "plus_half_unit_tech_always_mech",
+        "type": "mods",
+        "value": "+1",
+        "valueScalingType": "unit_tech",
+        "valueScalingMultiplier": 0.5,
+        "persistenceType": "ALWAYS",
+        "scope": "mf",
+        "related": [
+            {
+                "type": "unit",
+                "alias": "mirveda_mech"
+            }
+        ],
+        "forCombatAbility": "combatround"
+    },
+    {
+        "alias": "plus_2x_destroyers_always_flagship",
+        "type": "mods",
+        "value": "+1",
+        "valueScalingType": "destroyers",
+        "valueScalingMultiplier": 0.5,
+        "persistenceType": "ALWAYS",
+        "scope": "fs",
+        "related": [
+            {
+                "type": "unit",
+                "alias": "nokar_flagship"
+            }
+        ],
+        "forCombatAbility": "combatround"
+    },
+    {
+        "alias": "plus_1_always_other_units_with_flagship",
+        "type": "mods",
+        "value": "+1",
+        "persistenceType": "ALWAYS",
+        "scope": "",
+        "scopeExcept": "fs",
+        "related": [
+            {
+                "type": "unit",
+                "alias": "sardakk_flagship"
+            }
+        ],
+        "forCombatAbility": "combatround"
+    },
+    {
+        "alias": "plus_x_opponent_unit_tech_always_flagship",
+        "type": "mods",
+        "value": "+1",
+        "valueScalingType": "opponent_unit_tech",
+        "persistenceType": "ALWAYS",
+        "scope": "fs",
+        "related": [
+            {
+                "type": "unit",
+                "alias": "zealots_flagship"
+            }
+        ],
+        "forCombatAbility": "combatround"
+    },
+    {
+        "alias": "plus_2_opponent_cc_not_in_fleet_flagship",
+        "type": "mods",
+        "value": "+2",
+        "persistenceType": "CONDITIONAL",
+        "condition": "opponent_no_cc_fleet",
+        "scope": "fs",
+        "related": [
+            {
+                "type": "unit",
+                "alias": "mahact_flagship"
+            }
+        ],
+        "forCombatAbility": "combatround"
+    },
+    {
+        "alias": "plus_x_opponent_faction_tech_always_mech",
+        "type": "mods",
+        "value": "+1",
+        "valueScalingType": "opponent_faction_tech",
+        "persistenceType": "ALWAYS",
+        "scope": "mf",
+        "related": [
+            {
+                "type": "unit",
+                "alias": "zealots_mech"
+            }
+        ],
+        "forCombatAbility": "combatround"
+    },
+    {
+        "alias": "plus_2_opponent_frag_conditional_mech",
+        "type": "mods",
+        "value": "+2",
+        "persistenceType": "CONDITIONAL",
+        "condition": "opponent_frag",
+        "scope": "mf",
+        "related": [
+            {
+                "type": "unit",
+                "alias": "naalu_mech"
+            }
+        ],
+        "forCombatAbility": "combatround"
+    },
+    {
+        "alias": "plus_1_inf_with_mech",
+        "type": "mods",
+        "value": "+1",
+        "persistenceType": "CONDITIONAL",
+        "condition": "has_ability_fragile",
+        "scope": "gf",
+        "related": [
+            {
+                "type": "unit",
+                "alias": "jolnar_mech"
+            }
+        ],
+        "forCombatAbility": "combatround"
+    },
+    {
+        "alias": "plus_2_opponent_stolen_faction_tech_conditional_mech",
+        "type": "mods",
+        "value": "+2",
+        "persistenceType": "CONDITIONAL",
+        "condition": "opponent_stolen_faction_tech",
+        "scope": "mf",
+        "related": [
+            {
+                "type": "unit",
+                "alias": "nekro_mech"
+            }
+        ],
+        "forCombatAbility": "combatround"
+    },
+    {
+        "alias": "plus_2_mr_legendary_home_conditional",
+        "type": "mods",
+        "value": "+2",
+        "persistenceType": "CONDITIONAL",
+        "condition": "planet_mr_legendary_home",
+        "scope": "",
+        "related": [
+            {
+                "type": "leader",
+                "alias": "winnucommander"
+            }
+        ],
+        "forCombatAbility": "combatround"
+    },
+    {
+        "alias": "plus_1_always_afb",
+        "type": "mods",
+        "value": "+1",
+        "persistenceType": "ALWAYS",
+        "scope": "",
+        "related": [
+            {
+                "type": "leader",
+                "alias": "kolumecommander"
+            },
+            {
+                "type": "relic",
+                "alias": "starfall_array"
+            }
+        ],
+        "forCombatAbility": "AFB"
+    },
+    {
+        "alias": "plus_1_always_space_cannon_defence",
+        "type": "mods",
+        "value": "+1",
+        "persistenceType": "ALWAYS",
+        "scope": "",
+        "related": [
+            {
+                "type": "leader",
+                "alias": "kolumecommander"
+            },
+            {
+                "type": "relic",
+                "alias": "starfall_array"
+            }
+        ],
+        "forCombatAbility": "SpaceCannonDefence"
+    },
+    {
+        "alias": "plus_1_always_space_cannon_offense",
+        "type": "mods",
+        "value": "+1",
+        "persistenceType": "ALWAYS",
+        "scope": "",
+        "related": [
+            {
+                "type": "leader",
+                "alias": "kolumecommander"
+            },
+            {
+                "type": "relic",
+                "alias": "starfall_array"
+            }
+        ],
+        "forCombatAbility": "SpaceCannonOffence"
+    },
+    {
+        "alias": "plus_0_always_space_cannon_offense",
+        "type": "mods",
+        "value": "+0",
+        "persistenceType": "ALWAYS",
+        "scope": "",
+        "related": [
+            {
+                "type": "leader",
+                "alias": "mirvedacommander"
+            }
+        ],
+        
+        "forCombatAbility": "SpaceCannonOffence"
+    },
+    {
+        "alias": "plus_1_always_bombardment",
+        "type": "mods",
+        "value": "+1",
+        "persistenceType": "ALWAYS",
+        "scope": "",
+        "related": [
+            {
+                "type": "leader",
+                "alias": "kolumecommander"
+            },
+            {
+                "type": "relic",
+                "alias": "starfall_array"
+            }
+        ],
+        "forCombatAbility": "bombardment"
+    },
+    {
+        "alias": "plus_x_frag_always_flagship_afb",
+        "type": "mods",
+        "value": "+1",
+        "valueScalingType": "fragment",
+        "persistenceType": "ALWAYS",
+        "scope": "fs",
+        "related": [
+            {
+                "type": "unit",
+                "alias": "bentor_flagship"
+            }
+        ],
+        "forCombatAbility": "AFB"
+    },
+    {
+        "alias": "miltymod_cruiser2_bonus_hits_9_10",
+        "type": "bonus_hits",
+        "value": "+1",
+        "valueScalingType": "raw_rolls_gt_8",
+        "persistenceType": "ALWAYS",
+        "scope": "fs",
+        "forCombatAbility": "combatround",
+        "related": [
+            {
+                "type": "unit",
+                "alias": "miltymod_cruiser2"
+            }
+        ]
+    },
+    {
+        "alias": "roll_1_for_every_enemy_non_fighter",
+        "type": "extrarolls",
+        "value": "+1",
+        "persistenceType": "ALWAYS",
+        "valueScalingType": "opponent_non_fighter_ship",
+        "scope": "fs",
+        "related": [
+            {
+                "type": "unit",
+                "alias": "winnu_flagship"
+            }
+        ],
+        "forCombatAbility": "combatround"
+    }
+]

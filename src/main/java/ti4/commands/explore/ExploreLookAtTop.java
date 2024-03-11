@@ -2,13 +2,15 @@ package ti4.commands.explore;
 
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
+import ti4.helpers.ButtonHelper;
 import ti4.helpers.Constants;
+import ti4.helpers.Emojis;
 import ti4.helpers.Helper;
 import ti4.map.Game;
 import ti4.map.Player;
 import ti4.message.MessageHelper;
 
-import java.util.ArrayList;
+import java.util.List;
 
 public class ExploreLookAtTop extends ExploreSubcommandData {
 
@@ -33,10 +35,10 @@ public class ExploreLookAtTop extends ExploreSubcommandData {
             return;
         }
 
-        ArrayList<String> deck = activeGame.getExploreDeck(trait);
-        ArrayList<String> discardPile = activeGame.getExploreDiscard(trait);
+        List<String> deck = activeGame.getExploreDeck(trait);
+        List<String> discardPile = activeGame.getExploreDiscard(trait);
 
-        String traitNameWithEmoji = Helper.getEmojiFromDiscord(trait) + trait;
+        String traitNameWithEmoji = Emojis.getEmojiFromDiscord(trait) + trait;
         String playerFactionNameWithEmoji = player.getFactionEmoji();
         if (deck.isEmpty() && discardPile.isEmpty()) {
             sendMessage(traitNameWithEmoji + " explore deck & discard is empty - nothing to look at.");
@@ -48,7 +50,7 @@ public class ExploreLookAtTop extends ExploreSubcommandData {
         sb.append(displayExplore(topCard));
 
         MessageHelper.sendMessageToPlayerCardsInfoThread(player, activeGame, sb.toString());
-        sendMessage("top of " + traitNameWithEmoji + " explore deck has been set to " + playerFactionNameWithEmoji
+        MessageHelper.sendMessageToChannel(ButtonHelper.getCorrectChannel(player, activeGame), "top of " + traitNameWithEmoji + " explore deck has been set to " + playerFactionNameWithEmoji
                 + " Cards info thread.");
 
     }

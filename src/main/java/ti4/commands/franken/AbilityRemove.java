@@ -1,9 +1,7 @@
 package ti4.commands.franken;
 
 import java.util.List;
-
 import ti4.helpers.Constants;
-import ti4.helpers.Helper;
 import ti4.map.Player;
 
 public class AbilityRemove extends AbilityAddRemove {
@@ -13,7 +11,7 @@ public class AbilityRemove extends AbilityAddRemove {
 
     @Override
     public void doAction(Player player, List<String> abilityIDs) {
-        StringBuilder sb = new StringBuilder(Helper.getPlayerRepresentation(player, getActiveGame())).append(" removed abilities:\n");
+        StringBuilder sb = new StringBuilder(player.getRepresentation()).append(" removed abilities:\n");
         for (String abilityID : abilityIDs) {
             if (!player.hasAbility(abilityID)) {
                 sb.append("> ").append(abilityID).append(" (player did not have this ability)");

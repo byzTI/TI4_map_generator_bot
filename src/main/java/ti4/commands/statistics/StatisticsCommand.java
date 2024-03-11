@@ -1,5 +1,8 @@
 package ti4.commands.statistics;
 
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Objects;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction;
@@ -8,10 +11,6 @@ import ti4.helpers.Constants;
 import ti4.map.Game;
 import ti4.map.GameManager;
 import ti4.map.GameSaveLoadManager;
-
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Objects;
 
 public class StatisticsCommand implements Command {
 
@@ -52,16 +51,19 @@ public class StatisticsCommand implements Command {
         GameSaveLoadManager.saveMap(activeGame, event);
     }
 
-
     protected String getActionDescription() {
         return "Statistics";
     }
 
     private Collection<StatisticsSubcommandData> getSubcommands() {
         Collection<StatisticsSubcommandData> subcommands = new HashSet<>();
+        subcommands.add(new GameStats());
+        subcommands.add(new PlayerStats());
         subcommands.add(new AverageTurnTime());
         subcommands.add(new MedianTurnTime());
         subcommands.add(new CompareAFKTimes());
+        subcommands.add(new DiceLuck());
+        subcommands.add(new StellarConverter());
 
         return subcommands;
     }
@@ -69,7 +71,7 @@ public class StatisticsCommand implements Command {
     @Override
     public void registerCommands(CommandListUpdateAction commands) {
         commands.addCommands(
-                Commands.slash(getActionID(), getActionDescription())
-                        .addSubcommands(getSubcommands()));
+            Commands.slash(getActionID(), getActionDescription())
+                .addSubcommands(getSubcommands()));
     }
 }

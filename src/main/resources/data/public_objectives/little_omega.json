@@ -11,7 +11,7 @@
     "alias": "found_research_outposts_little_omega",
     "name": "Found Research Outposts ω",
     "phase": "Status",
-    "text": "Control 2 planets that have technology specialties and spend 2 tokens from your strategy pool.",
+    "text": "Control 2 planets that have technology specialties and spend 2 tokens from your tactic and/or strategy pools.",
     "points": 1,
     "source": "little_omega"
   },
@@ -24,24 +24,8 @@
     "source": "little_omega"
   },
   {
-    "alias": "parade_marvels_little_omega",
-    "name": "Parade Marvels ω",
-    "phase": "Status",
-    "text": "Have your flagship or a war sun on the game board that is not in or adjacent to your home system.",
-    "points": 1,
-    "source": "little_omega"
-  },
-  {
-    "alias": "raise_fleets_little_omega",
-    "name": "Raise Fleets ω",
-    "phase": "Status",
-    "text": "Have 3 non-fighter ships in each of 3 systems.",
-    "points": 1,
-    "source": "little_omega"
-  },
-  {
     "alias": "bestow_a_keleres_fleet_little_omega",
-    "name": "Bestow a Keleres Fleet ω",
+    "name": "Bestow an Imperial Fleet ω",
     "phase": "Status",
     "text": "Remove 1 of each of your carriers, cruisers, and destroyers from the game board.",
     "points": 1,
@@ -51,7 +35,7 @@
     "alias": "impose_order_little_omega",
     "name": "Impose Order ω",
     "phase": "Status",
-    "text": "Have ships in 4 systems that contain a structure.",
+    "text": "Have non-fighter ships in 3 systems that contain a structure.",
     "points": 1,
     "source": "little_omega"
   },
@@ -59,7 +43,7 @@
     "alias": "monopolize_a_trade_route_little_omega",
     "name": "Monopolize a Trade Route ω",
     "phase": "Status",
-    "text": "Have ships in 2 systems that both contain an alpha wormhole or both contain a beta wormhole.",
+    "text": "Have ships in 2 systems that each contain a non-delta wormhole of the same type.",
     "points": 1,
     "source": "little_omega"
   },
@@ -123,7 +107,7 @@
     "alias": "dominate_cities_little_omega",
     "name": "Dominate Cities ω",
     "phase": "Status",
-    "text": "Have ships in 6 systems that contain a structure.",
+    "text": "Have non-fighter ships in 5 systems that contain a structure.",
     "points": 2,
     "source": "little_omega"
   },
@@ -140,6 +124,14 @@
     "name": "Learn the Secrets of the Cosmos ω",
     "phase": "Status",
     "text": "Have units in 7 systems that contain or are adjacent to an anomaly.",
+    "points": 2,
+    "source": "little_omega"
+  },
+  {
+    "alias": "massive_cities_little_omega",
+    "name": "Construct Massive Cities",
+    "phase": "Status",
+    "text": "Have 6 structures.",
     "points": 2,
     "source": "little_omega"
   }

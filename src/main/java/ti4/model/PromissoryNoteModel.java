@@ -4,84 +4,72 @@ import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import org.apache.commons.lang3.StringUtils;
-
+import java.util.Optional;
 import lombok.Data;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
+import org.apache.commons.lang3.StringUtils;
 import ti4.helpers.Emojis;
-import ti4.helpers.Helper;
+import ti4.model.Source.ComponentSource;
+
 @Data
 public class PromissoryNoteModel implements ModelInterface, EmbeddableModel {
     private String alias;
     private String name;
     private String faction;
-    private String colour;
+    private String color;
     private Boolean playArea;
     private String attachment;
-    private String source;
+    private ComponentSource source;
     private String text;
+    private String homebrewReplacesID;
     private List<String> searchTags = new ArrayList<>();
 
-  public boolean isValid() {
+    public boolean isValid() {
         return alias != null
             && name != null
-            && (faction != null && colour != null)
-            && attachment != null
+            && (faction != null || color != null)
             && text != null
             && source != null;
     }
 
-    public String getAlias() {
-        return alias;
-    }
-    
-    public String getName() {
-        return name;
-    }
-    
-    public String getFaction() {
-        return faction;
+    public Optional<String> getFaction() {
+        return Optional.ofNullable(faction);
     }
 
-    public String getColour() {
-        return colour;
+    public Optional<String> getColor() {
+        return Optional.ofNullable(color);
     }
 
-    public String getFactionOrColour() {
-        if (!StringUtils.isBlank(getFaction())) return faction;
-        if (!StringUtils.isBlank(getColour())) return colour;
-        return faction + "_" + colour;
+    public String getFactionOrColor() {
+        if (!StringUtils.isBlank(getFaction().orElse(""))) return faction;
+        if (!StringUtils.isBlank(getColor().orElse(""))) return color;
+        return faction + "_" + color;
     }
 
-    public Boolean getPlayArea() {
-        return playArea;
+    public Optional<String> getAttachment() {
+        return Optional.ofNullable(attachment);
     }
 
-    public String getAttachment() {
-        return attachment;
-    }
-
-    public String getText() {
-        return text;
-    }
-
-    public String getSource() {
-        return source;
+    public Optional<String> getHomebrewReplacesID() {
+        return Optional.ofNullable(homebrewReplacesID);
     }
 
     public String getOwner() {
-        if (faction == null || faction.isEmpty()) return colour;
+        if (faction == null || faction.isEmpty()) return color;
         return faction;
     }
 
+    public boolean getPlayArea() {
+        return Optional.ofNullable(playArea).orElse(false);
+    }
+
     public boolean isPlayedDirectlyToPlayArea() {
-        if(playArea == null){
+        if (playArea == null) {
             return false;
         }
         List<String> pnIDsToHoldInHandBeforePlayArea = Arrays.asList(
-            "gift", "antivirus", "convoys", "dark_pact", "blood_pact", 
+            "gift", "antivirus", "convoys", "dark_pact", "blood_pact",
             "pop", "terraform", "dspnauge", "dspnaxis", "dspnbent",
             "dspndihm", "dspnghot", "dspngled", "dspnkolu", "dspnkort",
             "dspnlane", "dspnmyko", "dspnolra", "dspnrohd"); //TODO: just add a field to the model for this
@@ -99,23 +87,21 @@ public class PromissoryNoteModel implements ModelInterface, EmbeddableModel {
         //TITLE
         StringBuilder title = new StringBuilder();
         title.append(Emojis.PN);
-        if (!StringUtils.isBlank(getFaction())) title.append(Helper.getFactionIconFromDiscord(getFaction()));
+        if (!StringUtils.isBlank(getFaction().orElse(""))) title.append(Emojis.getFactionIconFromDiscord(getFaction().get()));
         title.append("__**").append(getName()).append("**__");
-        if (!StringUtils.isBlank(getColour())) title.append(" (").append(getColour()).append(")");
-        title.append(getSourceEmoji());
+        if (!StringUtils.isBlank(getColor().orElse(""))) title.append(" (").append(getColor()).append(")");
+        title.append(getSource().emoji());
         eb.setTitle(title.toString());
 
         if (justShowName) return eb.build();
 
         //DESCRIPTION
-        StringBuilder description = new StringBuilder();
-        description.append(getText());
-        eb.setDescription(description.toString());
+        eb.setDescription(getText());
 
         //FOOTER
         StringBuilder footer = new StringBuilder();
         if (includeHelpfulText) {
-            if (!StringUtils.isBlank(getAttachment())) footer.append("Attachment: ").append(getAttachment()).append("\n");
+            if (!StringUtils.isBlank(getAttachment().orElse(""))) footer.append("Attachment: ").append(getAttachment().orElse("")).append("\n");
             if (getPlayArea()) {
                 footer.append("Play area card. ");
                 if (isPlayedDirectlyToPlayArea()) {
@@ -130,25 +116,31 @@ public class PromissoryNoteModel implements ModelInterface, EmbeddableModel {
             footer.append("ID: ").append(getAlias()).append("    Source: ").append(getSource()).append("\n");
         }
         eb.setFooter(footer.toString());
-        
+
         eb.setColor(Color.blue);
         return eb.build();
     }
 
-    private String getSourceEmoji() {
-        return switch (getSource()) {
-            case "Discordant Stars" -> Emojis.DiscordantStars;
-            case "Absol" -> Emojis.Absol;
-            default -> "";
-        };
+    /**
+     * @deprecated This only exists to simulate the old text based promissory note .property files
+     */
+    @Deprecated
+    public String getShortText() {
+        String promStr = getText();
+        // if we would break trying to split the note, just return whatever is there
+        if (promStr == null || !promStr.contains(";")) {
+            return promStr;
+        }
+        return getName() + ";" + getFaction() + getColor();
     }
 
     public boolean search(String searchString) {
-        return getAlias().toLowerCase().contains(searchString) || getName().toLowerCase().contains(searchString) || getFactionOrColour().toLowerCase().contains(searchString) || getSearchTags().contains(searchString);
+        return getAlias().toLowerCase().contains(searchString) || getName().toLowerCase().contains(searchString) || getFactionOrColor().toLowerCase().contains(searchString)
+            || getSearchTags().contains(searchString);
     }
 
     public String getAutoCompleteName() {
-        return getName() + " (" + getFactionOrColour() + ") (" + getSource() + ")";
+        return getName() + " (" + getFactionOrColor() + ") [" + getSource() + "]";
     }
 
 }

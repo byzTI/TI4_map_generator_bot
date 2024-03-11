@@ -1,24 +1,22 @@
 package ti4.commands.special;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-
-import org.apache.commons.lang3.StringUtils;
-
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.utils.FileUpload;
+import ti4.commands.combat.StartCombat;
 import ti4.commands.units.AddUnits;
 import ti4.generator.GenerateTile;
 import ti4.generator.Mapper;
 import ti4.helpers.AliasHandler;
 import ti4.helpers.ButtonHelper;
 import ti4.helpers.Constants;
+import ti4.helpers.Emojis;
 import ti4.helpers.FoWHelper;
 import ti4.helpers.Helper;
 import ti4.helpers.Units.UnitKey;
@@ -49,8 +47,7 @@ public class SystemInfo extends SpecialSubcommandData {
         OptionMapping ringsMapping = event.getOption(Constants.EXTRA_RINGS);
         if (ringsMapping != null) {
             context = ringsMapping.getAsInt();
-            int newContext = 0;
-            if (context > 2) newContext = 2;
+            int newContext = Math.min(context, 2);
             if (context < 0) newContext = 0;
             if (context == 333) newContext = 3;
             if (context == 444) newContext = 4;
@@ -134,17 +131,17 @@ public class SystemInfo extends SpecialSubcommandData {
                     sb.append("\n");
                 }
 
-                HashMap<UnitKey, Integer> units = unitHolder.getUnits();
+                Map<UnitKey, Integer> units = unitHolder.getUnits();
                 for (Map.Entry<UnitKey, Integer> unitEntry : units.entrySet()) {
                     UnitKey unitKey = unitEntry.getKey();
-                    String colour = AliasHandler.resolveColor(unitKey.getColorID());
-                    Player player = activeGame.getPlayerFromColorOrFaction(colour);
+                    String color = AliasHandler.resolveColor(unitKey.getColorID());
+                    Player player = activeGame.getPlayerFromColorOrFaction(color);
                     if (player == null) continue;
                     UnitModel unitModel = player.getUnitFromUnitKey(unitKey);
-                    sb.append(player.getFactionEmojiOrColour()).append(Helper.getColourAsMention(event.getGuild(), colour));
+                    sb.append(player.getFactionEmojiOrColor()).append(Emojis.getColorEmojiWithName(color));
                     sb.append(" `").append(unitEntry.getValue()).append("x` ");
                     if (unitModel != null) {
-                        sb.append(Helper.getEmojiFromDiscord(unitModel.getBaseType())).append(" ").append(unitModel.getName()).append("\n");
+                        sb.append(Emojis.getEmojiFromDiscord(unitModel.getBaseType())).append(" ").append(unitModel.getName()).append("\n");
                     } else {
                         sb.append(unitKey).append("\n");
                     }
@@ -152,20 +149,36 @@ public class SystemInfo extends SpecialSubcommandData {
                 sb.append("----------\n");
             }
             FileUpload systemWithContext = GenerateTile.getInstance().saveImage(activeGame, context, tile.getPosition(), event);
-            MessageHelper.sendMessageWithFile(event.getChannel(), systemWithContext, sb.toString(), false);
+            MessageHelper.sendMessageToChannel(event.getChannel(), sb.toString());
+            MessageHelper.sendMessageWithFile(event.getChannel(), systemWithContext, "System", false);
             if (!activeGame.isFoWMode()) {
                 for (Player player : activeGame.getRealPlayers()) {
 
+                    if (!FoWHelper.playerHasUnitsInSystem(player, tile)) {
+                        continue;
+                    }
                     List<Player> players = ButtonHelper.getOtherPlayersWithShipsInTheSystem(player, activeGame, tile);
-                    if (players.size() > 0 && !player.getAllianceMembers().contains(players.get(0).getFaction())) {
+                    if (players.size() > 0 && !player.getAllianceMembers().contains(players.get(0).getFaction()) && FoWHelper.playerHasShipsInSystem(player, tile)) {
                         Player player2 = players.get(0);
                         if (player2 == player) {
                             player2 = players.get(1);
                         }
-                        List<Button> buttons = ButtonHelper.getButtonsForPictureCombats(activeGame, tile.getPosition(), player, player2, "space");
+                        List<Button> buttons = StartCombat.getGeneralCombatButtons(activeGame, tile.getPosition(), player, player2, "space", event);
                         MessageHelper.sendMessageToChannelWithButtons(event.getMessageChannel(), " ", buttons);
-                        break;
+                        return;
+                    } else {
+                        for (UnitHolder unitHolder : tile.getUnitHolders().values()) {
+                            if (unitHolder instanceof Planet) {
+                                if (ButtonHelper.getPlayersWithUnitsOnAPlanet(activeGame, tile, unitHolder.getName()).size() > 1) {
+                                    List<Player> listP = ButtonHelper.getPlayersWithUnitsOnAPlanet(activeGame, tile, unitHolder.getName());
+                                    List<Button> buttons = StartCombat.getGeneralCombatButtons(activeGame, tile.getPosition(), listP.get(0), listP.get(1), "ground", event);
+                                    MessageHelper.sendMessageToChannelWithButtons(event.getMessageChannel(), " ", buttons);
+                                    return;
+                                }
+                            }
+                        }
                     }
+
                 }
             }
 

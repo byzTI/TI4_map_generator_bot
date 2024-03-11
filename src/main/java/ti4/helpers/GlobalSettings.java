@@ -22,7 +22,9 @@ public class GlobalSettings {
         UPLOAD_DATA_TO_WEB_SERVER, //Whether to send map and data to the web server
         MAX_THREAD_COUNT, //How many threads can be open before force closing old ones
         THREAD_AUTOCLOSE_COUNT, //How many threads to close when above max thread count
-        FILE_IMAGE_CACHE_MAX_SIZE, FILE_IMAGE_CACHE_EXPIRE_TIME_MINUTES, URL_IMAGE_CACHE_MAX_SIZE, URL_IMAGE_CACHE_EXPIRE_TIME_MINUTES, LOG_CACHE_STATS_INTERVAL_MINUTES;
+        FILE_IMAGE_CACHE_MAX_SIZE, FILE_IMAGE_CACHE_EXPIRE_TIME_MINUTES, URL_IMAGE_CACHE_MAX_SIZE, URL_IMAGE_CACHE_EXPIRE_TIME_MINUTES, LOG_CACHE_STATS_INTERVAL_MINUTES,
+        GUILD_ID_FOR_NEW_GAME_CATEGORIES, //Which guild to create new game categories in
+        READY_TO_RECEIVE_COMMANDS; //Whether the bot is ready to receive commands
 
         @Override
         public String toString() {
@@ -38,8 +40,13 @@ public class GlobalSettings {
         return clazz.cast(settings.get(attr));
     }
 
+    public static <T> void setSetting(ImplementedSettings setting, T val) {
+        setSetting(setting.toString(), val);
+    }
+
     public static <T> void setSetting(String attr, T val) {
         settings.put(attr, val);
+        saveSettings();
     }
 
     public static void saveSettings() {

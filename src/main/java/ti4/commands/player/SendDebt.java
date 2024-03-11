@@ -9,6 +9,7 @@ import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import ti4.helpers.AliasHandler;
+import ti4.helpers.ButtonHelper;
 import ti4.helpers.Constants;
 import ti4.helpers.Helper;
 import ti4.map.Game;
@@ -40,7 +41,7 @@ public class SendDebt extends PlayerSubcommandData {
                 }
             }
         }
-        
+
         if (sendingPlayer == null) {
             sendMessage("Player could not be found");
             return;
@@ -53,18 +54,21 @@ public class SendDebt extends PlayerSubcommandData {
         }
 
         int debtCountToSend = event.getOption(Constants.DEBT_COUNT, 0, OptionMapping::getAsInt);
-        if (debtCountToSend <= 0 ) {
+        if (debtCountToSend <= 0) {
             sendMessage("Debt count must be a positive integer");
             return;
         }
 
         sendDebt(sendingPlayer, receivingPlayer, debtCountToSend);
-        sendMessage(Helper.getPlayerRepresentation(sendingPlayer, activeGame) + " sent " + debtCountToSend + " debt tokens to " + Helper.getPlayerRepresentation(receivingPlayer, activeGame));
         
+        ButtonHelper.fullCommanderUnlockCheck(receivingPlayer, activeGame, "vaden", event);
+        
+        sendMessage(sendingPlayer.getRepresentation() + " sent " + debtCountToSend + " debt tokens to " + receivingPlayer.getRepresentation());
+
     }
 
     public static void sendDebt(Player sendingPlayer, Player receivingPlayer, int debtCountToSend) {
-        String sendingPlayerColour = sendingPlayer.getColor();
-        receivingPlayer.addDebtTokens(sendingPlayerColour, debtCountToSend);
+        String sendingPlayerColor = sendingPlayer.getColor();
+        receivingPlayer.addDebtTokens(sendingPlayerColor, debtCountToSend);
     }
 }

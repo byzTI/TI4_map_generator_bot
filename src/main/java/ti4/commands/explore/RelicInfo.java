@@ -1,24 +1,31 @@
 package ti4.commands.explore;
 
+import java.util.ArrayList;
 import java.util.List;
 
-import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
+import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.events.interaction.GenericInteractionCreateEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
-import net.dv8tion.jda.api.utils.messages.MessageCreateData;
+import ti4.buttons.Buttons;
+import ti4.commands.uncategorized.CardsInfoHelper;
+import ti4.commands.uncategorized.InfoThreadCommand;
 import ti4.generator.Mapper;
 import ti4.helpers.Constants;
-import ti4.helpers.Emojis;
 import ti4.helpers.Helper;
 import ti4.map.Game;
 import ti4.map.Player;
 import ti4.message.MessageHelper;
 import ti4.model.RelicModel;
 
-public class RelicInfo extends ExploreSubcommandData {
+public class RelicInfo extends ExploreSubcommandData implements InfoThreadCommand{
     public RelicInfo() {
 		super(Constants.RELIC_INFO, "Send relic information to your Cards Info channel");
 	}
+
+    public boolean accept(SlashCommandInteractionEvent event) {
+        return acceptEvent(event, getActionID());
+    }
 
     @Override
     public void execute(SlashCommandInteractionEvent event) {
@@ -33,43 +40,36 @@ public class RelicInfo extends ExploreSubcommandData {
         sendRelicInfo(activeGame, player, event);
     }
 
-    public static void sendRelicInfo(Game activeGame, Player player, SlashCommandInteractionEvent event) {
-        String headerText = Helper.getPlayerRepresentation(player, activeGame) + " used `" + event.getCommandString() + "`";
+    public static void sendRelicInfo(Game activeGame, Player player, GenericInteractionCreateEvent event) {
+        String headerText = player.getRepresentation() + CardsInfoHelper.getHeaderText(event);
         MessageHelper.sendMessageToPlayerCardsInfoThread(player, activeGame, headerText);
         sendRelicInfo(activeGame, player);
     }
 
     public static void sendRelicInfo(Game activeGame, Player player) {
-        //RELIC INFO
-        MessageHelper.sendMessageToPlayerCardsInfoThread(player, activeGame, getRelicInfoText(player));
+        MessageHelper.sendMessageToChannelWithEmbedsAndButtons(
+                player.getCardsInfoThread(),
+                null,
+                getRelicEmbeds(player),
+                getRelicButtons(player));
+    }
 
-        //BUTTONS
-        String purgeRelicMessage = "_ _\nClick a button below to exhaust or purge a Relic";
-        List<Button> relicButtons = getRelicButtons(activeGame, player);
-        if (relicButtons != null && !relicButtons.isEmpty()) {
-            List<MessageCreateData> messageList = MessageHelper.getMessageCreateDataObjects(purgeRelicMessage, relicButtons);
-            ThreadChannel cardsInfoThreadChannel = player.getCardsInfoThread();
-            for (MessageCreateData message : messageList) {
-                cardsInfoThreadChannel.sendMessage(message).queue();
+    private static List<MessageEmbed> getRelicEmbeds(Player player) {
+        List<MessageEmbed> messageEmbeds = new ArrayList<>();
+        for (String relicID : player.getRelics()) {
+            RelicModel relicModel = Mapper.getRelic(relicID);
+            if (relicModel != null) {
+                MessageEmbed representationEmbed = relicModel.getRepresentationEmbed();
+                messageEmbeds.add(representationEmbed);
             }
         }
+        return messageEmbeds;
+    
     }
 
-    private static String getRelicInfoText(Player player) {
-        List<String> playerRelics = player.getRelics();
-        StringBuilder sb = new StringBuilder("__**Relic Info**__\n");
-        if (playerRelics == null || playerRelics.isEmpty()) {
-            sb.append("> No Relics");
-            return sb.toString();
-        }
-        for (String relicID : playerRelics) {
-            RelicModel relicModel = Mapper.getRelic(relicID);
-            if (relicModel != null) sb.append(Emojis.Relic).append(relicModel.getSimpleRepresentation()).append("\n");
-        }
-        return sb.toString();
-    }
-
-    private static List<Button> getRelicButtons(Game activeGame, Player player) {
-        return null;
+    private static List<Button> getRelicButtons(Player player) {
+        List<Button> buttons = new ArrayList<>();
+        buttons.add(Buttons.REFRESH_RELIC_INFO);
+        return buttons;
     }
 }

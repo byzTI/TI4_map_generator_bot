@@ -3,14 +3,15 @@ package ti4.commands.game;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
+import net.dv8tion.jda.api.events.interaction.GenericInteractionCreateEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import ti4.AsyncTI4DiscordBot;
+import ti4.helpers.ButtonHelper;
 import ti4.helpers.Constants;
 import ti4.map.Game;
 import ti4.map.GameManager;
@@ -32,7 +33,7 @@ public class GameCreate extends GameSubcommandData {
         String regex = "^[a-zA-Z0-9]+$";
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher = pattern.matcher(mapName);
-        if (!matcher.matches()){
+        if (!matcher.matches()) {
             MessageHelper.replyToMessage(event, "Game name can only contain a-z 0-9 symbols");
             return;
         }
@@ -44,11 +45,14 @@ public class GameCreate extends GameSubcommandData {
         Game game = createNewGame(event, mapName, member);
         reportNewGameCreated(game);
         MessageHelper.replyToMessage(event, "Game created with name: " + mapName);
+        if (event.getMessageChannel().getName().startsWith(game.getName() + "-")) {
+            ButtonHelper.offerPlayerSetupButtons(event.getMessageChannel(), game);
+        }
     }
 
-    public static Game createNewGame(SlashCommandInteractionEvent event, String gameName, Member gameOwner) {
+    public static Game createNewGame(GenericInteractionCreateEvent event, String gameName, Member gameOwner) {
         Game newGame = new Game();
-        newGame.newGameSetup(); 
+        newGame.newGameSetup();
         String ownerID = gameOwner.getId();
         newGame.setOwnerID(ownerID);
         newGame.setOwnerName(gameOwner.getEffectiveName());
@@ -67,17 +71,23 @@ public class GameCreate extends GameSubcommandData {
     }
 
     public static void reportNewGameCreated(Game game) {
-        if (game == null) return;
-        TextChannel bothelperLoungeChannel = AsyncTI4DiscordBot.guildPrimary.getTextChannelsByName("bothelper-lounge", true).stream().findFirst().orElse(null);
-        if (bothelperLoungeChannel == null) return;
+        if (game == null)
+            return;
+
+        TextChannel bothelperLoungeChannel = AsyncTI4DiscordBot.guildPrimary.getTextChannelsByName("staff-lounge", true)
+                .stream().findFirst().orElse(null);
+        if (bothelperLoungeChannel == null)
+            return;
         List<ThreadChannel> threadChannels = bothelperLoungeChannel.getThreadChannels();
-        if (threadChannels == null || threadChannels.isEmpty()) return;
+        if (threadChannels.isEmpty())
+            return;
         String threadName = "game-starts-and-ends";
         // SEARCH FOR EXISTING OPEN THREAD
         for (ThreadChannel threadChannel_ : threadChannels) {
             if (threadChannel_.getName().equals(threadName)) {
                 String guildName = game.getGuild() == null ? "Server Unknown" : game.getGuild().getName();
-                MessageHelper.sendMessageToChannel(threadChannel_, "Game: **" + game.getName() + "** on server **" + guildName + "** has been created.");
+                MessageHelper.sendMessageToChannel(threadChannel_,
+                        "Game: **" + game.getName() + "** on server **" + guildName + "** has been created.");
                 break;
             }
         }

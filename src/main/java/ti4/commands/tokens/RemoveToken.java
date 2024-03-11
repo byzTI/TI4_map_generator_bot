@@ -19,14 +19,14 @@ import java.util.*;
 
 public class RemoveToken extends AddRemoveToken {
     @Override
-    void parsingForTile(SlashCommandInteractionEvent event, ArrayList<String> colors, Tile tile, Game activeGame) {
+    void parsingForTile(SlashCommandInteractionEvent event, List<String> colors, Tile tile, Game activeGame) {
 
         OptionMapping option = event.getOption(Constants.TOKEN);
         if (option != null) {
             String tokenName = option.getAsString().toLowerCase();
             tokenName = AliasHandler.resolveAttachment(tokenName);
 
-            String tokenID = Mapper.getAttachmentID(tokenName);
+            String tokenID = Mapper.getAttachmentImagePath(tokenName);
             String tokenPath = tile.getAttachmentPath(tokenID);
             if (tokenPath != null) {
                 removeToken(event, tile, tokenID, true);
@@ -83,7 +83,7 @@ public class RemoveToken extends AddRemoveToken {
             }
             tile.removeToken(tokenID, planet);
             if (Mapper.getTokenID(Constants.MIRAGE).equals(tokenID)){
-                HashMap<String, UnitHolder> unitHolders = tile.getUnitHolders();
+                Map<String, UnitHolder> unitHolders = tile.getUnitHolders();
                 if (unitHolders.get(Constants.MIRAGE) != null){
                     unitHolders.remove(Constants.MIRAGE);
                 }

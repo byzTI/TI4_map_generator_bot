@@ -1,36 +1,28 @@
 package ti4.draft.items;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import ti4.draft.DraftItem;
 import ti4.generator.Mapper;
-import ti4.helpers.Helper;
+import ti4.helpers.Emojis;
+import ti4.model.DraftErrataModel;
 import ti4.model.FactionModel;
 import ti4.model.LeaderModel;
-
-import java.util.List;
 
 public class CommanderDraftItem extends DraftItem {
     public CommanderDraftItem(String itemId) {
         super(Category.COMMANDER, itemId);
     }
 
-    private FactionModel getFaction() {
-        if (ItemId.equals("keleres")) {
-            return Mapper.getFactionSetup("keleresa");
-        }
-        return Mapper.getFactionSetup(ItemId);
-    }
-
+    @JsonIgnore
     private LeaderModel getLeader() {
-        List<String> leaders = getFaction().getLeaders();
-        for (String leader : leaders) {
-            if (leader.contains("commander")) {
-                return Mapper.getLeader(leader);
-            }
-        }
-
-        return null;
+        return Mapper.getLeader(ItemId);
     }
 
+    @JsonIgnore
     @Override
     public String getShortDescription() {
         LeaderModel leader = getLeader();
@@ -40,6 +32,7 @@ public class CommanderDraftItem extends DraftItem {
         }return "Commander - " + getLeader().getName();
     }
 
+    @JsonIgnore
     @Override
     public String getLongDescriptionImpl() {
         LeaderModel leader = getLeader();
@@ -49,12 +42,28 @@ public class CommanderDraftItem extends DraftItem {
         return "";
     }
 
+    @JsonIgnore
     @Override
     public String getItemEmoji() {
         LeaderModel leader = getLeader();
         if (leader != null) {
-            return Helper.getEmojiFromDiscord(leader.getID());
+            return Emojis.getEmojiFromDiscord(leader.getID());
         }
         return "";
+    }
+
+    public static List<DraftItem> buildAllDraftableItems(List<FactionModel> factions) {
+        List<DraftItem> allItems = new ArrayList<>();
+        Map<String, LeaderModel> allLeaders = Mapper.getLeaders();
+        for (FactionModel faction : factions) {
+            List<String> leaders = faction.getLeaders();
+            leaders.removeIf((String leader) -> !"commander".equals(allLeaders.get(leader).getType()));
+            if (leaders.isEmpty()) {
+                continue;
+            }
+            allItems.add(DraftItem.Generate(Category.COMMANDER, leaders.get(0)));
+        }
+        DraftErrataModel.filterUndraftablesAndShuffle(allItems, DraftItem.Category.COMMANDER);
+        return allItems;
     }
 }

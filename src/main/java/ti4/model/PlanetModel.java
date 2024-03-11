@@ -1,6 +1,11 @@
 package ti4.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.awt.Color;
+import java.awt.Point;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import lombok.Data;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
@@ -9,13 +14,7 @@ import net.dv8tion.jda.api.entities.emoji.Emoji;
 import ti4.generator.TileHelper;
 import ti4.generator.UnitTokenPosition;
 import ti4.helpers.Emojis;
-import ti4.helpers.Helper;
 import ti4.model.TechSpecialtyModel.TechSpecialty;
-
-import java.awt.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
 
 @Data
 public class PlanetModel implements ModelInterface, EmbeddableModel {
@@ -33,11 +32,13 @@ public class PlanetModel implements ModelInterface, EmbeddableModel {
     private List<TechSpecialtyModel.TechSpecialty> techSpecialties;
     private String legendaryAbilityName;
     private String legendaryAbilityText;
+    private String legendaryAbilityFlavourText;
     private String flavourText;
     private UnitTokenPosition unitPositions;
-    private int spaceCannonDieCount = 0;
-    private int spaceCannonHitsOn = 0;
+    private int spaceCannonDieCount;
+    private int spaceCannonHitsOn;
     private List<String> searchTags = new ArrayList<>();
+    private String contrastColor = "";
 
     public boolean isValid() {
         return getId() != null
@@ -58,7 +59,7 @@ public class PlanetModel implements ModelInterface, EmbeddableModel {
     }
 
     public MessageEmbed getRepresentationEmbed(boolean includeAliases) {
-        
+
         EmbedBuilder eb = new EmbedBuilder();
 
         StringBuilder sb = new StringBuilder();
@@ -71,13 +72,14 @@ public class PlanetModel implements ModelInterface, EmbeddableModel {
             case CULTURAL -> eb.setColor(Color.blue);
             default -> eb.setColor(Color.white);
         }
-        
+
         TileModel tile = TileHelper.getTile(getTileId());
         sb = new StringBuilder();
         sb.append(getInfResEmojis()).append(getPlanetTypeEmoji()).append(getTechSpecialtyEmoji());
-        if (tile != null) sb.append("\nSystem: " + tile.getName());
+        if (tile != null) sb.append("\nSystem: ").append(tile.getName());
         eb.setDescription(sb.toString());
-        if (getLegendaryAbilityName() != null) eb.addField(Emojis.LegendaryPlanet +  getLegendaryAbilityName(), getLegendaryAbilityText(), false);
+        if (getLegendaryAbilityName() != null) eb.addField(Emojis.LegendaryPlanet + getLegendaryAbilityName(), getLegendaryAbilityText(), false);
+        if (getLegendaryAbilityFlavourText() != null) eb.addField("", getLegendaryAbilityFlavourText(), false);
         if (getFlavourText() != null) eb.addField("", getFlavourText(), false);
 
         sb = new StringBuilder();
@@ -91,7 +93,7 @@ public class PlanetModel implements ModelInterface, EmbeddableModel {
     }
 
     private String getInfResEmojis() {
-        return Helper.getResourceEmoji(resources) + Helper.getResourceEmoji(influence);
+        return Emojis.getResourceEmoji(resources) + Emojis.getInfluenceEmoji(influence);
     }
 
     private String getPlanetTypeEmoji() {
@@ -128,8 +130,6 @@ public class PlanetModel implements ModelInterface, EmbeddableModel {
                 case CYBERNETIC -> sb.append("Y");
                 case PROPULSION -> sb.append("B");
                 case WARFARE -> sb.append("R");
-                default -> sb.append("");
-                
             }
         }
         return sb.toString();
@@ -140,13 +140,12 @@ public class PlanetModel implements ModelInterface, EmbeddableModel {
     }
 
     public String getEmoji() {
-        return Helper.getPlanetEmoji(getId());
+        return Emojis.getPlanetEmoji(getId());
     }
 
     public String getEmojiURL() {
         Emoji emoji = Emoji.fromFormatted(getEmoji());
-        if (emoji instanceof CustomEmoji) {
-            CustomEmoji customEmoji = (CustomEmoji) emoji;
+        if (emoji instanceof CustomEmoji customEmoji) {
             return customEmoji.getImageUrl();
         }
         return null;
@@ -162,5 +161,9 @@ public class PlanetModel implements ModelInterface, EmbeddableModel {
         if (!getTechSpecialtyStringRepresentation().isBlank()) sb.append(" ").append(getTechSpecialtyStringRepresentation());
         sb.append(")");
         return sb.toString();
+    }
+
+    public String getContrastColor() {
+        return contrastColor;
     }
 }

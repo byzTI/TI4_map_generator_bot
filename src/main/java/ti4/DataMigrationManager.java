@@ -6,18 +6,19 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
-
 import org.apache.commons.lang3.StringUtils;
-
+import ti4.draft.DraftBag;
+import ti4.draft.DraftItem;
 import ti4.generator.Mapper;
 import ti4.helpers.Constants;
-import ti4.helpers.Helper;
 import ti4.map.Game;
 import ti4.map.GameManager;
 import ti4.map.GameSaveLoadManager;
@@ -28,8 +29,8 @@ import ti4.map.UnitHolder;
 import ti4.message.BotLogger;
 import ti4.model.FactionModel;
 import ti4.model.TechnologyModel;
-import ti4.model.UnitModel;
 import ti4.model.TechnologyModel.TechnologyType;
+import ti4.model.UnitModel;
 
 public class DataMigrationManager {
 
@@ -62,8 +63,10 @@ public class DataMigrationManager {
             runMigration("migratePlayerStatsBlockPositions_300823", DataMigrationManager::migratePlayerStatsBlockPositions_300823);
             runMigration("migrateRelicDecksForEnigmaticStarCharts_110923", DataMigrationManager::migrateRelicDecksForEnigmaticStarChartsAndUnderscoresFromExploreDecks_110923);
             runMigration("migrateForceShuffleAllRelicsDecks_241223", DataMigrationManager::migrateForceShuffleAllRelicsDecks_241223);
-            // runMigration("migrateExampleMigration_241223", (map) ->
-            // migrateExampleMigration_241223(map));
+            runMigration("migrateInitializeFactionTechs_181023", DataMigrationManager::migrateInitializeFactionTechs_181023);
+            runMigration("migrateRemoveOldArcaneShieldID_111223", DataMigrationManager::migrateRemoveOldArcaneShieldID_111223);
+            runMigration("migrateFrankenItems_111223", DataMigrationManager::migrateFrankenItems_111223);
+            //runMigration("migrateInitializeACD2_1", DataMigrationManager::migrateInitializeACD2_1); //name is formatted improperly and throwing errors
         } catch (Exception e) {
             BotLogger.log("Issue running migrations:", e);
         }
@@ -73,10 +76,39 @@ public class DataMigrationManager {
     /// <Description of how data is changing, and optionally what code fix it
     /// relates to>
     public static Boolean migrateExampleMigration_241223(Game game) {
-        boolean mapNeededMigrating = false;
         // Do your migration here for each non-finshed map
         // This will run once, and the map will log that it has had your migration run
         // so it doesnt re-run next time.
+        return false;
+    }
+
+    /// MIGRATION: Remove old/bad arcane shield attachmentID
+    public static Boolean migrateRemoveOldArcaneShieldID_111223(Game game) {
+        boolean mapNeededMigrating = false;
+        for (Tile tile : game.getTileMap().values()) {
+            for (UnitHolder unitHolder : tile.getUnitHolders().values()) {
+                if (unitHolder.getTokenList().contains("attachment_arcane_shield.png")) {
+                    unitHolder.removeToken("attachment_arcane_shield.png");
+                    unitHolder.addToken("attachment_arc_shield.png");
+                    mapNeededMigrating = true;
+                }
+            }
+        }
+        return mapNeededMigrating;
+    }
+
+    /// MIGRATION: Add faction techs to games that were created before faction techs added
+    public static Boolean migrateInitializeFactionTechs_181023(Game game) {
+        boolean mapNeededMigrating = false;
+        for (Player player : game.getRealPlayers()) {
+            if (player.getFactionTechs().isEmpty()) {
+                if (player.getFactionSetupInfo() == null) continue;
+                mapNeededMigrating = true;
+                for (String techID : player.getFactionSetupInfo().getFactionTech()) {
+                    player.addFactionTech(techID);
+                }
+            }
+        }
         return mapNeededMigrating;
     }
 
@@ -124,7 +156,7 @@ public class DataMigrationManager {
     /// This will fix 6 player 3 ring maps anchors
     public static Boolean migratePlayerStatsBlockPositions_300823(Game activeGame) {
         Boolean mapNeededMigrating = false;
-        ArrayList<String> setup6p = new ArrayList<>() {
+        List<String> setup6p = new ArrayList<>() {
             {
                 add("301");
                 add("304");
@@ -134,7 +166,7 @@ public class DataMigrationManager {
                 add("316");
             }
         };
-        ArrayList<String> setup8p = new ArrayList<>() {
+        List<String> setup8p = new ArrayList<>() {
             {
                 add("401");
                 add("404");
@@ -148,9 +180,9 @@ public class DataMigrationManager {
         };
 
         List<Player> players = new ArrayList<>(activeGame.getPlayers().values());
-        int playerCount = activeGame.getRealPlayers().size();
+        int playerCount = activeGame.getRealPlayers().size() + activeGame.getDummies().size();
 
-        ArrayList<String> setup;
+        List<String> setup;
         if (playerCount == 6 && activeGame.getRingCount() == 3) {
             setup = setup6p;
         } else if (playerCount == 8 && activeGame.getRingCount() == 4) {
@@ -174,7 +206,7 @@ public class DataMigrationManager {
     }
 
     /// MIGRATION: Update "absol mode" games' deck IDs
-    /// Only truly matters if map.resetRelics or map.resetAgendas is called 
+    /// Only truly matters if map.resetRelics or map.resetAgendas is called
     /// Migrated ~pbd893ish
     public static Boolean migrateAbsolDeckIDs_210823(Game game) {
         boolean mapNeededMigrating = false;
@@ -204,7 +236,7 @@ public class DataMigrationManager {
     /// The first version of this had two issues;
     /// 1. nekro unit upgrades werent included cause the base unit didnt exist in the faction setup (updated the code below slightly)
     /// 2. the cruiser unit.json was referring to the wrong tech (this just requires us to run the same code again after changing units.json)
-    /// Better to keep this code seprate so we know what was changed when. 
+    /// Better to keep this code seprate so we know what was changed when.
     ///
     public static Boolean migrateOwnedUnitsV2_210823(Game game) {
         boolean mapNeededMigrating = false;
@@ -214,9 +246,9 @@ public class DataMigrationManager {
 
                 // Trying to assign an accurate Faction Model for old keleres players.
                 if (factionSetupInfo == null && "keleres".equals(player.getFaction())) {
-                    List<FactionModel> keleresSubfactions = Mapper.getFactions().stream()
+                    List<FactionModel> keleresSubfactions = Mapper.getFactionIDs().stream()
                         .filter(factionID -> factionID.startsWith("keleres") && !"keleres".equals(factionID))
-                        .map(Mapper::getFactionSetup)
+                        .map(Mapper::getFaction)
                         .toList();
 
                     // guess subfaction based on homeplanet
@@ -228,7 +260,7 @@ public class DataMigrationManager {
                             homesystem = game.getTile(factionModel.getHomeSystem().replace("new", ""));
                         }
                         if (homesystem != null) {
-                            factionSetupInfo = Mapper.getFactionSetup(factionModel.getAlias());
+                            factionSetupInfo = Mapper.getFaction(factionModel.getAlias());
                             break;
                         }
 
@@ -248,7 +280,7 @@ public class DataMigrationManager {
                             if (homeSystem != null) {
                                 boolean isHomeSystemUsedBySomeoneElse = false;
                                 for (String factionId : game.getFactions()) {
-                                    FactionModel otherFactionSetup = Mapper.getFactionSetup(factionId);
+                                    FactionModel otherFactionSetup = Mapper.getFaction(factionId);
                                     if (otherFactionSetup != null
                                         && otherFactionSetup.getHomeSystem().equals(homeSystem.getTileID())) {
                                         isHomeSystemUsedBySomeoneElse = true;
@@ -290,7 +322,7 @@ public class DataMigrationManager {
                         }
                     }
                 }
-                HashSet<String> updatedUnitIDs = new HashSet<>(ownedUnitIDs);
+                Set<String> updatedUnitIDs = new HashSet<>(ownedUnitIDs);
                 if (!player.getUnitsOwned().equals(updatedUnitIDs)) {
                     mapNeededMigrating = true;
                     player.setUnitsOwned(updatedUnitIDs);
@@ -321,9 +353,9 @@ public class DataMigrationManager {
 
                 // Trying to assign an accurate Faction Model for old keleres players.
                 if (factionSetupInfo == null && "keleres".equals(player.getFaction())) {
-                    List<FactionModel> keleresSubfactions = Mapper.getFactions().stream()
+                    List<FactionModel> keleresSubfactions = Mapper.getFactionIDs().stream()
                         .filter(factionID -> factionID.startsWith("keleres") && !"keleres".equals(factionID))
-                        .map(Mapper::getFactionSetup)
+                        .map(Mapper::getFaction)
                         .toList();
 
                     // guess subfaction based on homeplanet
@@ -335,7 +367,7 @@ public class DataMigrationManager {
                             homesystem = game.getTile(factionModel.getHomeSystem().replace("new", ""));
                         }
                         if (homesystem != null) {
-                            factionSetupInfo = Mapper.getFactionSetup(factionModel.getAlias());
+                            factionSetupInfo = Mapper.getFaction(factionModel.getAlias());
                             break;
                         }
 
@@ -355,7 +387,7 @@ public class DataMigrationManager {
                             if (homeSystem != null) {
                                 boolean isHomeSystemUsedBySomeoneElse = false;
                                 for (String factionId : game.getFactions()) {
-                                    FactionModel otherFactionSetup = Mapper.getFactionSetup(factionId);
+                                    FactionModel otherFactionSetup = Mapper.getFaction(factionId);
                                     if (otherFactionSetup != null
                                         && otherFactionSetup.getHomeSystem().equals(homeSystem.getTileID())) {
                                         isHomeSystemUsedBySomeoneElse = true;
@@ -385,8 +417,8 @@ public class DataMigrationManager {
                 for (TechnologyModel technologyModel : playerTechs) {
                     UnitModel upgradedUnit = Mapper.getUnitModelByTechUpgrade(technologyModel.getAlias());
                     if (upgradedUnit != null) {
-                        if (StringUtils.isNotBlank(upgradedUnit.getUpgradesFromUnitId())) {
-                            int upgradesFromUnitIndex = ownedUnitIDs.indexOf(upgradedUnit.getUpgradesFromUnitId());
+                        if (upgradedUnit.getUpgradesFromUnitId().isPresent()) {
+                            int upgradesFromUnitIndex = ownedUnitIDs.indexOf(upgradedUnit.getUpgradesFromUnitId().get());
                             if (upgradesFromUnitIndex >= 0) {
                                 ownedUnitIDs.set(upgradesFromUnitIndex, upgradedUnit.getId());
                             }
@@ -395,7 +427,7 @@ public class DataMigrationManager {
                         }
                     }
                 }
-                HashSet<String> updatedUnitIDs = new HashSet<>(ownedUnitIDs);
+                Set<String> updatedUnitIDs = new HashSet<>(ownedUnitIDs);
                 if (!player.getUnitsOwned().equals(updatedUnitIDs)) {
                     mapNeededMigrating = true;
                     player.setUnitsOwned(updatedUnitIDs);
@@ -454,12 +486,12 @@ public class DataMigrationManager {
     private static Boolean migrateGheminaAddCarrier_190923(Game game) {
         boolean mapNeededMigrating = false;
         for (Player player : game.getPlayers().values()) {
-            if (player.getFaction().equalsIgnoreCase("ghemina") && player.hasUnit("carrier")) {
+            if ("ghemina".equalsIgnoreCase(player.getFaction()) && player.hasUnit("carrier")) {
                 player.removeOwnedUnitByID("carrier");
                 player.addOwnedUnitByID("ghemina_carrier");
                 mapNeededMigrating = true;
             }
-            if (player.getFaction().equalsIgnoreCase("ghemina") && player.hasUnit("carrier2")) {
+            if ("ghemina".equalsIgnoreCase(player.getFaction()) && player.hasUnit("carrier2")) {
                 player.removeOwnedUnitByID("carrier2");
                 player.addOwnedUnitByID("ghemina_carrier2");
                 mapNeededMigrating = true;
@@ -471,23 +503,22 @@ public class DataMigrationManager {
     private static Boolean migrateRenameVeldyrAttachments_270923(Game game) {
         boolean mapNeededMigrating = false;
         for (Entry<String, UnitHolder> entry : game.getPlanetsInfo().entrySet()) {
-            if (entry.getValue() instanceof Planet) {
-                Planet p = (Planet) entry.getValue();
-                HashSet<String> tokens = new HashSet<>(p.getTokenList());
+            if (entry.getValue() instanceof Planet p) {
+                Set<String> tokens = new HashSet<>(p.getTokenList());
                 for (String token : tokens) {
-                    if (token.equals("attachment_veldyr1.png")) {
+                    if ("attachment_veldyr1.png".equals(token)) {
                         p.removeToken(token);
                         p.addToken("attachment_veldyrtaxhaven.png");
                         mapNeededMigrating = true;
-                    } else if (token.equals("attachment_veldyr2.png")) {
+                    } else if ("attachment_veldyr2.png".equals(token)) {
                         p.removeToken(token);
                         p.addToken("attachment_veldyrbroadcasthub.png");
                         mapNeededMigrating = true;
-                    } else if (token.equals("attachment_veldyr3.png")) {
+                    } else if ("attachment_veldyr3.png".equals(token)) {
                         p.removeToken(token);
                         p.addToken("attachment_veldyrreservebank.png");
                         mapNeededMigrating = true;
-                    } else if (token.equals("attachment_veldyr4.png")) {
+                    } else if ("attachment_veldyr4.png".equals(token)) {
                         p.removeToken(token);
                         p.addToken("attachment_veldyrorbitalshipyard.png");
                         mapNeededMigrating = true;
@@ -500,7 +531,7 @@ public class DataMigrationManager {
 
     private static Boolean migrateRenameDSExplores_061023(Game game) {
         boolean mapNeededMigrating = false;
-        if (game.getExplorationDeckID().equals("explores_DS")) {
+        if ("explores_DS".equals(game.getExplorationDeckID())) {
             List<String> oldDeck = game.getAllExplores();
             List<String> replacementDeck = new ArrayList<>();
             for (String ex : oldDeck) {
@@ -522,13 +553,11 @@ public class DataMigrationManager {
                 game.setExploreDiscard(new ArrayList<>(replacementDiscard));
                 mapNeededMigrating = true;
             }
-            boolean x = false;
         }
         return mapNeededMigrating;
     }
 
     private static void runMigration(String migrationName, Function<Game, Boolean> migrationMethod) {
-
         String migrationDateString = migrationName.substring(migrationName.indexOf("_") + 1);
         DateFormat format = new SimpleDateFormat("ddMMyy");
         Date migrationForGamesBeforeDate = null;
@@ -546,7 +575,7 @@ public class DataMigrationManager {
             Date mapCreatedOn = null;
             try {
                 mapCreatedOn = mapCreatedOnFormat.parse(game.getCreationDate());
-            } catch (ParseException e) {
+            } catch (ParseException ignored) {
             }
             if (mapCreatedOn == null || mapCreatedOn.after(migrationForGamesBeforeDate)) {
                 continue;
@@ -571,4 +600,158 @@ public class DataMigrationManager {
             BotLogger.log(String.format("Migration %s run on following maps successfully: \n%s", migrationName, mapNames));
         }
     }
+
+    public static boolean migrateFrankenItems_111223(Game game) {
+        if (game.getActiveBagDraft() == null) {
+            return false;
+        }
+
+        for (Player p : game.getRealPlayers()) {
+            replaceFrankenItemsInBag_111223(p.getDraftHand());
+            replaceFrankenItemsInBag_111223(p.getCurrentDraftBag());
+            replaceFrankenItemsInBag_111223(p.getDraftQueue());
+        }
+
+        return true;
+    }
+
+    private static void replaceFrankenItemsInBag_111223(DraftBag bag) {
+        for (int i = 0; i < bag.Contents.size(); i++) {
+            DraftItem item = bag.Contents.get(i);
+            if ("keleres".equals(item.ItemId)) {
+                var newItem = DraftItem.Generate(item.ItemCategory, "keleresa");
+                swapBagItem(bag, i, newItem);
+                item = newItem;
+            }
+            if (item.ItemCategory == DraftItem.Category.MECH) {
+                if (Mapper.getUnit(item.ItemId) == null) {
+                    var faction = Mapper.getFaction(item.ItemId);
+                    var units = faction.getUnits();
+                    units.removeIf((String unit) -> !"mech".equals(Mapper.getUnit(unit).getBaseType()));
+                    swapBagItem(bag, i, DraftItem.Generate(DraftItem.Category.MECH, units.get(0)));
+                }
+            } else if (item.ItemCategory == DraftItem.Category.FLAGSHIP) {
+                if (Mapper.getUnit(item.ItemId) == null) {
+                    var faction = Mapper.getFaction(item.ItemId);
+                    var units = faction.getUnits();
+                    units.removeIf((String unit) -> !"flagship".equals(Mapper.getUnit(unit).getBaseType()));
+                    swapBagItem(bag, i, DraftItem.Generate(DraftItem.Category.FLAGSHIP, units.get(0)));
+                }
+            } else if (item.ItemCategory == DraftItem.Category.AGENT) {
+                if (Mapper.getLeader(item.ItemId) == null) {
+                    var faction = Mapper.getFaction(item.ItemId);
+                    List<String> agents = faction.getLeaders();
+                    agents.removeIf((String leader) -> !"agent".equals(Mapper.getLeader(leader).getType()));
+                    swapBagItem(bag, i, DraftItem.Generate(DraftItem.Category.AGENT, agents.get(0)));
+                }
+            } else if (item.ItemCategory == DraftItem.Category.COMMANDER) {
+                if (Mapper.getLeader(item.ItemId) == null) {
+                    var faction = Mapper.getFaction(item.ItemId);
+                    List<String> agents = faction.getLeaders();
+                    agents.removeIf((String leader) -> !"commander".equals(Mapper.getLeader(leader).getType()));
+                    swapBagItem(bag, i, DraftItem.Generate(DraftItem.Category.COMMANDER, agents.get(0)));
+                }
+            } else if (item.ItemCategory == DraftItem.Category.HERO) {
+                if (Mapper.getLeader(item.ItemId) == null) {
+                    var faction = Mapper.getFaction(item.ItemId);
+                    List<String> agents = faction.getLeaders();
+                    agents.removeIf((String leader) -> !"hero".equals(Mapper.getLeader(leader).getType()));
+                    swapBagItem(bag, i, DraftItem.Generate(DraftItem.Category.HERO, agents.get(0)));
+                }
+            } else if (item.ItemCategory == DraftItem.Category.PN) {
+                if (Mapper.getPromissoryNote(item.ItemId) == null) {
+                    var faction = Mapper.getFaction(item.ItemId);
+                    List<String> pns = faction.getPromissoryNotes();
+                    swapBagItem(bag, i, DraftItem.Generate(DraftItem.Category.PN, pns.get(0)));
+                }
+            }
+        }
+    }
+
+    private static void swapBagItem(DraftBag bag, int index, DraftItem newItem) {
+        BotLogger.log(String.format("Draft Bag replacing %s with %s", bag.Contents.get(index).getAlias(), newItem.getAlias()));
+        bag.Contents.remove(index);
+        bag.Contents.add(index, newItem);
+    }
+
+    public static boolean migrateInitializeACD2_1(Game game) {
+        if (game.getName() == null || !game.getName().contains("pbd1913")) {
+            return false;
+        }
+        Map<String, String> replacements = new HashMap<>();
+        replacements.put("sensor_jam", "corruption");
+        List<String> decksToCheck = List.of("action_deck_2");
+        return replaceActionCards(game, decksToCheck, replacements);
+    }
+
+    private static boolean replaceStage1s(Game game, List<String> decksToCheck, Map<String, String> replacements) {
+        if (!decksToCheck.contains(game.getStage1PublicDeckID())) {
+            return false;
+        }
+
+        boolean mapNeededMigrating = false;
+        for (String toReplace : replacements.keySet()) {
+            String replacement = replacements.get(toReplace);
+
+            mapNeededMigrating |= replace(game.getPublicObjectives1(), toReplace, replacement);
+            mapNeededMigrating |= replaceKey(game.getRevealedPublicObjectives(), toReplace, replacement);
+            mapNeededMigrating |= replaceKey(game.getScoredPublicObjectives(), toReplace, replacement);
+        }
+        return mapNeededMigrating;
+    }
+
+    private static boolean replaceActionCards(Game game, List<String> decksToCheck, Map<String, String> replacements) {
+        if (!decksToCheck.contains(game.getAcDeckID())) {
+            return false;
+        }
+
+        boolean mapNeededMigrating = false;
+        for (String toReplace : replacements.keySet()) {
+            String replacement = replacements.get(toReplace);
+
+            mapNeededMigrating |= replace(game.getActionCards(), toReplace, replacement);
+            mapNeededMigrating |= replaceKey(game.getDiscardActionCards(), toReplace, replacement);
+
+            for (Player player : game.getRealPlayers()) {
+                mapNeededMigrating |= replaceKey(player.getActionCards(), toReplace, replacement);
+            }
+        }
+        return mapNeededMigrating;
+    }
+
+    private static boolean replaceAgendaCards(Game game, List<String> decksToCheck, Map<String, String> replacements) {
+        if (!decksToCheck.contains(game.getAgendaDeckID())) {
+            return false;
+        }
+
+        boolean mapNeededMigrating = false;
+        for (String toReplace : replacements.keySet()) {
+            String replacement = replacements.get(toReplace);
+
+            mapNeededMigrating |= replace(game.getAgendas(), toReplace, replacement);
+            mapNeededMigrating |= replaceKey(game.getDiscardAgendas(), toReplace, replacement);
+            mapNeededMigrating |= replaceKey(game.getSentAgendas(), toReplace, replacement);
+        }
+        return mapNeededMigrating;
+    }
+
+    private static <K, V> boolean replaceKey(Map<K, V> map, K toReplace, K replacement) {
+        if (map.containsKey(toReplace)) {
+            V value = map.get(toReplace);
+            map.put(replacement, value);
+            map.remove(toReplace);
+            return true;
+        }
+        return false;
+    }
+
+    private static <K> boolean replace(List<K> list, K toReplace, K replacement) {
+        int index = list.indexOf(toReplace);
+        if (index > -1) {
+            list.set(index, replacement);
+            return true;
+        }
+        return false;
+    }
+
 }

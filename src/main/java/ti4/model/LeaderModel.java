@@ -4,25 +4,24 @@ import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-
-import org.apache.commons.lang3.StringUtils;
-
 import lombok.Data;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.emoji.CustomEmoji;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
+import org.apache.commons.lang3.StringUtils;
 import ti4.generator.Mapper;
 import ti4.helpers.Constants;
 import ti4.helpers.Emojis;
-import ti4.helpers.Helper;
+import ti4.model.Source.ComponentSource;
 
 @Data
-public class LeaderModel implements ModelInterface, EmbeddableModel { 
+public class LeaderModel implements ModelInterface, EmbeddableModel {
     private String ID;
     private String type;
     private String faction;
     private String name;
+    private String shortName;
     private String title;
     private String abilityName;
     private String abilityWindow;
@@ -30,8 +29,9 @@ public class LeaderModel implements ModelInterface, EmbeddableModel {
     private String unlockCondition;
     private String flavourText;
     private String emoji;
-    private String source;
+    private ComponentSource source;
     private List<String> searchTags = new ArrayList<>();
+    private String homebrewReplacesID;
 
     @Override
     public boolean isValid() {
@@ -40,12 +40,9 @@ public class LeaderModel implements ModelInterface, EmbeddableModel {
             && faction != null
             && name != null
             && title != null
-            // && abilityName != null
             && abilityWindow != null
             && abilityText != null
             && unlockCondition != null
-            // && flavourText != null
-            // && emoji != null
             && source != null;
     }
 
@@ -54,22 +51,30 @@ public class LeaderModel implements ModelInterface, EmbeddableModel {
         return getID();
     }
 
+    public String getShortName() {
+        return Optional.ofNullable(shortName).orElse(getName());
+    }
+
     public String getLeaderEmoji() {
-        return Optional.ofNullable(getEmoji()).orElse(Helper.getEmojiFromDiscord(getID()));
+        return Optional.ofNullable(getEmoji()).orElse(Emojis.getEmojiFromDiscord(getID()));
     }
 
-    public String getAbilityName() {
-        return Optional.ofNullable(abilityName).orElse("");
+    public Optional<String> getAbilityName() {
+        return Optional.ofNullable(abilityName);
     }
 
-    public String getFlavourText() {
-        return Optional.ofNullable(flavourText).orElse("");
+    public Optional<String> getFlavourText() {
+        return Optional.ofNullable(flavourText);
+    }
+
+    public Optional<String> getHomebrewReplacesID() {
+        return Optional.ofNullable(homebrewReplacesID);
     }
 
     public String getRepresentation(boolean includeTitle, boolean includeAbility, boolean includeUnlockCondition) {
         StringBuilder representation = new StringBuilder();
         representation.append(getLeaderEmoji()).append(" **").append(getName()).append("**");
-        
+
         if (includeTitle) representation.append(": ").append(getTitle()); //add title
         if (includeAbility && Constants.HERO.equals(getType())) representation.append(" - ").append("__**").append(getAbilityName()).append("**__"); //add hero ability name
         if (includeAbility) representation.append(" - *").append(getAbilityWindow()).append("* ").append(getAbilityText()); //add ability
@@ -79,33 +84,31 @@ public class LeaderModel implements ModelInterface, EmbeddableModel {
     }
 
     public MessageEmbed getRepresentationEmbed() {
-        return getRepresentationEmbed(false, false, false, false);
+        return getRepresentationEmbed(false, true, false, false);
     }
 
     public MessageEmbed getRepresentationEmbed(boolean includeID, boolean includeFactionType, boolean showUnlockConditions, boolean includeFlavourText) {
         EmbedBuilder eb = new EmbedBuilder();
 
         //TITLE
-        StringBuilder title = new StringBuilder();
-        title.append(getLeaderEmoji());
-        title.append(" __**").append(getName()).append("**__").append(" - ").append(getTitle());
-        title.append(getSourceEmoji());
-        eb.setTitle(title.toString());
+        String title = getLeaderEmoji() +
+            " __**" + getName() + "**__" + " - " + getTitle() +
+            getSource().emoji();
+        eb.setTitle(title);
 
         Emoji emoji = Emoji.fromFormatted(getLeaderEmoji());
-        if (emoji instanceof CustomEmoji) {
-            CustomEmoji customEmoji = (CustomEmoji) emoji;
+        if (emoji instanceof CustomEmoji customEmoji) {
             eb.setThumbnail(customEmoji.getImageUrl());
         }
 
         //DESCRIPTION
         StringBuilder description = new StringBuilder();
         if (includeFactionType) {
-            FactionModel faction = Mapper.getFactionSetup(getFaction());
+            FactionModel faction = Mapper.getFaction(getFaction());
             if (faction != null) {
-                description.append(Helper.getFactionIconFromDiscord(faction.getAlias())).append(" ").append(faction.getFactionName()).append(" ");
+                description.append(Emojis.getFactionIconFromDiscord(faction.getAlias())).append(" ").append(faction.getFactionName()).append(" ");
             } else {
-                description.append(Helper.getFactionIconFromDiscord(getFaction())).append(" ").append(getFaction());
+                description.append(Emojis.getFactionIconFromDiscord(getFaction())).append(" ").append(getFaction());
             }
             description.append(" ").append(StringUtils.capitalize(getType()));
         }
@@ -113,35 +116,26 @@ public class LeaderModel implements ModelInterface, EmbeddableModel {
         eb.setDescription(description.toString());
 
         //FIELDS
-        eb.addField(Optional.ofNullable(getAbilityName()).orElse(" "), "**" + getAbilityWindow() + "**\n> " + getAbilityText(), false);
-        if (includeFlavourText && !StringUtils.isBlank(getFlavourText())) eb.addField(" ", "*" + getFlavourText() + "*", false);
+        eb.addField(getAbilityName().orElse(" "), "**" + getAbilityWindow() + "**\n> " + getAbilityText(), false);
+        if (includeFlavourText && getFlavourText().isPresent()) eb.addField(" ", "*" + getFlavourText() + "*", false);
 
         //FOOTER
         StringBuilder footer = new StringBuilder();
         if (includeID) footer.append("ID: ").append(getAlias()).append("    Source: ").append(getSource());
         eb.setFooter(footer.toString());
-        
+
         eb.setColor(Color.black);
         return eb.build();
-    }
-
-    private String getSourceEmoji() {
-        return switch (getSource()) {
-            case "ds" -> Emojis.DiscordantStars;
-            case "cryppter" -> "";
-            case "baldrick" -> "";
-            default -> "";
-        };
     }
 
     public boolean search(String searchString) {
         if (searchString == null) return true;
         searchString = searchString.toLowerCase();
         return getID().toLowerCase().contains(searchString)
-            || getName().toLowerCase().contains(searchString) 
-            || getTitle().toLowerCase().contains(searchString) 
-            || getAbilityName().toLowerCase().contains(searchString) 
-            || getAbilityWindow().toLowerCase().contains(searchString) 
+            || getName().toLowerCase().contains(searchString)
+            || getTitle().toLowerCase().contains(searchString)
+            || getAbilityName().orElse("").toLowerCase().contains(searchString)
+            || getAbilityWindow().toLowerCase().contains(searchString)
             || getAbilityText().toLowerCase().contains(searchString)
             || getUnlockCondition().toLowerCase().contains(searchString)
             || getAutoCompleteName().toLowerCase().contains(searchString)
@@ -151,5 +145,5 @@ public class LeaderModel implements ModelInterface, EmbeddableModel {
     public String getAutoCompleteName() {
         return getName() + " (" + getFaction() + " " + getType() + ")";
     }
-    
+
 }

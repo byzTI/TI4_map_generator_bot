@@ -1,9 +1,7 @@
 package ti4.commands.franken;
 
 import java.util.List;
-
 import ti4.helpers.Constants;
-import ti4.helpers.Helper;
 import ti4.map.Player;
 
 public class PNRemove extends PNAddRemove {
@@ -13,7 +11,7 @@ public class PNRemove extends PNAddRemove {
 
     @Override
     public void doAction(Player player, List<String> pnIDs) {
-        StringBuilder sb = new StringBuilder(Helper.getPlayerRepresentation(player, getActiveGame())).append(" removed PNs:\n");
+        StringBuilder sb = new StringBuilder(player.getRepresentation()).append(" removed PNs:\n");
         for (String pnID : pnIDs) {
             if (!player.ownsPromissoryNote(pnID)) {
                 sb.append("> ").append(pnID).append(" (player did not own this PN)");

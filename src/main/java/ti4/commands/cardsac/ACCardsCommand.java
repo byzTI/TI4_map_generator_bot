@@ -123,10 +123,10 @@ public class ACCardsCommand implements Command {
 
     private Collection<ACCardsSubcommandData> getSubcommands() {
         Collection<ACCardsSubcommandData> subcommands = new HashSet<>();
-        subcommands.add(new ACInfo_Legacy());
         subcommands.add(new ACInfo());
         subcommands.add(new DrawAC());
         subcommands.add(new DiscardAC());
+        subcommands.add(new PurgeAC());
         subcommands.add(new DiscardACRandom());
         subcommands.add(new ShowAC());
         subcommands.add(new ShowACToAll());
@@ -135,7 +135,9 @@ public class ACCardsCommand implements Command {
         subcommands.add(new ShowAllAC());
         subcommands.add(new ShowACRemainingCardCount());
         subcommands.add(new PickACFromDiscard());
+        subcommands.add(new PickACFromPurged());
         subcommands.add(new ShowDiscardActionCards());
+        subcommands.add(new ShowPurgedActionCards());
         subcommands.add(new ShuffleACBackIntoDeck());
         subcommands.add(new RevealAndPutACIntoDiscard());
         subcommands.add(new SentAC());

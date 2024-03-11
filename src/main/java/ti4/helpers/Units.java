@@ -2,18 +2,33 @@ package ti4.helpers;
 
 import java.util.concurrent.ThreadLocalRandom;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import lombok.Data;
 import lombok.Getter;
 
 public class Units {
 
-    private static String emdash = "—";
+    private static final String emdash = "—";
 
+    /**
+     * <H3>
+     * DO NOT ADD NEW VALUES TO THIS OBJECT.
+     * </H3>
+     * 
+     * <p>
+     * It is being used as a key in some major hashmaps which causes issues when we attempt to 
+     * save/restore from JSON as JSON map keys have to be strings, not JSON objects. This forces
+     * us to use custom mappers to resolve.
+     * </p>
+     */
     @Data
     public static class UnitKey {
         private UnitType unitType;
         private String colorID;
 
+        @JsonIgnore
         public String getColor() {
             return AliasHandler.resolveColor(colorID);
         }
@@ -30,13 +45,22 @@ public class Units {
             return unitType.getUnitTypeEmoji();
         }
 
+        @JsonIgnore
         public String getFileName() {
-            if (unitType.equals(UnitType.Destroyer) && ThreadLocalRandom.current().nextInt(Constants.EYE_CHANCE) == 0) {
+            if (unitType == UnitType.Destroyer && ThreadLocalRandom.current().nextInt(Constants.EYE_CHANCE) == 0) {
                 return String.format("%s_dd_eyes.png", colorID);
             }
+            if(UnitType.TyrantsLament == unitType || UnitType.Lady == unitType || UnitType.Cavalry == unitType){
+                return String.format("%s_%s.png", colorID, "fs");
+            }
+            if(UnitType.PlenaryOrbital == unitType){
+                return String.format("%s_%s.png", colorID, "sd");
+            }
+            
             return String.format("%s_%s.png", colorID, asyncID());
         }
 
+        @JsonIgnore
         public String getOldUnitID() {
             return String.format("%s_%s.png", colorID, asyncID());
         }
@@ -49,7 +73,7 @@ public class Units {
             return String.format("%s%s%s", colorID, emdash, asyncID());
         }
 
-        UnitKey(UnitType unitType, String colorID) {
+        public UnitKey(@JsonProperty("unitType") UnitType unitType, @JsonProperty("colorID") String colorID) {
             this.unitType = unitType;
             this.colorID = colorID;
         }
@@ -58,7 +82,7 @@ public class Units {
     public enum UnitType {
         Infantry("gf"), Mech("mf"), Pds("pd"), Spacedock("sd"), CabalSpacedock("csd"), // ground based
         Fighter("ff"), Destroyer("dd"), Cruiser("ca"), Carrier("cv"), Dreadnought("dn"), Flagship("fs"), Warsun("ws"), //ships
-        PlenaryOrbital("plenaryorbital"), TyrantsLament("tyrantslament"); //relics
+        PlenaryOrbital("plenaryorbital"), TyrantsLament("tyrantslament"), Lady("lady"), Cavalry("cavalry"); //relics
 
         @Getter
         public final String value;
@@ -83,6 +107,8 @@ public class Units {
                 case "ws" -> "War Sun";
                 case "plenaryorbital" -> "Plenary Orbital";
                 case "tyrantslament" -> "Tyrant's Lament";
+                case "cavalry" -> "The Cavalry";
+                case "lady" -> "The Lady";
                 default -> null;
             };
         }
@@ -101,8 +127,10 @@ public class Units {
                 case "dn" -> "dreadnought";
                 case "fs" -> "flagship";
                 case "ws" -> "warsun";
-                case "plenaryorbital" -> null;
-                case "tyrantslament" -> null;
+                case "plenaryorbital" -> "plenaryorbital";
+                case "tyrantslament" -> "tyrantslament";
+                case "cavalry" -> "cavalry";
+                case "lady" -> "lady";
                 default -> null;
             };
         }
@@ -118,7 +146,7 @@ public class Units {
                 case "ca" -> Emojis.cruiser;
                 case "cv" -> Emojis.carrier;
                 case "dn" -> Emojis.dreadnought;
-                case "fs", "tyrantslament" -> Emojis.flagship;
+                case "fs", "tyrantslament", "lady", "cavalry" -> Emojis.flagship;
                 case "ws" -> Emojis.warsun;
                 default -> null;
             };

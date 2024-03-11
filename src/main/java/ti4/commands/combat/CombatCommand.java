@@ -3,7 +3,6 @@ package ti4.commands.combat;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Objects;
-
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction;
@@ -72,8 +71,10 @@ public class CombatCommand implements Command {
     }
 
     private Collection<CombatSubcommandData> getSubcommands() {
-        Collection<CombatSubcommandData> subcommands = new HashSet<>();
-        return subcommands;
+        HashSet<CombatSubcommandData> hashSet = new HashSet<>();
+        hashSet.add(new CombatRoll());
+        hashSet.add(new StartCombat());
+        return hashSet;
     }
 
     @Override

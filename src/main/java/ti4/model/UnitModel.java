@@ -3,7 +3,6 @@ package ti4.model;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-
 import lombok.Data;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
@@ -11,7 +10,9 @@ import ti4.generator.Mapper;
 import ti4.helpers.AliasHandler;
 import ti4.helpers.CombatRollType;
 import ti4.helpers.Emojis;
-import ti4.helpers.Helper;
+import ti4.map.Game;
+import ti4.map.Player;
+import ti4.model.Source.ComponentSource;
 
 @Data
 public class UnitModel implements ModelInterface, EmbeddableModel {
@@ -22,7 +23,7 @@ public class UnitModel implements ModelInterface, EmbeddableModel {
     private String upgradesFromUnitId;
     private String upgradesToUnitId;
     private String requiredTechId;
-    private String source;
+    private ComponentSource source;
     private String faction;
     private int moveValue;
     private int productionValue;
@@ -46,6 +47,7 @@ public class UnitModel implements ModelInterface, EmbeddableModel {
     private Boolean isGroundForce;
     private Boolean isShip;
     private String ability;
+    private String homebrewReplacesID;
     private List<String> searchTags = new ArrayList<>();
 
     //Source: units.json - source of json: https://docs.google.com/spreadsheets/d/1nbHylJyn4VURCRKX8ePmOrLa6dAsc504ww0BPZXIRxU/edit?usp=sharing
@@ -56,10 +58,14 @@ public class UnitModel implements ModelInterface, EmbeddableModel {
         return id != null
             && !id.isEmpty()
             && baseType != null
+            && name != null
             && asyncId != null
             && source != null
-            && List.of("ca", "cv", "dd", "dn", "ff", "fs", "gf", "mf", "pd", "sd", "ws", "csd", "plenaryorbital", "tyrantslament").contains(getAsyncId())
-            && (getFaction() == null || Mapper.isFaction(getFaction().toLowerCase()));
+            && List.of("ca", "cv", "dd", "dn", "ff", "fs", "gf", "mf", "pd", "sd", "ws", "csd", "plenaryorbital", "tyrantslament", "lady", "cavalry").contains(getAsyncId())
+            // && (requiredTechId == null || Mapper.isValidTech(requiredTechId))
+            // && (upgradesFromUnitId == null || Mapper.isValidUnit(upgradesFromUnitId))
+            // && (upgradesToUnitId == null || Mapper.isValidUnit(upgradesToUnitId))
+            && (getFaction().isEmpty() || Mapper.isValidFaction(getFaction().orElse("").toLowerCase()));
     }
 
     public String getAlias() {
@@ -70,22 +76,25 @@ public class UnitModel implements ModelInterface, EmbeddableModel {
         return "_" + getAsyncId() + ".png";
     }
 
-    public String getColourAsyncID(String colour) {
-        colour = AliasHandler.resolveColor(colour);
-        colour = Mapper.getColorID(colour);
-        return colour + getImageFileSuffix();
+    public String getColorAsyncID(String color) {
+        color = AliasHandler.resolveColor(color);
+        color = Mapper.getColorID(color);
+        return color + getImageFileSuffix();
     }
 
     public String getUnitEmoji() {
-        return Helper.getEmojiFromDiscord(getBaseType());
+        return Emojis.getEmojiFromDiscord(getBaseType());
     }
 
     public String getUnitRepresentation() {
-        String faction = getFaction();
-        String factionEmoji = Helper.getEmojiFromDiscord(faction);
-        String unitEmoji = Helper.getEmojiFromDiscord(getBaseType());
+        String factionEmoji = Emojis.getEmojiFromDiscord(getFaction().orElse(""));
+        String unitEmoji = Emojis.getEmojiFromDiscord(getBaseType());
 
-        return unitEmoji + " " + getName() + factionEmoji + ": " + getAbility();
+        String unitString = unitEmoji + " " + getName() + factionEmoji;
+        if (getAbility().isPresent()) {
+            unitString += ": " + getAbility().get();
+        }
+        return unitString;
     }
 
     public MessageEmbed getRepresentationEmbed() {
@@ -93,9 +102,8 @@ public class UnitModel implements ModelInterface, EmbeddableModel {
     }
 
     public MessageEmbed getRepresentationEmbed(boolean includeAliases) {
-
-        String factionEmoji = getFaction() == null ? "" : Helper.getFactionIconFromDiscord(getFaction());
-        String unitEmoji = getBaseType() == null ? "" : Helper.getEmojiFromDiscord(getBaseType());
+        String factionEmoji = getFaction().isEmpty() ? "" : Emojis.getFactionIconFromDiscord(getFaction().orElse(""));
+        String unitEmoji = getBaseType() == null ? "" : Emojis.getEmojiFromDiscord(getBaseType());
 
         EmbedBuilder eb = new EmbedBuilder();
 
@@ -105,7 +113,7 @@ public class UnitModel implements ModelInterface, EmbeddableModel {
         if (!getValuesText().isEmpty()) eb.addField("Values:", getValuesText(), true);
         if (!getDiceText().isEmpty()) eb.addField("Dice Rolls:", getDiceText(), true);
         if (!getOtherText().isEmpty()) eb.addField("Traits:", getOtherText(), true);
-        if (getAbility() != null) eb.addField("Ability:", getAbility(), false);
+        if (getAbility().isPresent()) eb.addField("Ability:", getAbility().get(), false);
 
         if (includeAliases) eb.setFooter("UnitID: " + getId() + "\nAliases: " + getAsyncIDAliases() + "\nSource: " + getSource());
 
@@ -113,11 +121,7 @@ public class UnitModel implements ModelInterface, EmbeddableModel {
     }
 
     public String getSourceEmoji() {
-        return switch (getSource()) {
-            case "absol" -> Emojis.Absol;
-            case "ds" -> Emojis.DiscordantStars;
-            default -> "";
-        };
+        return source.emoji();
     }
 
     public int getCombatDieCountForAbility(CombatRollType rollType) {
@@ -126,9 +130,64 @@ public class UnitModel implements ModelInterface, EmbeddableModel {
             case AFB -> getAfbDieCount();
             case bombardment -> getBombardDieCount();
             case SpaceCannonOffence, SpaceCannonDefence -> getSpaceCannonDieCount();
-            default -> getCombatDieCount();
         };
     }
+    public int getCombatDieCountForAbility(CombatRollType rollType, Player player, Game activeGame) {
+        return switch (rollType) {
+            case combatround -> getCombatDieCount();
+            case AFB -> getAfbDieCount(player, activeGame);
+            case bombardment -> getBombardDieCount();
+            case SpaceCannonOffence -> getSpaceCannonDieCount(player, activeGame);
+            case SpaceCannonDefence -> getSpaceCannonDieCount();
+        };
+    }
+
+    public int getAfbDieCount(Player player, Game activeGame){
+        if(!activeGame.playerHasLeaderUnlockedOrAlliance(player, "zeliancommander")){
+            return getAfbDieCount();
+        }else{
+            if(getAfbDieCount() == 0 && (getBaseType().equalsIgnoreCase("warsun") || getBaseType().equalsIgnoreCase("dreadnought"))){
+                return 1;
+            }else{
+                return getAfbDieCount();
+            }
+        }
+    }
+    public int getSpaceCannonDieCount(Player player, Game activeGame){
+        if(!activeGame.getFactionsThatReactedToThis("EBSFaction").equalsIgnoreCase(player.getFaction())){
+            return getSpaceCannonDieCount();
+        }else{
+            if(getBaseType().equalsIgnoreCase("spacedock")){
+                return 3;
+            }else{
+                return getSpaceCannonDieCount();
+            }
+        }
+    }
+
+    public int getAfbHitsOn(Player player, Game activeGame){
+        if(!activeGame.playerHasLeaderUnlockedOrAlliance(player, "zeliancommander")){
+            return getAfbHitsOn();
+        }else{
+            if(getAfbHitsOn() == 0 && (getBaseType().equalsIgnoreCase("warsun") || getBaseType().equalsIgnoreCase("dreadnought"))){
+                return 5;
+            }else{
+                return getAfbHitsOn();
+            }
+        }
+    }
+    public int getSpaceCannonHitsOn(Player player, Game activeGame){
+        if(!activeGame.getFactionsThatReactedToThis("EBSFaction").equalsIgnoreCase(player.getFaction())){
+            return getSpaceCannonHitsOn();
+        }else{
+            if(getBaseType().equalsIgnoreCase("spacedock")){
+                return 5;
+            }else{
+                return getSpaceCannonHitsOn();
+            }
+        }
+    }
+    
 
     public int getCombatDieHitsOnForAbility(CombatRollType rollType) {
         return switch (rollType) {
@@ -136,7 +195,15 @@ public class UnitModel implements ModelInterface, EmbeddableModel {
             case AFB -> getAfbHitsOn();
             case bombardment -> getBombardHitsOn();
             case SpaceCannonOffence, SpaceCannonDefence -> getSpaceCannonHitsOn();
-            default -> getCombatHitsOn();
+        };
+    }
+    public int getCombatDieHitsOnForAbility(CombatRollType rollType, Player player, Game activeGame) {
+        return switch (rollType) {
+            case combatround -> getCombatHitsOn();
+            case AFB -> getAfbHitsOn(player, activeGame);
+            case bombardment -> getBombardHitsOn();
+            case SpaceCannonOffence -> getSpaceCannonHitsOn(player, activeGame);
+            case SpaceCannonDefence -> getSpaceCannonHitsOn();
         };
     }
 
@@ -167,9 +234,9 @@ public class UnitModel implements ModelInterface, EmbeddableModel {
 
     private String getCostText() {
         if (getCost() >= 1) {
-            return "Cost: " + Helper.getResourceEmoji(Math.round(getCost())) + "\n";
+            return "Cost: " + Emojis.getResourceEmoji(Math.round(getCost())) + "\n";
         } else if (getCost() == 0.5) {
-            return "Cost: " + Emojis.Resources_1 + " (for 2 " + Helper.getEmojiFromDiscord(getBaseType()) + ")\n";
+            return "Cost: " + Emojis.Resources_1 + " (for 2 " + Emojis.getEmojiFromDiscord(getBaseType()) + ")\n";
         }
         return "";
     }
@@ -243,26 +310,27 @@ public class UnitModel implements ModelInterface, EmbeddableModel {
 
     public boolean search(String searchString) {
         return getName().toLowerCase().contains(searchString)
-            || (getFaction() != null && getFaction().toLowerCase().contains(searchString))
+            || getFaction().orElse("").toLowerCase().contains(searchString)
             || getId().toLowerCase().contains(searchString)
             || getBaseType().toLowerCase().contains(searchString)
             || getSearchTags().contains(searchString);
     }
 
     public static int sortFactionUnitsFirst(UnitModel a, UnitModel b) {
-        boolean fa = a.getFaction() == null || a.getFaction().isEmpty();
-        boolean fb = b.getFaction() == null || b.getFaction().isEmpty();
+        boolean fa = a.getFaction().isEmpty();
+        boolean fb = b.getFaction().isEmpty();
         if (fa && fb) return 0;
         if (!fa && !fb) return 0;
-        if (!fa && fb) return -1;
+        if (!fa) return -1;
         return 1;
     }
 
     public String getAutoCompleteName() {
         StringBuilder sb = new StringBuilder();
         sb.append(getName()).append(" (");
-        if (getFaction() != null) sb.append(getFaction()).append(" ");
-        sb.append(getBaseType()).append(")");
+        if (getFaction().isPresent()) sb.append(getFaction().get()).append(" ");
+        sb.append(getBaseType()).append(") [");
+        sb.append(getSource()).append("]");
         return sb.toString();
     }
 
@@ -296,5 +364,29 @@ public class UnitModel implements ModelInterface, EmbeddableModel {
 
     public boolean getIsShip() {
         return Optional.ofNullable(isShip).orElse(false);
+    }
+
+    public Optional<String> getUpgradesFromUnitId() {
+        return Optional.ofNullable(upgradesFromUnitId);
+    }
+
+    public Optional<String> getUpgradesToUnitId() {
+        return Optional.ofNullable(upgradesToUnitId);
+    }
+
+    public Optional<String> getRequiredTechId() {
+        return Optional.ofNullable(requiredTechId);
+    }
+
+    public Optional<String> getFaction() {
+        return Optional.ofNullable(faction);
+    }
+
+    public Optional<String> getAbility() {
+        return Optional.ofNullable(ability);
+    }
+
+    public Optional<String> getHomebrewReplacesID() {
+        return Optional.ofNullable(homebrewReplacesID);
     }
 }

@@ -28,14 +28,14 @@ public class ShowAllSOToAll extends SOCardsSubcommandData {
 
         sb.append("Player: ").append(player.getUserName()).append("\n");
 
-        List<String> secretObjectives = new ArrayList<>(activeGame.getSecretObjective(player.getUserID()).keySet());
+        List<String> secretObjectives = new ArrayList<>(player.getSecrets().keySet());
         Collections.shuffle(secretObjectives);
-        Map<String, Integer> scoredSecretObjective = new LinkedHashMap<>(activeGame.getScoredSecretObjective(player.getUserID()));
+        Map<String, Integer> scoredSecretObjective = new LinkedHashMap<>(player.getSecretsScored());
         for (String id : activeGame.getSoToPoList()) {
             scoredSecretObjective.remove(id);
         }
 
-        sb.append(Helper.getPlayerRepresentation(player, activeGame));
+        sb.append(player.getRepresentation());
         sb.append("\n");
         sb.append("**Secret Objectives:**").append("\n");
         int index = 1;

@@ -1,27 +1,27 @@
 package ti4;
 
+import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
+import org.jetbrains.annotations.Nullable;
 import ti4.helpers.Constants;
 import ti4.helpers.Storage;
 import ti4.helpers.Units.UnitKey;
 
-import org.jetbrains.annotations.Nullable;
-
-import java.io.File;
-import java.util.HashMap;
-
 public class ResourceHelper {
     private static ResourceHelper resourceHelper;
-    private final HashMap<String, String> unitCache = new HashMap<>();
-    private final HashMap<String, String> decalCache = new HashMap<>();
-    private final HashMap<String, String> tileCache = new HashMap<>();
-    private final HashMap<String, String> ccCache = new HashMap<>();
-    private final HashMap<String, String> attachmentCache = new HashMap<>();
-    private final HashMap<String, String> tokenCache = new HashMap<>();
-    private final HashMap<String, String> factionCache = new HashMap<>();
-    private final HashMap<String, String> generalCache = new HashMap<>();
-    private final HashMap<String, String> planetCache = new HashMap<>();
-    private final HashMap<String, String> paCache = new HashMap<>();
+    private final Map<String, String> unitCache = new HashMap<>();
+    private final Map<String, String> decalCache = new HashMap<>();
+    private final Map<String, String> spoopyCache = new HashMap<>();
+    private final Map<String, String> tileCache = new HashMap<>();
+    private final Map<String, String> ccCache = new HashMap<>();
+    private final Map<String, String> attachmentCache = new HashMap<>();
+    private final Map<String, String> tokenCache = new HashMap<>();
+    private final Map<String, String> factionCache = new HashMap<>();
+    private final Map<String, String> generalCache = new HashMap<>();
+    private final Map<String, String> planetCache = new HashMap<>();
+    private final Map<String, String> paCache = new HashMap<>();
 
     private ResourceHelper() {
     }
@@ -116,6 +116,33 @@ public class ResourceHelper {
     }
 
     @Nullable
+    public String getSpoopyFile() {
+        // overlay_jackolantern_1
+        int face = ThreadLocalRandom.current().nextInt(1, 4);
+        String name = "overlay_jackolantern_" + face + ".png";
+        String spoopyPath = spoopyCache.get(name);
+        if (spoopyPath != null) {
+            return spoopyPath;
+        }
+        String unit = getResourceFromFolder("decals/", name, "Could not find decal file");
+        spoopyCache.put(name, unit);
+        return unit;
+    }
+
+    @Nullable
+    public String getNonSpoopyFinFile(String name) {
+        // overlay_jackolantern_1
+
+        String spoopyPath = spoopyCache.get(name);
+        if (spoopyPath != null) {
+            return spoopyPath;
+        }
+        String unit = getResourceFromFolder("decals/", name, "Could not find decal file");
+        spoopyCache.put(name, unit);
+        return unit;
+    }
+
+    @Nullable
     public String getCCFile(String name) {
         String ccPath = ccCache.get(name);
         if (ccPath != null) {
@@ -205,4 +232,5 @@ public class ResourceHelper {
     public String getHelpFile(String name) {
         return getResourceFromFolder("help/", name, "Could not find alias file");
     }
+
 }

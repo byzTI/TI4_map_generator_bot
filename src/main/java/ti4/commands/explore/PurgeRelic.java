@@ -7,7 +7,6 @@ import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import ti4.generator.Mapper;
 import ti4.helpers.Constants;
 import ti4.helpers.Emojis;
-import ti4.helpers.Helper;
 import ti4.map.Player;
 import ti4.model.RelicModel;
 
@@ -29,7 +28,7 @@ public class PurgeRelic extends GenericRelicAction {
         player.removeRelic(relicId);
         player.removeExhaustedRelic(relicId);
         RelicModel relicData = Mapper.getRelic(relicId);
-        sendMessage(Helper.getPlayerRepresentation(player, getActiveGame()) + " purged relic Relic:\n" + Emojis.Relic + " __**" + relicData.getName() + "**__\n> " + relicData.getText() + "\n");
+        sendMessage(player.getRepresentation() + " purged relic Relic:\n" + Emojis.Relic + " __**" + relicData.getName() + "**__\n> " + relicData.getText() + "\n");
         RelicInfo.sendRelicInfo(getActiveGame(), player, event);
     }
 }

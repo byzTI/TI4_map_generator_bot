@@ -1,5 +1,10 @@
 package ti4.commands.franken;
 
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.User;
@@ -15,12 +20,6 @@ import ti4.map.Game;
 import ti4.map.GameManager;
 import ti4.map.GameSaveLoadManager;
 import ti4.message.MessageHelper;
-
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 public class FrankenCommand implements Command {
 
@@ -44,8 +43,6 @@ public class FrankenCommand implements Command {
                         return true;
                     }
                 }
-                MessageHelper.replyToMessage(event, "You are not authorized to use this command. You must have the @Bothelper role.");
-                return false;
             }
 
             GameManager gameManager = GameManager.getInstance();
@@ -123,6 +120,8 @@ public class FrankenCommand implements Command {
         subcommands.add(new AbilityRemove());
         subcommands.add(new LeaderAdd());
         subcommands.add(new LeaderRemove());
+        subcommands.add(new FactionTechAdd());
+        subcommands.add(new FactionTechRemove());
         subcommands.add(new PNAdd());
         subcommands.add(new PNRemove());
         subcommands.add(new UnitAdd());
@@ -131,6 +130,7 @@ public class FrankenCommand implements Command {
         subcommands.add(new SetFactionIcon());
         subcommands.add(new FrankenEdit());
         subcommands.add(new ShowFrankenBag());
+        subcommands.add(new FrankenViewCard());
         return subcommands;
     }
 

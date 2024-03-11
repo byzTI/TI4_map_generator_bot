@@ -1,12 +1,10 @@
 package ti4.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.awt.Point;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import lombok.Data;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
@@ -57,7 +55,7 @@ public class TileModel {
         if (isSupernova()) sb.append(Emojis.Supernova);
         if (isNebula()) sb.append(Emojis.Nebula);
         if (isGravityRift()) sb.append(Emojis.GravityRift);
-        if (hasPlanets()) sb.append("\nPlanets: " + getPlanets().toString());
+        if (hasPlanets()) sb.append("\nPlanets: ").append(getPlanets().toString());
         eb.setDescription(sb.toString());
 
         eb.setThumbnail("attachment://" + getImagePath());
@@ -108,5 +106,20 @@ public class TileModel {
     @JsonIgnore
     public boolean isGravityRift() {
         return Optional.ofNullable(isGravityRift).orElse(false);
+    }
+
+    @JsonIgnore
+    public String getAutoCompleteName() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(getId()).append(" ");
+        if (getName() != null) sb.append(getName());
+        return sb.toString();
+    }
+
+    @JsonIgnore
+    public boolean search(String searchString) {
+        return getId().toLowerCase().contains(searchString) ||
+            getNameNullSafe().toLowerCase().contains(searchString) ||
+            (getAliases() != null && getAliases().stream().anyMatch(a -> a.toLowerCase().contains(searchString)));
     }
 }

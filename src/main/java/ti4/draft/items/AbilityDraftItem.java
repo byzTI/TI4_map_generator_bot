@@ -1,37 +1,57 @@
 package ti4.draft.items;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import ti4.draft.DraftItem;
 import ti4.generator.Mapper;
-import ti4.helpers.Helper;
+import ti4.model.AbilityModel;
+import ti4.model.DraftErrataModel;
+import ti4.model.FactionModel;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class AbilityDraftItem extends DraftItem {
     public AbilityDraftItem(String itemId) {
         super(Category.ABILITY, itemId);
     }
 
+    @JsonIgnore
     @Override
     public String getShortDescription() {
-        String[] split = getAbilityStringSplit();
-        return split[0];
+        return getAbilityModel().getName();
     }
 
+    @JsonIgnore
     @Override
     public String getLongDescriptionImpl() {
-        String[] split = getAbilityStringSplit();
-        if (!split[2].equals(" ")) {
-            return split[2];
+        AbilityModel abilityModel = getAbilityModel();
+        if (abilityModel.getPermanentEffect().isPresent()) {    
+            return abilityModel.getPermanentEffect().get();
+        } else if (abilityModel.getWindow().isPresent() && abilityModel.getWindowEffect().isPresent()) {
+            return "*" + abilityModel.getWindow().get() + ":* " + abilityModel.getWindowEffect().get();
         }
-        else {
-            return "*" + split[3] + ":* " + split[4];
-        }
+        return "";
     }
 
+    @JsonIgnore
     @Override
     public String getItemEmoji() {
-        return Helper.getFactionIconFromDiscord(getAbilityStringSplit()[1]);
+        return getAbilityModel().getFactionEmoji();
     }
 
-    private String[] getAbilityStringSplit() {
-        return Mapper.getAbility(ItemId).split("\\|");
+    @JsonIgnore
+    private AbilityModel getAbilityModel() {
+        return Mapper.getAbility(ItemId);
+    }
+
+    public static List<DraftItem> buildAllDraftableItems(List<FactionModel> factions) {
+        List<DraftItem> allItems = new ArrayList<>();
+        for (FactionModel faction : factions) {
+            for (var ability : faction.getAbilities()) {
+                allItems.add(DraftItem.Generate(DraftItem.Category.ABILITY, ability));
+            }
+        }
+        DraftErrataModel.filterUndraftablesAndShuffle(allItems, DraftItem.Category.ABILITY);
+        return allItems;
     }
 }

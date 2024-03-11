@@ -1,31 +1,28 @@
 package ti4.draft.items;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import ti4.draft.DraftItem;
 import ti4.generator.Mapper;
-import ti4.helpers.Helper;
+import ti4.helpers.Emojis;
+import ti4.model.DraftErrataModel;
 import ti4.model.FactionModel;
 import ti4.model.LeaderModel;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 public class AgentDraftItem extends DraftItem {
     public AgentDraftItem(String itemId) {
         super(Category.AGENT, itemId);
     }
 
-    private FactionModel getFaction() {
-        if (ItemId.equals("keleres")) {
-            return Mapper.getFactionSetup("keleresa");
-        }
-        return Mapper.getFactionSetup(ItemId);
-    }
-
+    @JsonIgnore
     private LeaderModel getLeader() {
-        FactionModel faction = getFaction();
-        if (faction != null) {
-            return Mapper.getLeader(faction.getLeaders().get(0));
-        }
-        return null;
+        return Mapper.getLeader(ItemId);
     }
 
+    @JsonIgnore
     @Override
     public String getShortDescription() {
         LeaderModel leader = getLeader();
@@ -36,6 +33,7 @@ public class AgentDraftItem extends DraftItem {
         return "Agent - " + leader.getName();
     }
 
+    @JsonIgnore
     @Override
     public String getLongDescriptionImpl() {
         LeaderModel leader = getLeader();
@@ -45,12 +43,30 @@ public class AgentDraftItem extends DraftItem {
         return "";
     }
 
+    @JsonIgnore
     @Override
     public String getItemEmoji() {
         LeaderModel leader = getLeader();
         if (leader != null) {
-            return Helper.getEmojiFromDiscord(leader.getID());
+            return Emojis.getEmojiFromDiscord(leader.getID());
         }
         return "";
+    }
+
+    public static List<DraftItem> buildAllDraftableItems(List<FactionModel> factions) {
+        List<DraftItem> allItems = new ArrayList<>();
+        Map<String, LeaderModel> allLeaders = Mapper.getLeaders();
+        for (FactionModel faction : factions) {
+            List<String> agents = faction.getLeaders();
+            agents.removeIf((String leader) -> {
+               return !"agent".equals(allLeaders.get(leader).getType());
+            });
+            if (agents.isEmpty()) {
+                continue;
+            }
+            allItems.add(DraftItem.Generate(Category.AGENT, agents.get(0)));
+        }
+        DraftErrataModel.filterUndraftablesAndShuffle(allItems, DraftItem.Category.AGENT);
+        return allItems;
     }
 }

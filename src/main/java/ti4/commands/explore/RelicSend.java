@@ -82,28 +82,28 @@ public class RelicSend extends GenericRelicAction {
         switch (relicID) {
             case "shard" -> {
                 shardCustomPOName = "Shard of the Throne";
-                shardPublicObjectiveID = activeGame.getCustomPublicVP().get(shardCustomPOName);
+                shardPublicObjectiveID = activeGame.getRevealedPublicObjectives().get("Shard of the Throne");
             }
             case "absol_shardofthethrone1", "absol_shardofthethrone2", "absol_shardofthethrone3" -> {
                 int absolShardNum = Integer.parseInt(StringUtils.right(relicID, 1));
                 shardCustomPOName = "Shard of the Throne (" + absolShardNum + ")";
-                shardPublicObjectiveID = activeGame.getCustomPublicVP().get(shardCustomPOName);
+                shardPublicObjectiveID = activeGame.getRevealedPublicObjectives().get(shardCustomPOName);
             }
         }
         if (shardCustomPOName != null && shardPublicObjectiveID != null && activeGame.getCustomPublicVP().containsKey(shardCustomPOName) && activeGame.getCustomPublicVP().containsValue(shardPublicObjectiveID)) {
             activeGame.unscorePublicObjective(player1.getUserID(), shardPublicObjectiveID);
             activeGame.scorePublicObjective(player2.getUserID(), shardPublicObjectiveID);
-            Helper.checkEndGame(activeGame, player2);
         }
-
+        
         if (player1.hasRelic(relicID) || !player2.hasRelic(relicID)) {
             sendMessage("Something may have gone wrong - please check your relics and ping Bothelper if there is a problem.");
             return;
         }
         RelicModel relicModel = Mapper.getRelic(relicID);
-        String sb = Helper.getPlayerRepresentation(player1, activeGame) +
-                " sent a relic to " + Helper.getPlayerRepresentation(player2, activeGame) +
-                "\n" + relicModel.getSimpleRepresentation();
+        String sb = player1.getRepresentation() +
+        " sent a relic to " + player2.getRepresentation() +
+        "\n" + relicModel.getSimpleRepresentation();
         sendMessage(sb);
+        Helper.checkEndGame(activeGame, player2);
     }
 }

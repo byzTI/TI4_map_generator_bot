@@ -13,7 +13,7 @@ import ti4.message.MessageHelper;
 
 public class SetUnitCap extends GameSubcommandData {
     public SetUnitCap() {
-        super(Constants.SET_UNIT_CAP, "Amount of a particular unit shown in reinforcements for a particular player.");
+        super(Constants.SET_UNIT_CAP, "Particular unit amount in reinforcements for a player.");
         addOptions(new OptionData(OptionType.STRING, Constants.FACTION_COLOR, "Color or faction that you're setting unit cap for").setAutoComplete(true).setRequired(true));
         addOptions(new OptionData(OptionType.STRING, Constants.UNIT_NAME, "Unit that you're setting the cap for").setRequired(true));
         addOptions(new OptionData(OptionType.INTEGER, Constants.UNIT_CAP, "Unit Cap").setRequired(true));
@@ -30,7 +30,7 @@ public class SetUnitCap extends GameSubcommandData {
         Player player = Helper.getPlayer(activeGame, null, event);
         String unitID = AliasHandler.resolveUnit(unit);
         player.setUnitCap(unitID, unitCap);
-        MessageHelper.sendMessageToChannel(event.getChannel(), "Set "+ unit+ " max to "+unitCap+" for "+Helper.getPlayerRepresentation(player, activeGame));
+        MessageHelper.sendMessageToChannel(event.getChannel(), "Set "+ unit+ " max to "+unitCap+" for "+player.getRepresentation());
 
     }
 }

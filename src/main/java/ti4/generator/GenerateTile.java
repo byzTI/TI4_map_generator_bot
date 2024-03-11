@@ -1,19 +1,8 @@
 package ti4.generator;
 
-import net.dv8tion.jda.api.events.interaction.GenericInteractionCreateEvent;
-import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
-import net.dv8tion.jda.api.utils.FileUpload;
-
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import ti4.generator.GenerateMap.TileStep;
-import ti4.helpers.*;
-import ti4.map.*;
-import ti4.message.BotLogger;
-
-import javax.imageio.ImageIO;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Point;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -21,7 +10,27 @@ import java.io.IOException;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import javax.imageio.ImageIO;
+import net.dv8tion.jda.api.events.interaction.GenericInteractionCreateEvent;
+import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.utils.FileUpload;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import ti4.generator.MapGenerator.TileStep;
+import ti4.helpers.Constants;
+import ti4.helpers.FoWHelper;
+import ti4.helpers.Helper;
+import ti4.helpers.Storage;
+import ti4.map.Game;
+import ti4.map.MapFileDeleter;
+import ti4.map.Player;
+import ti4.map.Tile;
+import ti4.message.BotLogger;
 
 public class GenerateTile {
     private Graphics graphics;
@@ -29,18 +38,11 @@ public class GenerateTile {
     private int width;
     private int height;
 
-    private final int extraX = 100;
-    private final int extraY = 100;
-    private final int tileHeight = 300;
-    private final int tileWidth = 345;
-    private final int tileExtraWidth = 260;
-
     private int offsetX;
     private int offsetY;
 
     private Boolean isFoWPrivate;
     private Player fowPlayer;
-    private HashMap<String, Tile> tilesToDisplay = new HashMap<>();
 
     private static GenerateTile instance;
 
@@ -50,7 +52,12 @@ public class GenerateTile {
     }
 
     private void init(int context, String focusTile) {
+        int tileExtraWidth = 260;
+        int tileWidth = 345;
+        int extraX = 100;
         width = tileWidth + (tileExtraWidth * 2 * context) + extraX;
+        int tileHeight = 300;
+        int extraY = 100;
         height = tileHeight * (2 * context + 1) + extraY;
 
         if (focusTile == null) {
@@ -95,7 +102,7 @@ public class GenerateTile {
         init(context, focusTile);
         reset();
 
-        tilesToDisplay = new HashMap<>(activeGame.getTileMap());
+        Map<String, Tile> tilesToDisplay = new HashMap<>(activeGame.getTileMap());
         Set<String> systemsInRange = getTilesToShow(activeGame, context, focusTile);
         Set<String> keysToRemove = new HashSet<>(tilesToDisplay.keySet());
         keysToRemove.removeAll(systemsInRange);
@@ -131,7 +138,7 @@ public class GenerateTile {
         }
 
         try {
-            HashMap<String, Tile> tileMap = new HashMap<>(tilesToDisplay);
+            Map<String, Tile> tileMap = new HashMap<>(tilesToDisplay);
             tileMap.remove(null);
 
             Set<String> tiles = tileMap.keySet();
@@ -198,10 +205,6 @@ public class GenerateTile {
     }
 
     private void addTile(Tile tile, Game activeGame, TileStep step) {
-        addTile(tile, activeGame, step, false);
-    }
-
-    private void addTile(Tile tile, Game activeGame, TileStep step, boolean setupCheck) {
         if (tile == null || tile.getTileID() == null) {
             return;
         }
@@ -212,14 +215,12 @@ public class GenerateTile {
                 throw new Exception("Could not map tile to a position on the map: " + activeGame.getName());
             }
 
-            int tileX = positionPoint.x + offsetX - GenerateMap.TILE_PADDING;
-            int tileY = positionPoint.y + offsetY - GenerateMap.TILE_PADDING;
+            int tileX = positionPoint.x + offsetX - MapGenerator.TILE_PADDING;
+            int tileY = positionPoint.y + offsetY - MapGenerator.TILE_PADDING;
 
-            BufferedImage tileImage = GenerateMap.partialTileImage(tile, activeGame, step, fowPlayer, isFoWPrivate);
+            BufferedImage tileImage = MapGenerator.partialTileImage(tile, activeGame, step, fowPlayer, isFoWPrivate);
             graphics.drawImage(tileImage, tileX, tileY, null);
 
-        } catch (IOException e) {
-            BotLogger.log("Error drawing tile: " + tile.getTileID(), e);
         } catch (Exception exception) {
             BotLogger.log("Tile Error, when building map: " + tile.getTileID(), exception);
         }

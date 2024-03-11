@@ -1,15 +1,16 @@
 package ti4.commands.special;
 
-import java.util.Set;
-
+import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.events.interaction.GenericInteractionCreateEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import ti4.commands.cardspn.PNInfo;
+import ti4.generator.Mapper;
 import ti4.helpers.Constants;
 import ti4.helpers.Helper;
 import ti4.map.Game;
 import ti4.map.Player;
 import ti4.message.MessageHelper;
+import ti4.model.AgendaModel;
 
 public class NaaluCommander extends SpecialSubcommandData {
 
@@ -30,43 +31,73 @@ public class NaaluCommander extends SpecialSubcommandData {
         }
         secondHalfOfNaaluCommander(event, activeGame, player);
     }
-    public void secondHalfOfNaaluCommander(GenericInteractionCreateEvent event, Game activeGame, Player player){
 
-        if (!activeGame.playerHasLeaderUnlockedOrAlliance(player, "naalucommander")) { //TODO: switch logic from isNaalu to hasNaaluCommander
+    public void secondHalfOfNaaluCommander(GenericInteractionCreateEvent event, Game activeGame, Player player) {
+
+        if (!activeGame.playerHasLeaderUnlockedOrAlliance(player, "naalucommander")) {
             sendMessage("Only players with access to an unlocked Naalu Commander can use this ability");
             return;
         }
 
         StringBuilder sb = new StringBuilder();
-        sb.append(event.getUser().getAsMention()).append("\n");
-        sb.append("__**Top Agenda:**__\n");
-        String agendaID = activeGame.lookAtTopAgenda(0);
-        sb.append("1: ");
-        if (activeGame.getSentAgendas().get(agendaID) != null) {
-            sb.append("This agenda is currently in somebody's hand.");
-        } else {
-            sb.append(Helper.getAgendaRepresentation(agendaID));
-        }
-        sb.append("\n\n");
-        sb.append("__**Bottom Agenda:**__\n");
-        agendaID = activeGame.lookAtBottomAgenda(0);
-        sb.append("1: ");
-        if (activeGame.getSentAgendas().get(agendaID) != null) {
-            sb.append("This agenda is currently in somebody's hand.");
-        } else {
-            sb.append(Helper.getAgendaRepresentation(agendaID));
-        }
-        sb.append("\n\n");
-
-        for (Player player_ : player.getNeighbouringPlayers()) {
-            sb.append("_ _\n**__");
-            sb.append(player_.getFactionEmoji());
-            sb.append(Helper.getColourAsMention(event.getGuild(), player_.getColor())).append(" ");
-            sb.append(player_.getUserName()).append("'s Promissory Notes:__**\n");
-            sb.append(PNInfo.getPromissoryNoteCardInfo(activeGame, player_, false));
-        }
-
-        if (!activeGame.isFoWMode()) MessageHelper.sendMessageToChannel(activeGame.getMainGameChannel(), Helper.getPlayerRepresentation(player, activeGame) + " is using Naalu Commander to look at the top & bottom agenda, and their neighbour's promissory notes.");
+        sb.append(player.getRepresentation(true, true)).append(" you are using the Naalu Commander:");
         MessageHelper.sendMessageToPlayerCardsInfoThread(player, activeGame, sb.toString());
+
+        // Top Agenda
+        sendTopAgendaToCardsInfoSkipCovert(activeGame, player);
+
+        // Bottom Agenda
+        MessageEmbed embed = null;
+        sb.setLength(0);
+        sb.append("__**Bottom Agenda:**__\n");
+        String agendaID = activeGame.lookAtBottomAgenda(0);
+        if (activeGame.getSentAgendas().get(agendaID) != null) {
+            embed = AgendaModel.agendaIsInSomeonesHandEmbed();
+        } else if (agendaID != null) {
+            embed = Mapper.getAgenda(agendaID).getRepresentationEmbed();
+        } else {
+            sb.append("Could not find agenda");
+        }
+        MessageHelper.sendMessageToChannelWithEmbed(player.getCardsInfoThread(), sb.toString(), embed);
+
+        sb.setLength(0);
+        boolean first = true;
+        for (Player player_ : player.getNeighbouringPlayers()) {
+            if (!first) sb.append("\n\n");
+            first = false;
+            sb.append("## ").append(player_.getRepresentation(false, false)).append("'s ");
+            sb.append(PNInfo.getPromissoryNoteCardInfo(activeGame, player_, false, true));
+        }
+
+        if (!activeGame.isFoWMode()) MessageHelper.sendMessageToChannel(activeGame.getMainGameChannel(),
+            player.getRepresentation() + " is using Naalu Commander to look at the top & bottom agenda, and their neighbour's promissory notes.");
+        MessageHelper.sendMessageToPlayerCardsInfoThread(player, activeGame, sb.toString());
+    }
+
+    public static void sendTopAgendaToCardsInfoSkipCovert(Game activeGame, Player player) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("__**Top Agenda:**__");
+        String agendaID = activeGame.lookAtTopAgenda(0);
+        MessageEmbed embed = null;
+        if (activeGame.getSentAgendas().get(agendaID) != null) {
+            if (activeGame.getCurrentAgendaInfo().contains("_CL_") && activeGame.getCurrentPhase().startsWith("agenda")) {
+                sb.append("You are currently voting on covert legislation and the top agenda is in the speaker's hand.");
+                sb.append(" Showing the next agenda because thats how it should be by the RULEZ\n");
+                agendaID = activeGame.lookAtTopAgenda(1);
+
+                if (activeGame.getSentAgendas().get(agendaID) != null) {
+                    embed = AgendaModel.agendaIsInSomeonesHandEmbed();
+                } else if (agendaID != null) {
+                    embed = Mapper.getAgenda(agendaID).getRepresentationEmbed();
+                }
+            } else {
+                sb.append("The top agenda is currently in somebody's hand. As per the RULEZ, you should not be able to see the next agenda until they are finished deciding top/bottom/discard");
+            }
+        } else if (agendaID != null) {
+            embed = Mapper.getAgenda(agendaID).getRepresentationEmbed();
+        } else {
+            sb.append("Could not find agenda");
+        }
+        MessageHelper.sendMessageToChannelWithEmbed(player.getCardsInfoThread(), sb.toString(), embed);
     }
 }

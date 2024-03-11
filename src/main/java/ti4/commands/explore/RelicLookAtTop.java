@@ -1,11 +1,9 @@
 package ti4.commands.explore;
 
 import java.util.List;
-
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import ti4.generator.Mapper;
 import ti4.helpers.Constants;
-import ti4.helpers.Helper;
 import ti4.map.Game;
 import ti4.map.Player;
 import ti4.message.MessageHelper;
@@ -25,7 +23,7 @@ public class RelicLookAtTop extends GenericRelicAction {
         }
         String relicID = relicDeck.get(0);
         RelicModel relicModel = Mapper.getRelic(relicID);
-        String sb = "**Relic - Look at Top**\n" + Helper.getPlayerRepresentation(player, activeGame) + "\n" + relicModel.getSimpleRepresentation();
+        String sb = "**Relic - Look at Top**\n" + player.getRepresentation() + "\n" + relicModel.getSimpleRepresentation();
         MessageHelper.sendMessageToPlayerCardsInfoThread(player, activeGame, sb);
     }
 }

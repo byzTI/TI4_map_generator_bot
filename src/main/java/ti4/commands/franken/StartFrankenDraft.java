@@ -6,6 +6,7 @@ import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import ti4.draft.FrankenDraft;
 import ti4.draft.PoweredFrankenDraft;
+import ti4.helpers.ButtonHelper;
 import ti4.helpers.Constants;
 import ti4.helpers.FrankenDraftHelper;
 import ti4.map.Game;
@@ -14,29 +15,25 @@ import ti4.map.GameSaveLoadManager;
 public class StartFrankenDraft extends FrankenSubcommandData {
     public StartFrankenDraft() {
         super(Constants.START_FRANKEN_DRAFT, "Start a franken draft");
-        addOptions(new OptionData(OptionType.STRING, Constants.POWERED, "1 extra faction tech/ability, enter yes or no, default no"));
+        addOptions(new OptionData(OptionType.BOOLEAN, Constants.POWERED, "'True' to add 1 extra faction tech/ability (Default: False)"));
     }
 
     @Override
     public void execute(SlashCommandInteractionEvent event) {
         Game activeGame = getActiveGame();
-
+        if(activeGame.getRealPlayers().size() < (activeGame.getPlayers().size()-2)){
+            ButtonHelper.setUpFrankenFactions(activeGame, event);
+        }
         FrankenDraftHelper.clearPlayerHands(activeGame);
 
-        OptionMapping stratPings = event.getOption(Constants.POWERED);
-        if (stratPings != null){
-            String stratP = stratPings.getAsString();
-            if ("yes".equalsIgnoreCase(stratP)){
-                activeGame.setBagDraft(new PoweredFrankenDraft(activeGame));
-                FrankenDraftHelper.startDraft(activeGame);
-            } else {
-                activeGame.setBagDraft(new FrankenDraft(activeGame));
-                FrankenDraftHelper.startDraft(activeGame);
-            }
-        }else{
+        boolean stratPings = event.getOption(Constants.POWERED, false, OptionMapping::getAsBoolean);
+        if (stratPings){
+            activeGame.setBagDraft(new PoweredFrankenDraft(activeGame));
+        } else {
             activeGame.setBagDraft(new FrankenDraft(activeGame));
-            FrankenDraftHelper.startDraft(activeGame);
         }
+        
+        FrankenDraftHelper.startDraft(activeGame);
         GameSaveLoadManager.saveMap(activeGame, event);
     }
 }

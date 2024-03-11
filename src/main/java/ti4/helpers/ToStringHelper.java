@@ -1,7 +1,6 @@
 package ti4.helpers;
 
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
-import java.text.NumberFormat;
 import java.util.Arrays;
 import java.util.Objects;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -123,7 +122,7 @@ public class ToStringHelper {
         }
 
         if (value != null && value.getClass().isArray()) {
-          Object[] objectArray = {value};
+          Object[] objectArray = { value };
           String arrayString = Arrays.deepToString(objectArray);
           builder.append(arrayString, 1, arrayString.length() - 1);
         } else {
@@ -156,10 +155,11 @@ public class ToStringHelper {
 
   private static final class ValueHolder {
 
-    @Nullable String name;
-    @Nullable Object value;
-    @Nullable ValueHolder next;
-
-    private ValueHolder() {}
+    @Nullable
+    String name;
+    @Nullable
+    Object value;
+    @Nullable
+    ValueHolder next;
   }
 }

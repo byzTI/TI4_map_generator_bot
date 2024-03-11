@@ -19,12 +19,7 @@ public class RemoveExplore extends ExploreSubcommandData {
         String[] idList = ids.split(",");
         StringBuilder sb = new StringBuilder();
         for (String id : idList) {
-            String card = null;
-            try {
-                card = Mapper.getExploreRepresentation(id);
-            } catch (Exception e) {
-            }
-            if (card != null) {
+            if (Mapper.getExplore(id) != null) {
                 activeGame.purgeExplore(id);
                 sb.append("Exploration card removed: ").append(displayExplore(id)).append(System.lineSeparator());
             } else {
