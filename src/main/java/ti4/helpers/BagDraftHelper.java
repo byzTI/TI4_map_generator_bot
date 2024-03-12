@@ -41,7 +41,8 @@ public class BagDraftHelper {
     }
 
     public static void processDraftAction(Game activeGame, Player player, ButtonInteractionEvent event, String buttonID) {
-        String action = buttonID.split(";")[1];
+        String action = buttonID.replace(ActionName, "");
+        action = action.replace(BagDraft.COMMAND_PREFIX, "");
         BagDraft draft = activeGame.getActiveBagDraft();
         if (draft.CurrentPhase.processCommandString(player, action, event)) {
             if (!draft.startNextPhase()) {

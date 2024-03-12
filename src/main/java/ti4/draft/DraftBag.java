@@ -14,6 +14,7 @@ import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 import net.dv8tion.jda.api.utils.messages.MessageEditBuilder;
 import org.jetbrains.annotations.NotNull;
 import ti4.helpers.Constants;
+import ti4.map.Game;
 import ti4.map.Player;
 
 import java.util.ArrayList;
@@ -32,15 +33,23 @@ public class DraftBag extends DraftItemCollection {
     public String headerMessageId;
     public String footerMessageId;
 
+    public DraftBag() {
+        super();
+    }
+
+    public DraftBag(Game game) {
+        super(game);
+    }
+
     @Override
     public RestAction<Void> createDisplay() {
         itemMessages = new HashMap<>();
         ThreadChannel existingThread = getExistingThread();
-        RestAction<Void> action = Draft.Game.getMainGameChannel().sendTyping();
+        RestAction<Void> action = getGame().getMainGameChannel().sendTyping();
         if (existingThread != null) {
             action = action.flatMap(unused -> existingThread.delete());
         }
-        return action.flatMap(unused -> createThread()).flatMap(unused -> Draft.Game.getMainGameChannel().sendTyping()).flatMap(unused -> setupThreadPosts());
+        return action.flatMap(unused -> createThread()).flatMap(unused -> getGame().getMainGameChannel().sendTyping()).flatMap(unused -> setupThreadPosts());
     }
 
     private RestAction<Void> setupThreadPosts() {
@@ -66,23 +75,30 @@ public class DraftBag extends DraftItemCollection {
 
     @Override
     public RestAction<Void> updateDisplay(Player viewer) {
-        Map<DraftItem.Category, List<DraftItem>> sortedItems = new HashMap<>();
-        for (DraftItem item : Contents) {
-            if (!sortedItems.containsKey(item.ItemCategory)) {
-                sortedItems.put(item.ItemCategory, new ArrayList<>());
-            }
-            sortedItems.get(item.ItemCategory).add(item);
-        }
+        RestAction<Void> action = new EmptyRestAction();
 
         ThreadChannel thread = getThread();
 
         getHeaderUpdateAction().queue();
         getFooterUpdateAction(viewer).queue();
-        for (var entry : sortedItems.entrySet()) {
-            updateCategoryDisplay(entry.getKey(), viewer).and(thread.sendTyping()).queue();
+        List<DraftItem.Category> categories = new ArrayList<>();
+        for (DraftItem item : Contents) {
+            if (!categories.contains(item.ItemCategory)) {
+                categories.add(item.ItemCategory);
+            }
         }
 
-        return new EmptyRestAction();
+        for (var cat : itemMessages.keySet()) {
+            if (!categories.contains(cat)) {
+                categories.add(cat);
+            }
+        }
+
+        for (var cat : categories) {
+            action = action.and(updateCategoryDisplay(cat, viewer)).and(thread.sendTyping());
+        }
+
+        return action;
     }
 
     @NotNull
@@ -106,18 +122,18 @@ public class DraftBag extends DraftItemCollection {
             }
         }
 
-        Button resetButton = Button.of(ButtonStyle.DANGER, BagDraft.COMMAND_PREFIX + "reset_queue", "Reset")
+        Button resetButton = Button.of(ButtonStyle.DANGER, BagDraft.COMMAND_PREFIX + "reset-queue", "Reset")
                 .withEmoji(Emoji.fromUnicode("U+267B"));
 
-        Button confirmButton = Button.of(ButtonStyle.SUCCESS, BagDraft.COMMAND_PREFIX + "confirm_queue", "Confirm Draft and Pass")
+        Button confirmButton = Button.of(ButtonStyle.SUCCESS, BagDraft.COMMAND_PREFIX + "confirm-queue", "Confirm Draft and Pass")
                 .withEmoji(Emoji.fromUnicode("U+1F44D"));
 
         List<Button> buttons = new ArrayList<>();
         if (!isAnythingDraftable(viewer)) {
-            buttons.add(resetButton);
+            buttons.add(confirmButton);
         }
         if (!queuedItems.isEmpty()) {
-            buttons.add(confirmButton);
+            buttons.add(resetButton);
         }
 
         if (footerMessageId == null) {
@@ -125,12 +141,18 @@ public class DraftBag extends DraftItemCollection {
             if (!buttons.isEmpty()) {
                 builder.setActionRow(buttons);
             }
+            else {
+                builder.setComponents(new ArrayList<>());
+            }
             footerUpdateAction = thread.sendMessage(builder.build());
         }
         else {
             MessageEditBuilder builder = new MessageEditBuilder().setContent(footerText.toString());
             if (!buttons.isEmpty()) {
                 builder.setActionRow(buttons);
+            }
+            else {
+                builder.setComponents(new ArrayList<>());
             }
             footerUpdateAction = thread.editMessageById(footerMessageId, builder.build());
         }
@@ -184,15 +206,15 @@ public class DraftBag extends DraftItemCollection {
             if (itemQueued) {
                 style = ButtonStyle.DANGER;
                 label = "Do not draft " + item.getShortDescription();
-                action = "dequeue_" + item.getAlias();
+                action = "dequeue;" + item.getAlias();
             } else if (itemDraftable) {
                 style = ButtonStyle.PRIMARY;
                 label = "Draft " + item.getShortDescription();
-                action = "queue_" + item.getAlias();
+                action = "queue;" + item.getAlias();
             } else {
                 style = ButtonStyle.SECONDARY;
                 label = item.getShortDescription() + " - Undraftable";
-                action = "queue_" + item.getAlias();
+                action = "queue;" + item.getAlias();
             }
 
             Button button = Button.of(style, BagDraft.COMMAND_PREFIX + action, label).withEmoji(Emoji.fromFormatted(item.getItemEmoji()));
@@ -201,19 +223,40 @@ public class DraftBag extends DraftItemCollection {
             }
             buttonList.add(button);
         }
-        ActionRow row = ActionRow.of(buttonList);
+
+        List<ActionRow> actionRows = new ArrayList<>();
+        List<Button> row = new ArrayList<>();
+        for (Button b : buttonList) {
+            if (row.size() >= 5) {
+                actionRows.add(ActionRow.of(row));
+                row = new ArrayList<>();
+            }
+            row.add(b);
+        }
+        if (!row.isEmpty()) {
+            actionRows.add(ActionRow.of(row));
+        }
 
         String messageContent = messageContentBuilder.toString();
 
         ThreadChannel thread = getThread();
         RestAction<Message> postOrEditAction;
         if (itemMessages.containsKey(category)) {
-            MessageEditBuilder b = new MessageEditBuilder().setContent(messageContent).setComponents(row);
+            MessageEditBuilder b = new MessageEditBuilder().setContent(messageContent);
+
+            if (!actionRows.isEmpty()) {
+                b.setComponents(actionRows);
+            }
+            else {
+                b.setComponents(new ArrayList<>());
+            }
             postOrEditAction = thread.editMessageById(itemMessages.get(category), b.build());
         }
         else {
             var messageBuilder = new MessageCreateBuilder().addContent(messageContent);
-            messageBuilder.addComponents(row);
+            if (!actionRows.isEmpty()) {
+                messageBuilder.addComponents(actionRows);
+            }
             postOrEditAction = thread.sendMessage(messageBuilder.build());
         }
         return thread.sendTyping().flatMap(unused -> postOrEditAction).onSuccess(message -> {
@@ -275,7 +318,7 @@ public class DraftBag extends DraftItemCollection {
         }
 
         // If players haven't seen all bags, you can only draft one item per category
-        if (draftPhase.PassCount < Draft.Game.getRealPlayers().size()) {
+        if (draftPhase.PassCount < getGame().getRealPlayers().size()) {
             if (queuedItems.stream().anyMatch(i -> i.ItemCategory.equals(item.ItemCategory))) {
                 return false;
             }
@@ -302,6 +345,6 @@ public class DraftBag extends DraftItemCollection {
     @JsonIgnore
     @Override
     protected String getChannelName() {
-        return Constants.BAG_INFO_THREAD_PREFIX + Draft.Game.getName() + "-" + Name;
+        return Constants.BAG_INFO_THREAD_PREFIX + getGame().getName() + "-" + Name;
     }
 }

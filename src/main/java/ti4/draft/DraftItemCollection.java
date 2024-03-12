@@ -1,6 +1,9 @@
 package ti4.draft;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import net.dv8tion.jda.api.entities.ThreadMember;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
@@ -8,6 +11,8 @@ import net.dv8tion.jda.api.requests.RestAction;
 import net.dv8tion.jda.api.requests.restaction.ThreadChannelAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import ti4.map.Game;
+import ti4.map.GameManager;
 import ti4.map.Player;
 
 import java.util.*;
@@ -17,8 +22,20 @@ public abstract class DraftItemCollection {
     public String Name;
     public List<DraftItem> Contents = new ArrayList<>();
 
-    @JsonIgnore
-    public BagDraft Draft;
+    @JsonProperty
+    @JsonInclude
+    private String gameName;
+
+    public DraftItemCollection(){
+    }
+
+    protected DraftItemCollection(Game g) {
+        gameName = g.getName();
+    }
+
+    protected Game getGame() {
+        return GameManager.getInstance().getGame(gameName);
+    }
 
     public String toStoreString()
     {
@@ -52,7 +69,23 @@ public abstract class DraftItemCollection {
         return destroyDisplay();
     }
 
-    public RestAction<Void> giveThreadToPlayer(Player player) {
+    public RestAction<Void> removeAllPlayersFromThread() {
+        ThreadChannel channel = getThread();
+        return channel.retrieveThreadMembers()
+                .flatMap(allMembers -> {
+                    Collection<RestAction<Void>> removeActions = new ArrayList<>();
+                    removeActions.add(channel.sendTyping());
+                    for (ThreadMember member : allMembers) {
+                        if (member.getThread().getOwnerThreadMember() == member) {
+                            continue;
+                        }
+                        removeActions.add(channel.removeThreadMember(member.getUser()));
+                    }
+                    return RestAction.allOf(removeActions);
+                }).and(channel.getParentChannel().asTextChannel().sendTyping());
+    }
+
+    public RestAction<Void> removeAllPlayersExcept(Player player) {
         ThreadChannel channel = getThread();
         return channel.retrieveThreadMembers()
                 .flatMap(allMembers -> {
@@ -60,17 +93,18 @@ public abstract class DraftItemCollection {
                     removeActions.add(channel.sendTyping());
                     for (ThreadMember member : allMembers) {
                         String id = member.getUser().getId();
-                        if (id.equals(player.getUserID())) {
-                            continue;
-                        }
-                        if (member.getThread().getOwnerThreadMember() == member) {
+                        if (id.equals(player.getUserID()) || member.getThread().getOwnerThreadMember() == member) {
                             continue;
                         }
                         removeActions.add(channel.removeThreadMember(member.getUser()));
                     }
                     return RestAction.allOf(removeActions);
-                })
-                .flatMap(unused -> channel.addThreadMemberById(player.getUserID()));
+                }).and(channel.getParentChannel().asTextChannel().sendTyping());
+    }
+
+    public RestAction<Void> giveThreadToPlayer(Player player) {
+        ThreadChannel channel = getThread();
+        return channel.addThreadMemberById(player.getUserID());
     }
 
     @JsonIgnore
@@ -84,7 +118,7 @@ public abstract class DraftItemCollection {
     @Nullable
     @JsonIgnore
     public ThreadChannel getExistingThread() {
-        TextChannel actionsChannel = Draft.Game.getMainGameChannel();
+        TextChannel actionsChannel = getGame().getMainGameChannel();
 
         List<ThreadChannel> allThreads = actionsChannel.getThreadChannels();
         for (ThreadChannel thread : allThreads) {
@@ -97,7 +131,7 @@ public abstract class DraftItemCollection {
 
     @NotNull
     public ThreadChannelAction createThread() {
-        TextChannel actionsChannel = Draft.Game.getMainGameChannel();
+        TextChannel actionsChannel = getGame().getMainGameChannel();
         boolean isPrivateChannel = true;
         ThreadChannelAction threadCreationAction = actionsChannel.createThreadChannel(getChannelName(), isPrivateChannel);
         threadCreationAction.setInvitable(false);

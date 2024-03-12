@@ -2,7 +2,7 @@ package ti4.draft.phases;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.interactions.callbacks.IReplyCallback;
 import net.dv8tion.jda.api.requests.RestAction;
@@ -20,16 +20,18 @@ public class FrankenDraftCardsPhase extends ItemDraftPhase {
 
     public FrankenDraftCardsPhase() {}
     @JsonInclude
+    @JsonProperty
     private List<String> draftOrder = new ArrayList<>();
 
     @JsonInclude
+    @JsonProperty
     private String lastPassMessageId;
 
     @Override
     public boolean processCommandString (Player player, String commandString, IReplyCallback replyCallback) {
-        String[] splitCommand = commandString.split("_");
+        String[] splitCommand = commandString.split(";");
         DraftBag bag = getCurrentlyDraftingBag(player);
-        DraftItem item = DraftItem.GenerateFromAlias(splitCommand[1]);
+        DraftItem item = splitCommand.length > 1 ? DraftItem.GenerateFromAlias(splitCommand[1]) : null;
         switch (splitCommand[0]) {
             case "queue":
                 if (item != null && bag.queueItemForDraft(splitCommand[1])) {
@@ -54,21 +56,30 @@ public class FrankenDraftCardsPhase extends ItemDraftPhase {
                     }
                 }
                 break;
-            case "reset_queue":
+            case "reset-queue":
+                ReadyFlags.put(player.getUserID(), false);
                 bag.resetDraftQueue();
                 bag.updateDisplay(player)
                         .onSuccess(unused -> GameSaveLoadManager.saveMap(Draft.Game)).queue();
                 break;
-            case "confirm_queue":
+            case "confirm-queue":
                 ReadyFlags.put(player.getUserID(), true);
                 tryPass();
+                break;
+            case "unconfirm-queue":
+                ReadyFlags.put(player.getUserID(), false);
                 break;
         }
         return false;
     }
 
     private void tryPass() {
-
+        for (Player p : Draft.Game.getRealPlayers()) {
+            if (!ReadyFlags.get(p.getUserID())) {
+                return;
+            }
+        }
+        passBags();
     }
 
     @Override
@@ -79,6 +90,9 @@ public class FrankenDraftCardsPhase extends ItemDraftPhase {
     @Override
     public void onPhaseStart() {
         generateBags();
+        for (Player p : Draft.Game.getRealPlayers()) {
+            p.setDraftHand(new DraftHand(Draft.Game));
+        }
 
         Collection<RestAction<Void>> setupActions = new ArrayList<>();
         TextChannel mainGameChannel = Draft.Game.getMainGameChannel();
@@ -87,31 +101,39 @@ public class FrankenDraftCardsPhase extends ItemDraftPhase {
 
             setupActions.add(bag.createDisplay()
                     .flatMap(unused -> mainGameChannel.sendTyping())
-                    .flatMap(unused -> bag.giveThreadToPlayer(p))
-                    .flatMap(unused1 -> bag.updateDisplay(p)));
+                    .flatMap(unused -> bag.removeAllPlayersFromThread())
+                    .flatMap(unused -> bag.updateDisplay(p))
+                    .flatMap(unused -> bag.giveThreadToPlayer(p)));
         }
         RestAction.allOf(setupActions).onSuccess(unused -> GameSaveLoadManager.saveMap(Draft.Game)).queue();
         mainGameChannel.sendMessage("*Bags are being distributed. Please select 3 cards to draft. " +
                 "After this, you will select at most 2 cards each round.*").queue(message -> lastPassMessageId = message.getId());
+        mainGameChannel.sendTyping();
     }
 
     public void passBags() {
+        for (Player player : Draft.Game.getRealPlayers()) {
+            DraftBag bag = getCurrentlyDraftingBag(player);
+            for (DraftItem item : bag.queuedItems) {
+                player.getDraftHand().addCard(item);
+                bag.removeCard(item);
+            }
+            bag.queuedItems.clear();
+        }
         PassCount++;
         Bags.values().forEach(bag -> bag.QueueLimit = 2);
-        Draft.Game.getMainGameChannel().sendMessage("*Bags have been passed. Please select 2 cards to draft. " +
+        Draft.Game.getMainGameChannel().sendMessage("*Bags are being passed. Please select 2 cards to draft. " +
                 "This was the " + FrankenUtils.IntToOrdinal(PassCount) + " round of cards.*").queue(message -> lastPassMessageId = message.getId());
-        openAllBags();
-    }
 
-    public void openAllBags() {
         for (Player player : Draft.Game.getRealPlayers()){
-            openBagForPlayer(player);
+            DraftBag bag = getCurrentlyDraftingBag(player);
+            bag.removeAllPlayersFromThread().flatMap(unused -> bag.updateDisplay(player)).flatMap(unused -> bag.giveThreadToPlayer(player)).queue();
         }
     }
 
     public void openBagForPlayer(Player player) {
         DraftBag bag = getCurrentlyDraftingBag(player);
-        bag.giveThreadToPlayer(player).queue();
+        bag.removeAllPlayersExcept(player).flatMap(unused -> bag.updateDisplay(player)).flatMap(unused -> bag.giveThreadToPlayer(player)).queue();
     }
 
     @JsonIgnore
@@ -146,9 +168,8 @@ public class FrankenDraftCardsPhase extends ItemDraftPhase {
                 " Each bag will contain the following:\n" + componentLimits);
 
         for (Player player : Draft.Game.getRealPlayers()){
-            DraftBag bag = new DraftBag();
+            DraftBag bag = new DraftBag(Draft.Game);
             bag.Name = player.getColor() + " bag";
-            bag.Draft = Draft;
             bag.QueueLimit = 3;
             bag.draftPhase = this;
 

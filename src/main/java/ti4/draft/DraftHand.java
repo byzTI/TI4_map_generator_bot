@@ -5,9 +5,18 @@ import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
 import net.dv8tion.jda.api.requests.RestAction;
 import org.jetbrains.annotations.NotNull;
 import ti4.helpers.Constants;
+import ti4.map.Game;
 import ti4.map.Player;
 
 public class DraftHand extends DraftItemCollection {
+
+    public DraftHand() {
+        super();
+    }
+
+    public DraftHand(Game game) {
+        super(game);
+    }
     @Override
     public RestAction<Void> createDisplay() {
         return new EmptyRestAction();
@@ -34,6 +43,6 @@ public class DraftHand extends DraftItemCollection {
     @NotNull
     @Override
     protected String getChannelName() {
-        return Constants.DRAFT_HAND_THREAD_PREFIX + Draft.Game.getName() + "-" + Name;
+        return Constants.DRAFT_HAND_THREAD_PREFIX + getGame().getName() + "-" + Name;
     }
 }
