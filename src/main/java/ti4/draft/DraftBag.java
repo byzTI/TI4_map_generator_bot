@@ -104,15 +104,23 @@ public class DraftBag extends DraftItemCollection {
     @NotNull
     @JsonIgnore
     public RestAction<Message> getFooterUpdateAction(Player viewer) {
+        boolean anythingDraftable = isAnythingDraftable(viewer);
+
         ThreadChannel thread = getThread();
         RestAction<Message> footerUpdateAction;
         StringBuilder footerText = new StringBuilder();
-        footerText.append("# Please select ");
-        if (queuedItems.isEmpty()) {
-            footerText.append(QueueLimit).append(" items to draft.");
+        if (anythingDraftable) {
+            footerText.append("# Please select ");
+            if (queuedItems.isEmpty()) {
+                footerText.append(QueueLimit).append(" items to draft.");
+            } else {
+                footerText.append(QueueLimit - queuedItems.size()).append(" more items.\n");
+            }
+        } else {
+            footerText.append("# You cannot draft anything in this bag.\nPlease press Confirm Draft and Pass.");
         }
-        else {
-            footerText.append(QueueLimit - queuedItems.size()).append(" more items.\n");
+
+        if (!queuedItems.isEmpty()) {
             footerText.append("**You are currently drafting:**\n");
             for(DraftItem item:queuedItems) {
                 footerText.append("- ");
@@ -129,7 +137,7 @@ public class DraftBag extends DraftItemCollection {
                 .withEmoji(Emoji.fromUnicode("U+1F44D"));
 
         List<Button> buttons = new ArrayList<>();
-        if (!isAnythingDraftable(viewer)) {
+        if (!anythingDraftable) {
             buttons.add(confirmButton);
         }
         if (!queuedItems.isEmpty()) {
@@ -140,18 +148,15 @@ public class DraftBag extends DraftItemCollection {
             MessageCreateBuilder builder = new MessageCreateBuilder().addContent(footerText.toString());
             if (!buttons.isEmpty()) {
                 builder.setActionRow(buttons);
-            }
-            else {
+            } else {
                 builder.setComponents(new ArrayList<>());
             }
             footerUpdateAction = thread.sendMessage(builder.build());
-        }
-        else {
+        } else {
             MessageEditBuilder builder = new MessageEditBuilder().setContent(footerText.toString());
             if (!buttons.isEmpty()) {
                 builder.setActionRow(buttons);
-            }
-            else {
+            } else {
                 builder.setComponents(new ArrayList<>());
             }
             footerUpdateAction = thread.editMessageById(footerMessageId, builder.build());
@@ -167,8 +172,7 @@ public class DraftBag extends DraftItemCollection {
         String headerContent = "# " + this.Name;
         if (headerMessageId == null) {
             headerUpdateAction = thread.sendMessage(headerContent);
-        }
-        else {
+        } else {
             headerUpdateAction = thread.editMessageById(headerMessageId, headerContent);
         }
         return headerUpdateAction.onSuccess(message -> headerMessageId = message.getId());

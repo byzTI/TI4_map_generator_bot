@@ -12,7 +12,7 @@ public class FrankenSetupPhase extends DraftPhase {
 
     @Override
     public void onPhaseStart() {
-
+        StringBuilder contentBuilder = new StringBuilder();
     }
 
     @Override
