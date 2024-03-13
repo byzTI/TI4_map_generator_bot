@@ -8,12 +8,11 @@ import ti4.commands.milty.MiltyDraftTile;
 import ti4.draft.DraftItem;
 import ti4.generator.Mapper;
 import ti4.generator.TileHelper;
-import ti4.helpers.ButtonHelper;
 import ti4.helpers.Emojis;
-import ti4.map.Tile;
 import ti4.model.*;
 
 public class BlueTileDraftItem extends DraftItem {
+    public BlueTileDraftItem(){super(Category.BLUETILE);}
     public BlueTileDraftItem(String itemId) {
         super(Category.BLUETILE, itemId);
     }

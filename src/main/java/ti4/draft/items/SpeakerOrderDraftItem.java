@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SpeakerOrderDraftItem extends DraftItem {
+    public SpeakerOrderDraftItem(){super(Category.DRAFTORDER);}
     public SpeakerOrderDraftItem(String itemId) {
         super(Category.DRAFTORDER, itemId);
     }

@@ -8,7 +8,7 @@ import java.util.Map;
 
 public abstract class ItemDraftPhase extends DraftPhase {
 
-    @JsonManagedReference
+    @JsonManagedReference("phase")
     public Map<String, DraftBag> Bags = new HashMap<>();
     public Map<String, List<DraftItem>> Queues = new HashMap<>();
     public Map<String, Boolean> ReadyFlags = new HashMap<>();

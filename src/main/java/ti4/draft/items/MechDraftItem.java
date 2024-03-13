@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 public class MechDraftItem extends DraftItem {
+    public MechDraftItem(){super(Category.MECH);}
     public MechDraftItem(String itemId) {
         super(Category.MECH, itemId);
     }

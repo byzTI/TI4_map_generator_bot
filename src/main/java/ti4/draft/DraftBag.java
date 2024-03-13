@@ -24,7 +24,7 @@ import java.util.Map;
 
 public class DraftBag extends DraftItemCollection {
 
-    @JsonBackReference
+    @JsonBackReference("phase")
     public ItemDraftPhase draftPhase;
     public List<DraftItem> queuedItems = new ArrayList<>();
     public int QueueLimit;

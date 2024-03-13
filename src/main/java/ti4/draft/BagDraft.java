@@ -16,11 +16,11 @@ public class BagDraft {
     @JsonIgnore
     public ti4.map.Game Game;
 
-    @JsonManagedReference
+    @JsonManagedReference("draft")
     public List<DraftPhase> UnstartedPhases = new ArrayList<>();
-    @JsonManagedReference
+    @JsonManagedReference("draft")
     public DraftPhase CurrentPhase;
-    @JsonManagedReference
+    @JsonManagedReference("draft")
     public List<DraftPhase> CompletedPhases = new ArrayList<>();
 
     public void queuePhase(DraftPhase phase) {

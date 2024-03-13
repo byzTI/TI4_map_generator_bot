@@ -2,6 +2,7 @@ package ti4.draft.phases;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.interactions.callbacks.IReplyCallback;
@@ -18,7 +19,9 @@ import java.util.*;
 
 public class FrankenDraftCardsPhase extends ItemDraftPhase {
 
-    public FrankenDraftCardsPhase() {}
+    public FrankenDraftCardsPhase() {
+        draftOrder = new ArrayList<>();
+    }
     @JsonInclude
     @JsonProperty
     private List<String> draftOrder = new ArrayList<>();

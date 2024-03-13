@@ -5,6 +5,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
@@ -27,18 +30,44 @@ import ti4.draft.items.SpeakerOrderDraftItem;
 import ti4.draft.items.StartingFleetDraftItem;
 import ti4.draft.items.StartingTechDraftItem;
 import ti4.draft.items.TechDraftItem;
+import ti4.draft.phases.FrankenDraftCardsPhase;
+import ti4.draft.phases.FrankenSetupPhase;
 import ti4.generator.Mapper;
 import ti4.map.Player;
 import ti4.model.DraftErrataModel;
 import ti4.model.ModelInterface;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "ItemCategory")
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = AbilityDraftItem.class, name = "ABILITY"),
+        @JsonSubTypes.Type(value = AgentDraftItem.class, name = "AGENT"),
+        @JsonSubTypes.Type(value = BlueTileDraftItem.class, name = "BLUETILE"),
+        @JsonSubTypes.Type(value = CommanderDraftItem.class, name = "COMMANDER"),
+        @JsonSubTypes.Type(value = CommoditiesDraftItem.class, name = "COMMODITIES"),
+        @JsonSubTypes.Type(value = FlagshipDraftItem.class, name = "FLAGSHIP"),
+        @JsonSubTypes.Type(value = HeroDraftItem.class, name = "HERO"),
+        @JsonSubTypes.Type(value = HomeSystemDraftItem.class, name = "HOMESYSTEM"),
+        @JsonSubTypes.Type(value = MechDraftItem.class, name = "MECH"),
+        @JsonSubTypes.Type(value = PNDraftItem.class, name = "PN"),
+        @JsonSubTypes.Type(value = RedTileDraftItem.class, name = "REDTILE"),
+        @JsonSubTypes.Type(value = SpeakerOrderDraftItem.class, name = "DRAFTORDER"),
+        @JsonSubTypes.Type(value = StartingFleetDraftItem.class, name = "STARTINGFLEET"),
+        @JsonSubTypes.Type(value = StartingTechDraftItem.class, name = "STARTINGTECH"),
+        @JsonSubTypes.Type(value = TechDraftItem.class, name = "TECH")
+})
 public abstract class DraftItem implements ModelInterface {
+
+    public DraftItem() {}
+    protected DraftItem(Category itemCategory) {ItemCategory = itemCategory;}
     @Override
+    @JsonIgnore
     public boolean isValid() {
         return true;
     }
 
     @Override
+    @JsonIgnore
     public String getAlias() {
         return ItemCategory.toString()+":"+ItemId;
     }
@@ -80,10 +109,10 @@ public abstract class DraftItem implements ModelInterface {
         DRAFTORDER
     }
 
-    public final Category ItemCategory;
+    public Category ItemCategory;
 
     // The system ID of the item. Only convert this to player-readable text when necessary
-    public final String ItemId;
+    public String ItemId;
 
     @JsonIgnore
     public DraftErrataModel Errata;

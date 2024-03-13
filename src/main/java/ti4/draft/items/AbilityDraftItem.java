@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class AbilityDraftItem extends DraftItem {
+    public AbilityDraftItem(){super(Category.ABILITY);}
     public AbilityDraftItem(String itemId) {
         super(Category.ABILITY, itemId);
     }

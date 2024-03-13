@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 public class AgentDraftItem extends DraftItem {
+    public AgentDraftItem(){super(Category.AGENT);}
     public AgentDraftItem(String itemId) {
         super(Category.AGENT, itemId);
     }

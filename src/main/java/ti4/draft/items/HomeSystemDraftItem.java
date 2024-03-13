@@ -2,7 +2,6 @@ package ti4.draft.items;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import ti4.draft.DraftItem;
 import ti4.generator.Mapper;
@@ -11,6 +10,7 @@ import ti4.helpers.Emojis;
 import ti4.model.*;
 
 public class HomeSystemDraftItem extends DraftItem {
+    public HomeSystemDraftItem(){super(Category.HOMESYSTEM);}
     public HomeSystemDraftItem(String itemId) {
         super(Category.HOMESYSTEM, itemId);
     }

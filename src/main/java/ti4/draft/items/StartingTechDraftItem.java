@@ -12,6 +12,7 @@ import ti4.model.FactionModel;
 import ti4.model.TechnologyModel;
 
 public class StartingTechDraftItem extends DraftItem {
+    public StartingTechDraftItem(){super(Category.STARTINGTECH);}
     public StartingTechDraftItem(String itemId) {
         super(Category.STARTINGTECH, itemId);
     }

@@ -37,6 +37,9 @@ public abstract class DraftItemCollection {
         return GameManager.getInstance().getGame(gameName);
     }
 
+    @JsonBackReference
+    public BagDraft Draft;
+
     public String toStoreString()
     {
         StringBuilder sb = new StringBuilder();

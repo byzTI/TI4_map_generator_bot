@@ -17,7 +17,7 @@ import ti4.map.Player;
 )
 public abstract class DraftPhase {
 
-    @JsonBackReference
+    @JsonBackReference("draft")
     public BagDraft Draft;
 
     public abstract void onPhaseEnd();

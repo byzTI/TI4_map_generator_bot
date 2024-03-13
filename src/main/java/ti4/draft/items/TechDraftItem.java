@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TechDraftItem extends DraftItem {
+    public TechDraftItem(){super(Category.TECH);}
     public TechDraftItem(String itemId) {
         super(Category.TECH, itemId);
     }

@@ -11,6 +11,7 @@ import ti4.model.FactionModel;
 import ti4.model.LeaderModel;
 
 public class HeroDraftItem extends DraftItem {
+    public HeroDraftItem(){super(Category.HERO);}
     public HeroDraftItem(String itemId) {
         super(Category.HERO, itemId);
     }

@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CommoditiesDraftItem extends DraftItem {
+    public CommoditiesDraftItem(){super(Category.COMMODITIES);}
     public CommoditiesDraftItem(String itemId) {
         super(Category.COMMODITIES, itemId);
     }

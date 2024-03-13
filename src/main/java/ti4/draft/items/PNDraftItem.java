@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PNDraftItem extends DraftItem {
+    public PNDraftItem(){super(Category.PN);}
     public PNDraftItem(String itemId) {
         super(Category.PN, itemId);
     }

@@ -3,7 +3,6 @@ package ti4.draft.items;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import ti4.draft.DraftItem;
 import ti4.generator.Mapper;
@@ -13,6 +12,7 @@ import ti4.model.FactionModel;
 import ti4.model.LeaderModel;
 
 public class CommanderDraftItem extends DraftItem {
+    public CommanderDraftItem(){super(Category.COMMANDER);}
     public CommanderDraftItem(String itemId) {
         super(Category.COMMANDER, itemId);
     }

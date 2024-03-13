@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 public class FlagshipDraftItem extends DraftItem {
+    public FlagshipDraftItem(){super(Category.FLAGSHIP);}
     public FlagshipDraftItem(String itemId) {
         super(Category.FLAGSHIP, itemId);
     }
