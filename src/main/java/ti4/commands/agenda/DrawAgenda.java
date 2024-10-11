@@ -16,6 +16,7 @@ import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import ti4.buttons.Buttons;
 import ti4.generator.Mapper;
 import ti4.helpers.Constants;
 import ti4.helpers.Helper;
@@ -46,7 +47,7 @@ public class DrawAgenda extends AgendaSubcommandData {
 
     public static void drawAgenda(int count, boolean fromBottom, Game game, @NotNull Player player, boolean discard) {
         StringBuilder sb = new StringBuilder();
-        sb.append(player.getRepresentation(true, true)).append(" here are the agenda(s) you have drawn:");
+        sb.append(player.getRepresentation(true, true)).append(" here " + (count == 1 ? "is" : "are") + " the agenda" + (count == 1 ? "" : "s") + " you have drawn:");
         Player realPlayer = Helper.getGamePlayer(game, player, (Member) null, null);
         if (realPlayer == null || game == null) return;
 
@@ -66,7 +67,7 @@ public class DrawAgenda extends AgendaSubcommandData {
 
     public static void drawSpecificAgenda(String agendaID, Game game, @NotNull Player player) {
         StringBuilder sb = new StringBuilder();
-        sb.append(player.getRepresentation(true, true)).append(" here are the agenda(s) you have drawn:");
+        sb.append(player.getRepresentation(true, true)).append(" here is the agenda you have drawn:");
         Player realPlayer = Helper.getGamePlayer(game, player, (Member) null, null);
         if (realPlayer == null || game == null) return;
 
@@ -85,9 +86,9 @@ public class DrawAgenda extends AgendaSubcommandData {
 
     private static List<Button> agendaButtons(AgendaModel agenda, Integer id, boolean discard) {
         List<Button> buttons = new ArrayList<>();
-        Button topButton = Button.success("topAgenda_" + id, "Put " + agenda.getName() + " on the top of the agenda deck.").withEmoji(Emoji.fromUnicode("🔼"));
-        Button bottomButton = Button.danger("bottomAgenda_" + id, "Put " + agenda.getName() + " on the bottom of the agenda deck.").withEmoji(Emoji.fromUnicode("🔽"));
-        Button discardButton = Button.danger("discardAgenda_" + id, "Discard " + agenda.getName()).withEmoji(Emoji.fromUnicode("🗑️"));
+        Button topButton = Buttons.green("topAgenda_" + id, "Put " + agenda.getName() + " on the top of the agenda deck.").withEmoji(Emoji.fromUnicode("🔼"));
+        Button bottomButton = Buttons.red("bottomAgenda_" + id, "Put " + agenda.getName() + " on the bottom of the agenda deck.").withEmoji(Emoji.fromUnicode("🔽"));
+        Button discardButton = Buttons.red("discardAgenda_" + id, "Discard " + agenda.getName()).withEmoji(Emoji.fromUnicode("🗑️"));
 
         buttons.add(topButton);
         if (!discard) {

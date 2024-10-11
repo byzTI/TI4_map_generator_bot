@@ -18,7 +18,9 @@ import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 import ti4.AsyncTI4DiscordBot;
+import ti4.buttons.Buttons;
 import ti4.commands.bothelper.CreateGameChannels;
+import ti4.commands.search.SearchMyGames;
 import ti4.helpers.Constants;
 import ti4.map.Game;
 import ti4.map.GameManager;
@@ -27,8 +29,7 @@ import ti4.message.MessageHelper;
 public class CreateGameButton extends GameSubcommandData {
     public CreateGameButton() {
         super(Constants.CREATE_GAME_BUTTON, "Create Game Creation Button");
-        addOptions(new OptionData(OptionType.STRING, Constants.GAME_FUN_NAME, "Fun Name for the Channel")
-            .setRequired(true));
+        addOptions(new OptionData(OptionType.STRING, Constants.GAME_FUN_NAME, "Fun Name for the Channel").setRequired(true));
         addOptions(new OptionData(OptionType.USER, Constants.PLAYER1, "Player1").setRequired(true));
         addOptions(new OptionData(OptionType.USER, Constants.PLAYER2, "Player2"));
         addOptions(new OptionData(OptionType.USER, Constants.PLAYER3, "Player3"));
@@ -68,6 +69,13 @@ public class CreateGameButton extends GameSubcommandData {
                 Member member = event.getOption("player" + i).getAsMember();
                 if (member != null)
                     members.add(member);
+                if (member.getId().equalsIgnoreCase("400038967744921612")) {
+                    int amount = SearchMyGames.searchGames(member.getUser(), event, false, false, false, true, false, true, false, true);
+                    if (amount > 4) {
+                        MessageHelper.sendMessageToChannel(event.getChannel(), "One of the games proposed members is currently under a limit and cannot join more games at this time");
+                        return;
+                    }
+                }
                 if (gameOwner == null)
                     gameOwner = member;
             } else {
@@ -80,7 +88,7 @@ public class CreateGameButton extends GameSubcommandData {
 
         String buttonMsg = "";
         List<Button> buttons = new ArrayList<>();
-        buttons.add(Button.success("createGameChannels", "Create Game"));
+        buttons.add(Buttons.green("createGameChannels", "Create Game"));
         String gameFunName = event.getOption(Constants.GAME_FUN_NAME).getAsString();
         if (members.size() > 0) {
             buttonMsg = "Game Fun Name: " + gameFunName.replace(":", "") + "\nPlayers:\n";
@@ -91,31 +99,11 @@ public class CreateGameButton extends GameSubcommandData {
                     + ")\n";
                 counter++;
             }
-            Role bothelperRole = CreateGameChannels.getRole("Bothelper", event.getGuild());
             buttonMsg = buttonMsg + "\n\n" + " Please hit this button after confirming that the members are the correct ones.";
             MessageCreateBuilder baseMessageObject = new MessageCreateBuilder().addContent(buttonMsg);
             MessageHelper.sendMessageToChannel(event.getChannel(), buttonMsg, buttons);
             ActionRow actionRow = ActionRow.of(buttons);
             baseMessageObject.addComponents(actionRow);
-            // event.getChannel().sendMessage(baseMessageObject.build()).queue(message_ -> {
-            //     String msg = bothelperRole.getAsMention() + " this game is ready for launching "
-            //         + message_.getJumpUrl();
-            //     TextChannel bothelperLoungeChannel = AsyncTI4DiscordBot.guildPrimary
-            //         .getTextChannelsByName("staff-lounge", true).stream().findFirst().orElse(null);
-            //     if (bothelperLoungeChannel == null)
-            //         return;
-            //     List<ThreadChannel> threadChannels = bothelperLoungeChannel.getThreadChannels();
-            //     if (threadChannels.isEmpty())
-            //         return;
-            //     String threadName = "game-starts-and-ends";
-            //     // SEARCH FOR EXISTING OPEN THREAD
-            //     for (ThreadChannel threadChannel_ : threadChannels) {
-            //         if (threadChannel_.getName().equals(threadName)) {
-            //             MessageHelper.sendMessageToChannel(threadChannel_, msg);
-            //             break;
-            //         }
-            //     }
-            // });
         }
     }
 
@@ -128,7 +116,7 @@ public class CreateGameButton extends GameSubcommandData {
 
         if (mapreference != null && mapreference.getStoredValue("allowedButtonPress").equalsIgnoreCase("false")) {
             MessageHelper.sendMessageToChannel(event.getMessageChannel(),
-                "Admins have temporarily turned off game creation, most likely to contain a bug. Please be patient and they'll get back to you on when its fixed.");
+                "Admins have temporarily turned off game creation, most likely to contain a bug. Please be patient and they'll get back to you on when it's fixed.");
             return;
         }
         if (member != null) {

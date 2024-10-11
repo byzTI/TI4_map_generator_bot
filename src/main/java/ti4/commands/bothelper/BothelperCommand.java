@@ -67,19 +67,20 @@ public class BothelperCommand implements Command {
         subcommands.add(new CreateFOWGameChannels());
         subcommands.add(new ServerLimitStats());
         // subcommands.add(new ListOldChannels());
-        subcommands.add(new ListOldThreads());
+        //subcommands.add(new ListOldThreads());
         subcommands.add(new ArchiveOldThreads());
         subcommands.add(new FixGameChannelPermissions());
         subcommands.add(new ListCategoryChannelCounts());
         subcommands.add(new BeginVideoGeneration());
         // subcommands.add(new CreatePlanet());
         // subcommands.add(new CreateTile());
-        subcommands.add(new ReExportAllTiles());
+        // subcommands.add(new ReExportAllTiles());
         subcommands.add(new JazzCommand());
         subcommands.add(new ListButtons());
         subcommands.add(new ListSlashCommandsUsed());
         subcommands.add(new SendJsonToS3());
-        subcommands.add(new GameStats());
+        subcommands.add(new ServerGameStats());
+        subcommands.add(new ListDeadGames());
         subcommands.add(new RemoveTitle());
         return subcommands;
     }

@@ -2,10 +2,12 @@ package ti4.helpers;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
@@ -170,8 +172,10 @@ public class CombatModHelper {
                     new NamedCombatModifierModel(relevantMod, relevantMod.getRelated().get(0).getMessage()));
             }
         }
+        Set<NamedCombatModifierModel> set = new HashSet<>(modifiers);
+        List<NamedCombatModifierModel> uniqueList = new ArrayList<>(set);
 
-        return modifiers;
+        return uniqueList;
     }
 
     public static Integer GetCombinedModifierForUnit(UnitModel unit, Integer numOfUnit,
@@ -262,10 +266,35 @@ public class CombatModHelper {
             case Constants.MOD_OPPONENT_NO_CC_FLEET -> meetsCondition = !player.getMahactCC().contains(opponent.getColor());
             case "next_to_structure" -> meetsCondition = (ButtonHelperAgents.getAdjacentTilesWithStructuresInThem(player, game, tile).size() > 0 || ButtonHelperAgents.doesTileHaveAStructureInIt(player, tile));
             case Constants.MOD_UNITS_TWO_MATCHING_NOT_FF -> {
+                meetsCondition = false;
                 if (unitsByQuantity.entrySet().size() == 1) {
                     Entry<UnitModel, Integer> unitByQuantity = new ArrayList<>(unitsByQuantity.entrySet()).get(0);
                     meetsCondition = unitByQuantity.getValue() == 2
                         && !"ff".equals(unitByQuantity.getKey().getAsyncId());
+                }
+                if (unitsByQuantity.entrySet().size() == 2) {
+                    Entry<UnitModel, Integer> unitByQuantity = new ArrayList<>(unitsByQuantity.entrySet()).get(0);
+                    Entry<UnitModel, Integer> unitByQuantity2 = new ArrayList<>(unitsByQuantity.entrySet()).get(1);
+                    String baseType1 = unitByQuantity.getKey().getBaseType();
+                    String baseType2 = unitByQuantity2.getKey().getBaseType();
+                    if (baseType1.equalsIgnoreCase("fighter") || baseType2.equalsIgnoreCase("fighter")) {
+                        if (baseType1.equalsIgnoreCase("fighter")) {
+                            meetsCondition = unitByQuantity.getValue() == 2;
+                        } else {
+                            meetsCondition = unitByQuantity2.getValue() == 2;
+                        }
+                    } else if (baseType1.equalsIgnoreCase("flagship") && baseType2.equalsIgnoreCase("flagship")) {
+                        meetsCondition = true;
+                    }
+                }
+                if (unitsByQuantity.entrySet().size() == 3) {
+                    List<Entry<UnitModel, Integer>> entries = new ArrayList<>(unitsByQuantity.entrySet());
+                    meetsCondition = entries.stream()
+                        .limit(3)
+                        .allMatch(entry -> {
+                            String baseType = entry.getKey().getBaseType();
+                            return baseType.equalsIgnoreCase("fighter") || baseType.equalsIgnoreCase("flagship");
+                        });
                 }
             }
             case Constants.MOD_NEBULA_DEFENDER -> {
@@ -345,7 +374,7 @@ public class CombatModHelper {
     /// The amount of the mod is usually static (eg +2 fighters)
     /// But for some (mostly flagships), the value is scaled depending on game state
     /// like how many fragments you have
-    /// or how many POs the opponent has scored that you havent etc.
+    /// or how many POs the opponent has scored that you haven't etc.
     ///
     public static Integer GetVariableModValue(CombatModifierModel mod, Player player, Player opponent,
         Game game, List<UnitModel> opponentUnitsInCombat, UnitModel origUnit) {
@@ -424,6 +453,14 @@ public class CombatModHelper {
                 case "damaged_units_same_type" -> {
                     UnitHolder space = activeSystem.getUnitHolders()
                         .get("space");
+                    if (origUnit.getIsGroundForce() && activeSystem.getPlanetUnitHolders().size() > 0) {
+                        for (UnitHolder planet : activeSystem.getPlanetUnitHolders()) {
+                            if (planet.getUnitCount(Mapper.getUnitKey(AliasHandler.resolveUnit(origUnit.getBaseType()), player.getColorID()).getUnitType(), player) > 0) {
+                                space = planet;
+                            }
+                        }
+
+                    }
                     int count = 0;
                     if (space.getUnitDamage().get(Mapper.getUnitKey(AliasHandler.resolveUnit(origUnit.getBaseType()),
                         player.getColorID())) != null) {
@@ -454,7 +491,7 @@ public class CombatModHelper {
             }
             value = value * multiplier * scalingCount.doubleValue();
         }
-        value = Math.floor(value); // to make sure eg +1 per 2 destroyer doesnt return 2.5 etc
+        value = Math.floor(value); // to make sure eg +1 per 2 destroyer doesn't return 2.5 etc
         return (int) value;
     }
 

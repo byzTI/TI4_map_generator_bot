@@ -9,6 +9,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -25,9 +26,11 @@ import ti4.MessageListener;
 import ti4.commands.franken.StartFrankenDraft.FrankenDraftMode;
 import ti4.commands.game.Undo;
 import ti4.commands.map.Preset;
+import ti4.commands.milty.ForcePick;
 import ti4.commands.player.ChangeUnitDecal;
 import ti4.commands.statistics.GameStats.GameStatistics;
 import ti4.commands.statistics.PlayerStats;
+import ti4.commands.uncategorized.ServerPromote;
 import ti4.generator.Mapper;
 import ti4.generator.TileHelper;
 import ti4.helpers.Constants;
@@ -108,7 +111,7 @@ public class AutoCompleteProvider {
                     .collect(Collectors.toList());
                 event.replyChoices(options).queue();
             }
-            case Constants.FACTION -> {
+            case Constants.FACTION, Constants.FACTION2, Constants.FACTION3, Constants.FACTION4, Constants.FACTION5, Constants.FACTION6 -> {
                 String enteredValue = event.getFocusedOption().getValue();
                 List<FactionModel> factions = Mapper.getFactions();
                 List<Command.Choice> options;
@@ -153,6 +156,51 @@ public class AutoCompleteProvider {
                     event.replyChoices(options).queue();
                 }
             }
+            case Constants.HUE -> {
+                String enteredValue = Objects.toString(event.getFocusedOption().getValue(), "").toLowerCase();
+                Map<String, String> values = new HashMap<String, String>() {
+                    {
+                        put("RED", "Reds");
+                        put("GRAY", "Grays");
+                        put("GRAY", "Greys");
+                        put("GRAY", "Blacks");
+                        put("ORANGE", "Oranges");
+                        put("ORANGE", "Browns");
+                        put("YELLOW", "Yellows");
+                        put("GREEN", "Greens");
+                        put("BLUE", "Blues");
+                        put("PURPLE", "Purples");
+                        put("PINK", "Pinks");
+                        put("ALL", "ALL COLOURS");
+                    }
+                };
+                List<Command.Choice> options = values.entrySet().stream()
+                    .filter(entry -> entry.getValue().toLowerCase().contains(enteredValue))
+                    .limit(25)
+                    .map(entry -> new Command.Choice(entry.getValue(), entry.getKey()))
+                    .collect(Collectors.toList());
+                event.replyChoices(options).queue();
+            }
+            case Constants.DECAL_HUE -> {
+                String enteredValue = Objects.toString(event.getFocusedOption().getValue(), "").toLowerCase();
+                Map<String, String> values = new HashMap<String, String>() {
+                    {
+                        put("Pattern", "Pattern");
+                        put("Icon", "Icon");
+                        put("Symbol", "Symbol");
+                        put("Texture", "Texture");
+                        put("Line", "Line");
+                        put("Other", "Other");
+                        put("ALL", "ALL DECALS");
+                    }
+                };
+                List<Command.Choice> options = values.entrySet().stream()
+                    .filter(entry -> entry.getValue().toLowerCase().contains(enteredValue))
+                    .limit(25)
+                    .map(entry -> new Command.Choice(entry.getValue(), entry.getKey()))
+                    .collect(Collectors.toList());
+                event.replyChoices(options).queue();
+            }
             case Constants.CC_USE -> {
                 String enteredValue = event.getFocusedOption().getValue();
                 List<String> values = Arrays.asList("t/tactics", "r/retreat/reinforcements", "no");
@@ -164,9 +212,17 @@ public class AutoCompleteProvider {
                 event.replyChoices(options).queue();
             }
             case Constants.TOKEN -> {
-                String enteredValue = event.getFocusedOption().getValue();
-                List<Command.Choice> options = Mapper.getTokens().stream()
-                    .filter(token -> token.contains(enteredValue))
+                List<String> tokenNames = Mapper.getTokens().stream()
+                    .map(str -> {
+                        if (Mapper.getAttachmentInfo(str) != null) {
+                            return Mapper.getAttachmentInfo(str).getAutoCompleteName();
+                        }
+                        return str;
+                    })
+                    .toList();
+                String enteredValue = event.getFocusedOption().getValue().toLowerCase();
+                List<Command.Choice> options = tokenNames.stream()
+                    .filter(token -> token.toLowerCase().contains(enteredValue))
                     .limit(25)
                     .map(token -> new Command.Choice(token, token))
                     .collect(Collectors.toList());
@@ -174,7 +230,10 @@ public class AutoCompleteProvider {
             }
             case Constants.DISPLAY_TYPE -> {
                 String enteredValue = event.getFocusedOption().getValue();
-                List<Command.Choice> options = Stream.of("all", "map", "stats", "split", "none")
+                List<Command.Choice> options = Stream.of("all", "map", "stats", "split", "landscape",
+                    "wormholes", "anomalies", "legendaries", "empties", "aetherstream", "space_cannon_offense",
+                    "traits", "technology_specialties", "attachments", "shipless",
+                    "none")
                     .filter(value -> value.contains(enteredValue))
                     .limit(25)
                     .map(value -> new Command.Choice(value, value))
@@ -187,11 +246,11 @@ public class AutoCompleteProvider {
 
                 List<String> tableRelics = new ArrayList<>();
                 if (game != null) {
-                    for (Player player_ : game.getPlayers().values()) {
-                        List<String> playerRelics = player_.getRelics();
-                        tableRelics.addAll(playerRelics);
-                    }
-                    List<String> relicDeck = game.getAllRelics();
+                    // for (Player player_ : game.getPlayers().values()) {
+                    //     List<String> playerRelics = player_.getRelics();
+                    //     tableRelics.addAll(playerRelics);
+                    // }
+                    List<String> relicDeck = Mapper.getDecks().get(game.getRelicDeckID()).getNewShuffledDeck();
                     tableRelics.addAll(relicDeck);
                     Collections.shuffle(tableRelics);
                 }
@@ -788,6 +847,38 @@ public class AutoCompleteProvider {
                     .limit(25)
                     .sorted(Comparator.comparing(FrankenDraftMode::getAutoCompleteName))
                     .map(mode -> new Command.Choice(mode.getAutoCompleteName(), mode.toString()))
+                    .collect(Collectors.toList());
+                event.replyChoices(options).queue();
+            }
+            case Constants.PROMOTE_TARGET -> {
+                String enteredValue = event.getFocusedOption().getValue();
+                List<Command.Choice> options = ServerPromote.Servers.keySet().stream()
+                    .filter(key -> ServerPromote.Servers.get(key).toLowerCase().contains(enteredValue))
+                    .limit(25)
+                    .map(key -> new Command.Choice(key, ServerPromote.Servers.get(key)))
+                    .collect(Collectors.toList());
+                event.replyChoices(options).queue();
+            }
+            case Constants.PROMOTE_RANK -> {
+                String enteredValue = event.getFocusedOption().getValue();
+                List<Command.Choice> options = ServerPromote.Servers.keySet().stream()
+                    .filter(key -> ServerPromote.Ranks.get(key).toLowerCase().contains(enteredValue))
+                    .limit(25)
+                    .map(key -> new Command.Choice(key, ServerPromote.Ranks.get(key)))
+                    .collect(Collectors.toList());
+                event.replyChoices(options).queue();
+            }
+            case ForcePick.PICK -> {
+                String enteredValue = event.getFocusedOption().getValue();
+                if (game == null) {
+                    event.replyChoices(Collections.emptyList()).queue();
+                    return;
+                }
+                List<String> availablePicks = game.getMiltyDraftManager().allRemainingOptionsForActive();
+                List<Command.Choice> options = availablePicks.stream()
+                    .filter(pick -> pick.toLowerCase().contains(enteredValue.toLowerCase()))
+                    .limit(25)
+                    .map(pick -> new Command.Choice(pick, pick))
                     .collect(Collectors.toList());
                 event.replyChoices(options).queue();
             }

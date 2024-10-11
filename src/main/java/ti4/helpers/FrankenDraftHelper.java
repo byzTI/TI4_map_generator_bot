@@ -11,6 +11,7 @@ import net.dv8tion.jda.api.events.interaction.GenericInteractionCreateEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle;
+import ti4.buttons.Buttons;
 import ti4.commands.franken.ApplyDraftBags;
 import ti4.commands.player.Setup;
 import ti4.draft.BagDraft;
@@ -153,9 +154,9 @@ public class FrankenDraftHelper {
         if (draftQueueCount > 0) {
             List<Button> queueButtons = new ArrayList<>();
             if (isQueueFull || draftables.isEmpty()) {
-                queueButtons.add(Button.success(player.getFinsFactionCheckerPrefix() + "frankenDraftAction;confirm_draft", "I want to draft these cards."));
+                queueButtons.add(Buttons.green(player.getFinsFactionCheckerPrefix() + "frankenDraftAction;confirm_draft", "I want to draft these cards."));
             }
-            queueButtons.add(Button.danger(player.getFinsFactionCheckerPrefix() + "frankenDraftAction;reset_queue", "I want to draft different cards."));
+            queueButtons.add(Buttons.red(player.getFinsFactionCheckerPrefix() + "frankenDraftAction;reset_queue", "I want to draft different cards."));
             MessageHelper.sendMessageToChannelWithButtons(bagChannel, "# __Queue:__\n> You are drafting the following from this bag:\n" + getDraftQueueRepresentation(game, player), queueButtons);
 
             if (isQueueFull || draftables.isEmpty()) {
@@ -278,9 +279,9 @@ public class FrankenDraftHelper {
         int first = draft.getPicksFromFirstBag();
         int next = draft.getPicksFromNextBags();
         String message = "# " + game.getPing() + " Franken Draft has started!\n" +
-            "> As a reminder, for the first bag you pick " + first + " item(s), and for all the bags after that you pick " + next + " item(s).\n" +
+            "> As a reminder, for the first bag you pick " + first + " item" + (first == 1 ? "" : "s") + ", and for all the bags after that you pick " + next + " item" + (next == 1 ? "" : "s") + ".\n" +
             "> After each pick, the draft thread will be recreated. Sometimes discord will lag while sending long messages, so the buttons may take a few seconds to show up\n" +
-            "> Once you have made your " + next + " pick(s) (" + first + " in the first bag), the bags will automatically be passed once everyone is ready.";
+            "> Once you have made your " + next + " pick" + (next == 1 ? "" : "s") + " (" + first + " in the first bag), the bags will automatically be passed once everyone is ready.";
 
         MessageHelper.sendMessageToChannel(game.getMainGameChannel(), message);
         GameSaveLoadManager.saveMap(game, "Franken draft was started");
@@ -310,7 +311,7 @@ public class FrankenDraftHelper {
         if (skipped) {
             sb.append("\nSome players were skipped. Please confirm they are set up as an empty franken shell faction before proceeding with the draft");
         }
-        sb.append("\nFranken faction setup finished.\nUse `/franken set_faction_icon` to change your faction symbol. You can use any emoji the bot can use (`/search emojis`)");
+        sb.append("\nFranken faction setup finished.\nUse `/franken set_faction_icon` to change your faction symbol. You may use any emoji the bot can use (`/search emojis`).");
         MessageHelper.sendMessageToChannel(event.getMessageChannel(), sb.toString());
     }
 

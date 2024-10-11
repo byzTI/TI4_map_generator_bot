@@ -3,6 +3,7 @@ package ti4.commands.statistics;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Objects;
+
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction;
@@ -65,7 +66,10 @@ public class StatisticsCommand implements Command {
         subcommands.add(new DiceLuck());
         subcommands.add(new LifetimeRecord());
         subcommands.add(new FactionRecordOfTech());
+        subcommands.add(new FactionRecordOfSCPick());
+        subcommands.add(new GameWinsWithOtherFactions());
         subcommands.add(new StellarConverter());
+        subcommands.add(new ListTitlesGiven());
 
         return subcommands;
     }

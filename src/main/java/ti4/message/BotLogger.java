@@ -270,9 +270,16 @@ public class BotLogger {
     }
 
     public static void catchRestError(Throwable e) {
-        // Only log these in debug mode for now
-        if (GlobalSettings.getSetting(GlobalSettings.ImplementedSettings.DEBUG.toString(), Boolean.class, false))
+        // if it's ignored, it's not actionable. Simple
+        if (ignoredError(e)) return;
+
+        // Otherwise... maybe actionable!
+
+        // If it gets too annoying, we can limit to testing mode/debug mode
+        boolean debugMode = GlobalSettings.getSetting(GlobalSettings.ImplementedSettings.DEBUG.toString(), Boolean.class, false);
+        if (System.getenv("TESTING") != null || debugMode) {
             BotLogger.log("Encountered REST error", e);
+        }
     }
 
     private static boolean ignoredError(Throwable error) {

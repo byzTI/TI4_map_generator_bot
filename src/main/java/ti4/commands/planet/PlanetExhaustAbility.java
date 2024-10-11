@@ -17,6 +17,7 @@ import ti4.helpers.AliasHandler;
 import ti4.helpers.ButtonHelper;
 import ti4.helpers.Constants;
 import ti4.helpers.Helper;
+import ti4.helpers.TransactionHelper;
 import ti4.map.Game;
 import ti4.map.Player;
 import ti4.message.MessageHelper;
@@ -56,17 +57,17 @@ public class PlanetExhaustAbility extends PlanetAddRemove {
         switch (planet) {
             // Prophecy of Kings
             case "mallice" -> {
-                output = "Use buttons to gain 2 tg or wash your commodities";
-                buttons.add(Button.success("mallice_2_tg", "Gain 2tg"));
-                buttons.add(Button.success("mallice_convert_comm", "Convert Commodities"));
+                output = "Use buttons to gain 2TGs or wash your commodities";
+                buttons.add(Buttons.green("mallice_2_tg", "Gain 2TGs"));
+                buttons.add(Buttons.green("mallice_convert_comm", "Convert Commodities"));
             }
             case "hopesend" -> {
-                output = "Use buttons to drop a mech on a planet or draw an AC";
+                output = "Use buttons to drop 1 mech on a planet or draw 1 AC";
                 buttons.addAll(Helper.getPlanetPlaceUnitButtons(player, game, "mech", "placeOneNDone_skipbuild"));
                 if (player.hasAbility("scheming")) {
-                    buttons.add(Button.success("draw_2_ACDelete", "Draw 2 AC (With Scheming)"));
+                    buttons.add(Buttons.green("draw_2_ACDelete", "Draw 2 ACs (With Scheming)"));
                 } else {
-                    buttons.add(Button.success("draw_1_ACDelete", "Draw 1 AC"));
+                    buttons.add(Buttons.green("draw_1_ACDelete", "Draw 1 AC"));
                 }
             }
             case "primor" -> {
@@ -79,7 +80,7 @@ public class PlanetExhaustAbility extends PlanetAddRemove {
             }
             // Homebrew
             case "mr" -> {
-                output = "Use buttons to destroy a ground force on a legendary or planet adjacent to rex";
+                output = "Use buttons to destroy a ground force on a legendary or planet adjacent to Mecatol Rex.";
                 buttons.addAll(ButtonHelper.customRexLegendary(player, game));
             }
             case "silence" -> {
@@ -122,8 +123,8 @@ public class PlanetExhaustAbility extends PlanetAddRemove {
             }
         }
 
-        if (!buttons.isEmpty()) buttons.add(Button.danger("deleteButtons", "Delete these buttons"));
-        if (!buttons2.isEmpty()) buttons2.add(Button.danger("deleteButtons", "Delete these buttons"));
+        if (!buttons.isEmpty()) buttons.add(Buttons.red("deleteButtons", "Delete these buttons"));
+        if (!buttons2.isEmpty()) buttons2.add(Buttons.red("deleteButtons", "Delete these buttons"));
         if (!"blank".equalsIgnoreCase(output)) {
             MessageHelper.sendMessageToChannelWithButtons(channel, output, buttons);
         }
@@ -138,7 +139,7 @@ public class PlanetExhaustAbility extends PlanetAddRemove {
         for (String tech : player.getTechs()) {
             TechnologyModel techM = Mapper.getTech(tech);
             if (!techM.isUnitUpgrade() && (techM.getFaction().isEmpty() || techM.getFaction().orElse("").length() < 1)) {
-                buttons.add(Button.secondary(finChecker + "newPrism@" + tech, techM.getName()));
+                buttons.add(Buttons.gray(finChecker + "newPrism@" + tech, techM.getName()));
             }
         }
         return buttons;
@@ -149,7 +150,7 @@ public class PlanetExhaustAbility extends PlanetAddRemove {
         player.removeTech(techOut);
         TechnologyModel techM1 = Mapper.getTech(techOut);
         MessageHelper.sendMessageToChannel(player.getCorrectChannel(), player.getFactionEmoji() + " removed the tech " + techM1.getName());
-        MessageHelper.sendMessageToChannelWithButton(event.getMessageChannel(), player.getRepresentation() + " Use the button to get a tech with the same number of pre-requisites", Buttons.GET_A_FREE_TECH);
+        MessageHelper.sendMessageToChannelWithButton(event.getMessageChannel(), player.getRepresentation() + " Use the button to get a tech with the same number of prerequisites", Buttons.GET_A_FREE_TECH);
         event.getMessage().delete().queue();
         String message2 = "Use buttons to end turn or do another action.";
         List<Button> systemButtons = TurnStart.getStartOfTurnButtons(player, game, true, event);
@@ -163,9 +164,9 @@ public class PlanetExhaustAbility extends PlanetAddRemove {
                 continue;
             }
             if (game.isFowMode()) {
-                buttons.add(Button.secondary("prismStep2_" + p2.getFaction(), p2.getColor()));
+                buttons.add(Buttons.gray("prismStep2_" + p2.getFaction(), p2.getColor()));
             } else {
-                Button button = Button.secondary("prismStep2_" + p2.getFaction(), " ");
+                Button button = Buttons.gray("prismStep2_" + p2.getFaction(), " ");
                 String factionEmojiString = p2.getFactionEmoji();
                 button = button.withEmoji(Emoji.fromFormatted(factionEmojiString));
                 buttons.add(button);
@@ -179,8 +180,8 @@ public class PlanetExhaustAbility extends PlanetAddRemove {
         Player p2 = game.getPlayerFromColorOrFaction(buttonID.split("_")[1]);
         List<Button> buttons = new ArrayList<>();
 
-        buttons.add(Button.secondary("prismStep3_" + player.getFaction() + "_AC", "Send AC"));
-        buttons.add(Button.secondary("prismStep3_" + player.getFaction() + "_PN", "Send PN"));
+        buttons.add(Buttons.gray("prismStep3_" + player.getFaction() + "_AC", "Send AC"));
+        buttons.add(Buttons.gray("prismStep3_" + player.getFaction() + "_PN", "Send PN"));
 
         event.getMessage().delete().queue();
         MessageHelper.sendMessageToChannel(event.getMessageChannel(),
@@ -201,7 +202,7 @@ public class PlanetExhaustAbility extends PlanetAddRemove {
 
         } else {
             String buttonID2 = "transact_ACs_" + p2.getFaction();
-            ButtonHelper.resolveSpecificTransButtonsOld(game, player, buttonID2, event);
+            TransactionHelper.resolveSpecificTransButtonsOld(game, player, buttonID2, event);
         }
 
     }

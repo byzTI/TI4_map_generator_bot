@@ -29,12 +29,16 @@ public class RevealEvent extends EventSubcommandData {
         }
     }
 
-    public void revealEvent(GenericInteractionCreateEvent event, Game game, MessageChannel channel, String eventID) {
+    public static void revealEvent(GenericInteractionCreateEvent event, Game game, MessageChannel channel) {
+        revealEvent(event, game, channel, game.revealEvent(false));
+    }
+
+    public static void revealEvent(GenericInteractionCreateEvent event, Game game, MessageChannel channel, String eventID) {
         EventModel eventModel = Mapper.getEvent(eventID);
         if (eventModel != null) {
             channel.sendMessageEmbeds(eventModel.getRepresentationEmbed()).queue();
         } else {
-            MessageHelper.sendMessageToEventChannel(event, "Something went wrong");
+            MessageHelper.sendMessageToEventChannel(event, "Something went wrong revealing an event; eventID: " + eventID);
         }
     }
 }

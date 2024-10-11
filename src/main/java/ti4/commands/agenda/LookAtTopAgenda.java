@@ -3,14 +3,20 @@ package ti4.commands.agenda;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
+
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.events.interaction.GenericInteractionCreateEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import ti4.generator.Mapper;
+import ti4.helpers.ButtonHelper;
 import ti4.helpers.Constants;
 import ti4.helpers.Helper;
+import ti4.listeners.annotations.ButtonHandler;
 import ti4.map.Game;
 import ti4.map.Player;
 import ti4.message.MessageHelper;
@@ -43,9 +49,17 @@ public class LookAtTopAgenda extends AgendaSubcommandData {
         lookAtAgendas(game, player, count, false);
     }
 
+    @ButtonHandler("agendaLookAt") // agendaLookAt[count:X][lookAtBottom:Y] where X = int and Y = boolean
+    public static void lookAtAgendas(ButtonInteractionEvent event, Game game, Player player, String buttonID) {
+        int count = Integer.parseInt(StringUtils.substringBetween(buttonID, "[count:","]"));
+        boolean lookAtBottom = Boolean.parseBoolean(StringUtils.substringBetween(buttonID, "[lookAtBottom:","]"));
+        lookAtAgendas(game, player, count, lookAtBottom);
+        ButtonHelper.deleteMessage(event);
+    }
+
     public static void lookAtAgendas(Game game, Player player, int count, boolean lookFromBottom) {
         StringBuilder sb = new StringBuilder();
-        sb.append(player.getRepresentation(true, true)).append(" here are the agenda(s) you have looked at:");
+        sb.append(player.getRepresentation(true, true)).append(" here " + (count == 1 ? "is" : "are") + " the agenda" + (count == 1 ? "" : "s") + " you have looked at:");
         List<MessageEmbed> agendaEmbeds = getAgendaEmbeds(count, lookFromBottom, game);
 
         Player realPlayer = Helper.getGamePlayer(game, player, (Member) null, null);

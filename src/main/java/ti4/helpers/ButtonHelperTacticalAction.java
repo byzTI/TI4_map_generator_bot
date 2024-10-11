@@ -7,9 +7,12 @@ import java.util.Map;
 
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
+import net.dv8tion.jda.api.entities.emoji.EmojiUnion;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import ti4.buttons.Buttons;
 import ti4.commands.combat.StartCombat;
+import ti4.commands.leaders.CommanderUnlockCheck;
 import ti4.commands.player.TurnStart;
 import ti4.commands.special.CheckDistance;
 import ti4.commands.tokens.AddToken;
@@ -198,8 +201,7 @@ public class ButtonHelperTacticalAction {
                 }
             }
             String message = ButtonHelper.buildMessageFromDisplacedUnits(game, false, player, remove, tile);
-            List<Button> systemButtons = ButtonHelper.getButtonsForAllUnitsInSystem(player, game,
-                game.getTileByPosition(pos), remove);
+            List<Button> systemButtons = getButtonsForAllUnitsInSystem(player, game, game.getTileByPosition(pos), remove);
             event.getMessage().editMessage(message)
                 .setComponents(ButtonHelper.turnButtonListIntoActionRowList(systemButtons)).queue();
             return;
@@ -263,8 +265,7 @@ public class ButtonHelperTacticalAction {
             game.setSpecificCurrentMovedUnitsFrom1TacticalAction(unitName, amount);
         }
         String message = ButtonHelper.buildMessageFromDisplacedUnits(game, false, player, remove, tile);
-        List<Button> systemButtons = ButtonHelper.getButtonsForAllUnitsInSystem(player, game,
-            game.getTileByPosition(pos), remove);
+        List<Button> systemButtons = getButtonsForAllUnitsInSystem(player, game, game.getTileByPosition(pos), remove);
         event.getMessage().editMessage(message)
             .setComponents(ButtonHelper.turnButtonListIntoActionRowList(systemButtons)).queue();
     }
@@ -279,11 +280,11 @@ public class ButtonHelperTacticalAction {
                     .values()) {
                     if (uH instanceof Planet) {
                         String planet = uH.getName();
-                        trapButtons.add(Button.secondary("setTrapStep3_" + planet,
+                        trapButtons.add(Buttons.gray("setTrapStep3_" + planet,
                             Helper.getPlanetRepresentation(planet, game)));
                     }
                 }
-                trapButtons.add(Button.danger("deleteButtons", "Decline"));
+                trapButtons.add(Buttons.red("deleteButtons", "Decline"));
                 String msg = player.getRepresentation(true, true)
                     + " you can use the buttons to place a trap on a planet";
                 if (trapButtons.size() > 1) {
@@ -298,19 +299,20 @@ public class ButtonHelperTacticalAction {
                         "Use Celdauri Agent")
                     .withEmoji(Emoji.fromFormatted(Emojis.celdauri));
                 buttons.add(hacanButton);
-                buttons.add(Button.danger("deleteButtons", "Decline"));
+                buttons.add(Buttons.red("deleteButtons", "Decline"));
                 MessageHelper.sendMessageToChannelWithButtons(player.getCorrectChannel(),
                     player.getRepresentation(true, true)
-                        + " you can use " + (player.hasUnexhaustedLeader("yssarilagent") ? "Clever Clever " : "") + "George Nobin (Celdauri Agent) to place an SD for 2tg/2comm",
+                        + " you can use " + (player.hasUnexhaustedLeader("yssarilagent") ? "Clever Clever " : "")
+                        + "George Nobin, the Celdauri" + (player.hasUnexhaustedLeader("yssarilagent") ? "/Yssaril" : "") + " agent to place 1 space dock for 2TGs or 2 commodities",
                     buttons);
             }
         }
 
         if (!game.isAbsolMode() && player.getRelics().contains("emphidia")
             && !player.getExhaustedRelics().contains("emphidia")) {
-            String message = player.getRepresentation() + " You can use the button to explore using the " + Emojis.Relic + "Crown of Emphidia";
+            String message = player.getRepresentation() + " You can use the button to explore a planet using the " + Emojis.Relic + "Crown of Emphidia";
             List<Button> systemButtons2 = new ArrayList<>();
-            systemButtons2.add(Button.success("crownofemphidiaexplore", "Use Crown To Explore a Planet"));
+            systemButtons2.add(Buttons.green("crownofemphidiaexplore", "Use Crown of Emphidia To Explore"));
             MessageHelper.sendMessageToChannelWithButtons(event.getMessageChannel(), message, systemButtons2);
         }
         if (game.isNaaluAgent()) {
@@ -327,8 +329,7 @@ public class ButtonHelperTacticalAction {
             channel = player.getPrivateChannel();
         }
         MessageHelper.sendMessageToChannelWithButtons(channel, message, systemButtons);
-        event.getMessage().delete().queue();
-
+        ButtonHelper.deleteMessage(event);
     }
 
     public static void buildWithTacticalAction(Player player, Game game, ButtonInteractionEvent event,
@@ -339,21 +340,21 @@ public class ButtonHelperTacticalAction {
         String message = player.getRepresentation() + " Use the buttons to produce units. ";
         String message3 = "You have "
             + Helper.getProductionValue(player, game, game.getTileByPosition(pos), false)
-            + " PRODUCTION value in this system";
+            + " PRODUCTION value in this system.\n";
         if (Helper.getProductionValue(player, game, game.getTileByPosition(pos), false) > 0
             && game.playerHasLeaderUnlockedOrAlliance(player, "cabalcommander")) {
             message3 = message3
-                + ". You also have " + Emojis.Cabal + " commander which allows you to produce 2 " + Emojis.fighter + "/" + Emojis.infantry + " that dont count towards production limit. ";
+                + "You also have That Which Molds Flesh, the Vuil'raith commander, which allows you to produce 2 " + Emojis.fighter + "/" + Emojis.infantry + " that don't count towards production limit.\n";
         }
         if (Helper.getProductionValue(player, game, game.getTileByPosition(pos), false) > 0
             && ButtonHelper.isPlayerElected(game, player, "prophecy")) {
             message3 = message3
-                + ". Reminder that you have prophecy of Ixth and should produce 2 " + Emojis.fighter + " if you want to keep it. Its removal is not automated\n";
+                + "Reminder that you have Prophecy of Ixth and should produce 2 " + Emojis.fighter + " if you want to keep it. Its removal is not automated.\n";
         }
         MessageHelper.sendMessageToChannel(event.getChannel(),
-            message3 + ButtonHelper.getListOfStuffAvailableToSpend(player, game));
+            message3 + ButtonHelper.getListOfStuffAvailableToSpend(player, game, true));
         MessageHelper.sendMessageToChannelWithButtons(event.getChannel(), message, buttons);
-        event.getMessage().delete().queue();
+        ButtonHelper.deleteMessage(event);
     }
 
     public static void finishMovingForTacticalAction(Player player, Game game, ButtonInteractionEvent event,
@@ -407,13 +408,15 @@ public class ButtonHelperTacticalAction {
             List<Button> empyButtons = new ArrayList<>();
             if (!game.getMovedUnitsFromCurrentActivation().isEmpty()
                 && (tile.getUnitHolders().values().size() == 1) && player.hasUnexhaustedLeader("empyreanagent")) {
-                Button empyButton = Button.secondary("exhaustAgent_empyreanagent",
+                Button empyButton = Buttons.gray("exhaustAgent_empyreanagent",
                     "Use Empyrean Agent")
                     .withEmoji(Emoji.fromFormatted(Emojis.Empyrean));
                 empyButtons.add(empyButton);
-                empyButtons.add(Button.danger("deleteButtons", "Delete These Buttons"));
+                empyButtons.add(Buttons.red("deleteButtons", "Delete These Buttons"));
                 MessageHelper.sendMessageToChannelWithButtons(event.getMessageChannel(),
-                    player.getRepresentation(true, true) + " use button to exhaust " + (player.hasUnexhaustedLeader("yssarilagent") ? "Clever Clever " : "") + "Acamar (Empyrean Agent)", empyButtons);
+                    player.getRepresentation(true, true) + " use button to exhaust " + (player.hasUnexhaustedLeader("yssarilagent") ? "Clever Clever " : "")
+                        + "Acamar, the Empyrean" + (player.hasUnexhaustedLeader("yssarilagent") ? "/Yssaril" : "") + " agent",
+                    empyButtons);
             }
             if (!game.getMovedUnitsFromCurrentActivation().isEmpty()
                 && (tile.getUnitHolders().values().size() == 1) && player.getPlanets().contains("ghoti")) {
@@ -428,7 +431,7 @@ public class ButtonHelperTacticalAction {
                     || game.getMovedUnitsFromCurrentActivation().containsKey("flagshipdamaged"))
                 && player.hasUnit("dihmohn_flagship")) {
                 List<Button> produce = new ArrayList<>();
-                produce.add(Button.primary("dihmohnfs_" + game.getActiveSystem(), "Produce (2) Units"));
+                produce.add(Buttons.blue("dihmohnfs_" + game.getActiveSystem(), "Produce (2) Units"));
                 MessageHelper.sendMessageToChannelWithButtons(player.getCorrectChannel(),
                     player.getRepresentation()
                         + " Your Dih-Mohn Flagship moved into the active system and you can produce 2 units with a combined cost of 4.",
@@ -456,58 +459,51 @@ public class ButtonHelperTacticalAction {
             }
         }
 
-        if (systemButtons.size() == 2 || game.isL1Hero()) {
+        int landingButtons = 1;
+        if (!game.getStoredValue("possiblyUsedRift").isEmpty()) {
+            landingButtons = 2;
+        }
+        if (systemButtons.size() == landingButtons || game.isL1Hero()) {
             systemButtons = ButtonHelper.landAndGetBuildButtons(player, game, event, tile);
         }
-        if (player.getLeaderIDs().contains("nivyncommander") && !player.hasLeaderUnlocked("nivyncommander")) {
-            ButtonHelper.commanderUnlockCheck(player, game, "nivyn", event);
-        }
-        if (player.getLeaderIDs().contains("ghoticommander") && !player.hasLeaderUnlocked("ghoticommander")) {
-            ButtonHelper.commanderUnlockCheck(player, game, "ghoti", event);
-        }
-        if (player.getLeaderIDs().contains("zeliancommander") && !player.hasLeaderUnlocked("zeliancommander")) {
-            ButtonHelper.commanderUnlockCheck(player, game, "zelian", event);
-        }
-        ButtonHelper.fullCommanderUnlockCheck(player, game, "gledge", event);
-        ButtonHelper.fullCommanderUnlockCheck(player, game, "mortheus", event);
-        for (Player p2 : game.getRealPlayers()) {
-            ButtonHelper.fullCommanderUnlockCheck(p2, game, "empyrean", event);
-        }
+        CommanderUnlockCheck.checkPlayer(player, game, "nivyn", event);
+        CommanderUnlockCheck.checkPlayer(player, game, "ghoti", event);
+        CommanderUnlockCheck.checkPlayer(player, game, "zelian", event);
+        CommanderUnlockCheck.checkPlayer(player, game, "gledge", event);
+        CommanderUnlockCheck.checkPlayer(player, game, "mortheus", event);
+        CommanderUnlockCheck.checkAllPlayersInGame(game, "empyrean");
         MessageHelper.sendMessageToChannelWithButtons(event.getMessageChannel(), message, systemButtons);
         if (needPDSCheck && !game.isL1Hero() && playersWithPds2.size() > 0) {
             StartCombat.sendSpaceCannonButtonsToThread(player.getCorrectChannel(), game,
                 player, tile);
         }
-        event.getMessage().delete().queue();
+        ButtonHelper.deleteMessage(event);
     }
 
     public static void finishMovingFromOneTile(Player player, Game game, ButtonInteractionEvent event,
         String buttonID) {
         String pos = buttonID.replace("doneWithOneSystem_", "");
         Tile tile = game.getTileByPosition(pos);
+        int distance = CheckDistance.getDistanceBetweenTwoTiles(game, player, pos, game.getActiveSystem(), true);
         MessageHelper.sendMessageToChannel(event.getMessageChannel(), "From system "
-            + tile.getRepresentationForButtons(game, player) + " (**"
-            + CheckDistance.getDistanceBetweenTwoTiles(game, player, pos, game.getActiveSystem())
-            + " tile(s) away**)\n"
+            + tile.getRepresentationForButtons(game, player) + " (**" + distance + " tile" + (distance == 1 ? "" : "s") + " away**)\n"
             + event.getMessage().getContentRaw());
         String message = "Choose a different system to move from, or finalize movement.";
         game.resetCurrentMovedUnitsFrom1System();
         List<Button> systemButtons = ButtonHelper.getTilesToMoveFrom(player, game, event);
         MessageHelper.sendMessageToChannelWithButtons(event.getMessageChannel(), message, systemButtons);
-        event.getMessage().delete().queue();
-
+        ButtonHelper.deleteMessage(event);
     }
 
     public static void selectTileToMoveFrom(Player player, Game game, ButtonInteractionEvent event,
         String buttonID) {
         String pos = buttonID.replace("tacticalMoveFrom_", "");
-        List<Button> systemButtons = ButtonHelper.getButtonsForAllUnitsInSystem(player, game,
-            game.getTileByPosition(pos), "Move");
+        List<Button> systemButtons = getButtonsForAllUnitsInSystem(player, game, game.getTileByPosition(pos), "Move");
         game.resetCurrentMovedUnitsFrom1System();
         MessageHelper.sendMessageToChannelWithButtons(event.getMessageChannel(), "Chose to move from "
             + game.getTileByPosition(pos).getRepresentationForButtons(game, player)
             + ". Use buttons to select the units you want to move.", systemButtons);
-        event.getMessage().delete().queue();
+        ButtonHelper.deleteMessage(event);
     }
 
     public static void selectRingThatActiveSystemIsIn(Player player, Game game, ButtonInteractionEvent event) {
@@ -527,7 +523,8 @@ public class ButtonHelperTacticalAction {
         if (player.doesPlayerPreferDistanceBasedTacticalActions() && !game.isFowMode() && game.getRingCount() < 5) {
             alternateWayOfOfferingTiles(player, game);
         } else {
-            String message = "Doing a tactical action. Please select the ring of the map that the system you want to activate is located in. Reminder that a normal 6 player map is 3 rings, with ring 1 being adjacent to Rex. Mallice is in the corner";
+            String message = "Doing a tactical action. Please select the ring of the map that the system you want to activate is located in."
+                + " Reminder that a normal 6 player map is 3 rings, with ring 1 being adjacent to Mecatol Rex. The Wormhole Nexus is in the corner.";
             List<Button> ringButtons = ButtonHelper.getPossibleRings(player, game);
             MessageHelper.sendMessageToChannelWithButtons(event.getMessageChannel(), message, ringButtons);
         }
@@ -549,10 +546,10 @@ public class ButtonHelperTacticalAction {
             message = message + "0 tiles away";
         }
         for (String pos : initialOffering) {
-            buttons.add(Button.success("ringTile_" + pos, game.getTileByPosition(pos).getRepresentationForButtons(game, player)));
+            buttons.add(Buttons.green("ringTile_" + pos, game.getTileByPosition(pos).getRepresentationForButtons(game, player)));
         }
-        buttons.add(Button.secondary("getTilesThisFarAway_" + (maxDistance + 1), "Get Tiles " + (maxDistance + 1) + " Spaces Away"));
-        if ("481860200169472030".equals(player.getUserID())) buttons.addAll(ButtonHelper.getPossibleRings(player, game)); //TODO: Add option for this
+        buttons.add(Buttons.gray("getTilesThisFarAway_" + (maxDistance + 1), "Get Tiles " + (maxDistance + 1) + " Spaces Away"));
+        if (Constants.prisonerOneID.equals(player.getUserID())) buttons.addAll(ButtonHelper.getPossibleRings(player, game)); //TODO: Add option for this
         MessageHelper.sendMessageToChannelWithButtons(player.getCorrectChannel(), message, buttons);
     }
 
@@ -562,25 +559,26 @@ public class ButtonHelperTacticalAction {
         int maxDistance = desiredDistance;
         List<Button> buttons = new ArrayList<>();
         if (desiredDistance > 0) {
-            buttons.add(Button.secondary("getTilesThisFarAway_" + (maxDistance - 1), "Get Tiles " + (maxDistance - 1) + " Spaces Away"));
+            buttons.add(Buttons.gray("getTilesThisFarAway_" + (maxDistance - 1), "Get Tiles " + (maxDistance - 1) + " Spaces Away"));
         }
         for (String pos : CheckDistance.getAllTilesACertainDistanceAway(game, player, distances, desiredDistance)) {
             Tile tile = game.getTileByPosition(pos);
             String tileRepresentation = tile.getRepresentationForButtons(game, player);
             if (!tileRepresentation.contains("Hyperlane")) {
-                buttons.add(Button.success("ringTile_" + pos, tileRepresentation));
+                buttons.add(Buttons.green("ringTile_" + pos, tileRepresentation));
             }
         }
-        buttons.add(Button.secondary("getTilesThisFarAway_" + (maxDistance + 1), "Get Tiles " + (maxDistance + 1) + " Spaces Away"));
+        buttons.add(Buttons.gray("getTilesThisFarAway_" + (maxDistance + 1), "Get Tiles " + (maxDistance + 1) + " Spaces Away"));
 
         String message = "Doing a tactical action. Please select the tile you want to activate";
         MessageHelper.sendMessageToChannelWithButtons(player.getCorrectChannel(), message, buttons);
-        event.getMessage().delete().queue();
+        ButtonHelper.deleteMessage(event);
     }
 
     public static void selectActiveSystem(Player player, Game game, ButtonInteractionEvent event, String buttonID) {
         String pos = buttonID.replace("ringTile_", "");
         game.setActiveSystem(pos);
+        game.setStoredValue("possiblyUsedRift", "");
         game.setStoredValue("lastActiveSystem", pos);
         List<Button> systemButtons = ButtonHelper.getTilesToMoveFrom(player, game, event);
         MessageHelper.sendMessageToChannel(event.getChannel(), player.getRepresentation(true, true) + " activated "
@@ -610,11 +608,11 @@ public class ButtonHelperTacticalAction {
             && ButtonHelper.getTilesOfPlayersSpecificUnits(game, player, UnitType.Spacedock)
                 .contains(game.getTileByPosition(pos))) {
             List<Button> buttons = new ArrayList<>();
-            Button getCommButton = Button.primary("gain_1_comms", "Gain 1 Commodity")
+            Button getCommButton = Buttons.blue("gain_1_comms", "Gain 1 Commodity")
                 .withEmoji(Emoji.fromFormatted(Emojis.comm));
             buttons.add(getCommButton);
             String msg = player.getRepresentation()
-                + " you have Celdauri Commander and activated a system with your SD. Please hit button to get a commodity";
+                + " you have Henry Storcher, the Celdauri Commander, and activated a system with your space dock. Please use the button to get a commodity.";
             MessageHelper.sendMessageToChannel(player.getCorrectChannel(), msg, buttons);
         }
 
@@ -632,7 +630,8 @@ public class ButtonHelperTacticalAction {
 
         List<Button> button3 = ButtonHelperAgents.getL1Z1XAgentButtons(game, player);
         if (player.hasUnexhaustedLeader("l1z1xagent") && !button3.isEmpty() && !game.isL1Hero()) {
-            String msg = player.getRepresentation(true, true) + " You can use buttons to resolve " + (player.hasUnexhaustedLeader("yssarilagent") ? "Clever Clever " : "") + "I48S (L1Z1Z Agent) if you want";
+            String msg = player.getRepresentation(true, true) + " You can use buttons to resolve " + (player.hasUnexhaustedLeader("yssarilagent") ? "Clever Clever " : "")
+                + "I48S, the L1Z1Z " + (player.hasUnexhaustedLeader("yssarilagent") ? "/Yssaril" : "") + "agent, if you want.";
             MessageHelper.sendMessageToChannelWithButtons(event.getMessageChannel(), msg, button3);
         }
         Tile tile = game.getTileByPosition(pos);
@@ -647,7 +646,7 @@ public class ButtonHelperTacticalAction {
         List<Button> button2 = ButtonHelper.scanlinkResolution(player, game, event);
         if ((player.getTechs().contains("sdn") || player.getTechs().contains("absol_sdn")) && !button2.isEmpty()
             && !game.isL1Hero()) {
-            MessageHelper.sendMessageToChannelWithButtons(player.getCorrectChannel(), player.getRepresentation() + "Please resolve scanlink",
+            MessageHelper.sendMessageToChannelWithButtons(player.getCorrectChannel(), player.getRepresentation() + ", Please resolve Scanlink Drone Network.",
                 button2);
             if (player.hasAbility("awaken") || player.hasUnit("titans_flagship")) {
                 ButtonHelper.resolveTitanShenanigansOnActivation(player, game, game.getTileByPosition(pos),
@@ -686,8 +685,8 @@ public class ButtonHelperTacticalAction {
             }
             // if (abilities > 0 ) {
             // List<Button> buttons = new ArrayList<>();
-            // buttons.add(Button.success("doActivation_" + pos, "Confirm"));
-            // buttons.add(Button.danger("deleteButtons", "This activation was a mistake"));
+            // buttons.add(Buttons.green("doActivation_" + pos, "Confirm"));
+            // buttons.add(Buttons.red("deleteButtons", "This activation was a mistake"));
             // String msg = "# " + player.getFactionEmoji() + " You are about to
             // automatically trigger some abilities by activating this system. Please hit
             // confirm before continuing";
@@ -697,9 +696,158 @@ public class ButtonHelperTacticalAction {
         }
         game.setStoredValue("crucibleBoost", "");
         game.setStoredValue("flankspeedBoost", "");
+        game.setStoredValue("baldrickGDboost", "");
 
-        event.getMessage().delete().queue();
-
+        ButtonHelper.deleteMessage(event);
     }
 
+    public static List<Button> getButtonsForAllUnitsInSystem(Player player, Game game, Tile tile, String moveOrRemove) {
+        String finChecker = "FFCC_" + player.getFaction() + "_";
+        List<Button> buttons = new ArrayList<>();
+
+        Map<String, String> planetRepresentations = Mapper.getPlanetRepresentations();
+        for (Map.Entry<String, UnitHolder> entry : tile.getUnitHolders().entrySet()) {
+            String name = entry.getKey();
+            String representation = planetRepresentations.get(name);
+            if (representation == null) {
+                representation = name;
+            }
+            UnitHolder unitHolder = entry.getValue();
+            Map<UnitKey, Integer> units = unitHolder.getUnits();
+
+            if (unitHolder instanceof Planet) {
+                for (Map.Entry<UnitKey, Integer> unitEntry : units.entrySet()) {
+                    if (!player.unitBelongsToPlayer(unitEntry.getKey()))
+                        continue;
+                    UnitKey unitKey = unitEntry.getKey();
+                    representation = representation.replace(" ", "").toLowerCase().replace("'", "").replace("-", "");
+                    if ((unitKey.getUnitType() == UnitType.Infantry || unitKey.getUnitType() == UnitType.Mech)) {
+                        String unitName = ButtonHelper.getUnitName(unitKey.asyncID());
+                        int totalUnits = unitEntry.getValue();
+                        int damagedUnits = 0;
+                        EmojiUnion emoji = Emoji.fromFormatted(unitKey.unitEmoji());
+                        if (unitHolder.getUnitDamage() != null && unitHolder.getUnitDamage().get(unitKey) != null) {
+                            damagedUnits = unitHolder.getUnitDamage().get(unitKey);
+                        }
+                        for (int x = 1; x < damagedUnits + 1 && x <= 2; x++) {
+                            String buttonID = finChecker + "unitTactical" + moveOrRemove + "_" + tile.getPosition()
+                                + "_" + x + unitName + "damaged_" + representation;
+                            String buttonText = moveOrRemove + " " + x + " damaged " + unitKey.unitName() + " from "
+                                + Helper.getPlanetRepresentation(representation.toLowerCase(), game);
+                            Button validTile2 = Buttons.red(buttonID, buttonText).withEmoji(emoji);
+                            buttons.add(validTile2);
+                        }
+                        totalUnits = totalUnits - damagedUnits;
+                        for (int x = 1; x < totalUnits + 1 && x <= 2; x++) {
+                            String buttonID = finChecker + "unitTactical" + moveOrRemove + "_" + tile.getPosition()
+                                + "_" + x + unitName + "_" + representation;
+                            String buttonText = moveOrRemove + " " + x + " " + unitKey.unitName() + " from "
+                                + Helper.getPlanetRepresentation(representation.toLowerCase(), game);
+                            Button validTile2 = Buttons.red(buttonID, buttonText).withEmoji(emoji);
+                            buttons.add(validTile2);
+                        }
+                    }
+                }
+            } else {
+                for (Map.Entry<UnitKey, Integer> unitEntry : units.entrySet()) {
+                    if (!(player.unitBelongsToPlayer(unitEntry.getKey())))
+                        continue;
+
+                    UnitKey unitKey = unitEntry.getKey();
+                    String unitName = ButtonHelper.getUnitName(unitKey.asyncID());
+                    // System.out.println(unitKey.asyncID());
+                    int totalUnits = unitEntry.getValue();
+                    int damagedUnits = 0;
+
+                    if (unitHolder.getUnitDamage() != null && unitHolder.getUnitDamage().get(unitKey) != null) {
+                        damagedUnits = unitHolder.getUnitDamage().get(unitKey);
+                    }
+                    EmojiUnion emoji = Emoji.fromFormatted(unitKey.unitEmoji());
+                    for (int x = 1; x < damagedUnits + 1 && x <= 2; x++) {
+                        String buttonID = finChecker + "unitTactical" + moveOrRemove + "_" + tile.getPosition() + "_"
+                            + x + unitName + "damaged";
+                        String buttonText = moveOrRemove + " " + x + " damaged " + unitKey.unitName();
+                        Button validTile2 = Buttons.red(buttonID, buttonText);
+                        validTile2 = validTile2.withEmoji(emoji);
+                        buttons.add(validTile2);
+                    }
+                    totalUnits = totalUnits - damagedUnits;
+                    for (int x = 1; x < totalUnits + 1 && x <= 2; x++) {
+                        String buttonID = finChecker + "unitTactical" + moveOrRemove + "_" + tile.getPosition() + "_"
+                            + x + unitName;
+                        String buttonText = moveOrRemove + " " + x + " " + unitKey.unitName();
+                        Button validTile2 = Buttons.red(buttonID, buttonText);
+                        validTile2 = validTile2.withEmoji(emoji);
+                        buttons.add(validTile2);
+                    }
+                }
+            }
+
+        }
+        Button concludeMove;
+        Button doAll;
+        Button doAllShips;
+        if ("Remove".equalsIgnoreCase(moveOrRemove)) {
+            doAllShips = Buttons.gray(
+                finChecker + "unitTactical" + moveOrRemove + "_" + tile.getPosition() + "_removeAllShips",
+                "Remove all Ships");
+            buttons.add(doAllShips);
+            doAll = Buttons.gray(
+                finChecker + "unitTactical" + moveOrRemove + "_" + tile.getPosition() + "_removeAll",
+                "Remove all units");
+            concludeMove = Buttons.blue(finChecker + "doneRemoving", "Done removing units");
+        } else {
+            doAll = Buttons.gray(finChecker + "unitTactical" + moveOrRemove + "_" + tile.getPosition() + "_moveAll",
+                "Move all units");
+            concludeMove = Buttons.blue(finChecker + "doneWithOneSystem_" + tile.getPosition(),
+                "Done moving units from this system");
+            if (game.playerHasLeaderUnlockedOrAlliance(player, "tneliscommander")
+                && game.getStoredValue("tnelisCommanderTracker").isEmpty()) {
+                buttons.add(Buttons.blue("declareUse_Tnelis Commander_" + tile.getPosition(), "Use Tnelis Commander")
+                    .withEmoji(Emoji.fromFormatted(Emojis.tnelis)));
+            }
+        }
+        buttons.add(doAll);
+        buttons.add(concludeMove);
+        Map<String, Integer> displacedUnits = game.getCurrentMovedUnitsFrom1System();
+        for (String unit : displacedUnits.keySet()) {
+            String unitkey;
+            String planet = "";
+            String origUnit = unit;
+            String damagedMsg = "";
+            if (unit.contains("damaged")) {
+                unit = unit.replace("damaged", "");
+                damagedMsg = " damaged ";
+            }
+            if (unit.contains("_")) {
+                unitkey = unit.split("_")[0];
+                planet = unit.split("_")[1];
+            } else {
+                unitkey = unit;
+            }
+            for (int x = 1; x < displacedUnits.get(origUnit) + 1; x++) {
+                if (x > 2) {
+                    break;
+                }
+                String blabel = "Undo move of " + x + " " + damagedMsg + unitkey;
+                if (!"".equalsIgnoreCase(planet)) {
+                    blabel = blabel + " from " + Helper.getPlanetRepresentation(planet.toLowerCase(), game);
+                }
+                Button validTile2 = Buttons.green(
+                    finChecker + "unitTactical" + moveOrRemove + "_" + tile.getPosition() + "_" + x
+                        + unit.toLowerCase().replace(" ", "").replace("'", "") + damagedMsg.replace(" ", "")
+                        + "_reverse",
+                    blabel)
+                    .withEmoji(Emoji
+                        .fromFormatted(Emojis.getEmojiFromDiscord(unitkey.toLowerCase().replace(" ", ""))));
+                buttons.add(validTile2);
+            }
+        }
+        if (displacedUnits.keySet().size() > 0) {
+            Button validTile2 = Buttons.green(
+                finChecker + "unitTactical" + moveOrRemove + "_" + tile.getPosition() + "_reverseAll", "Undo all");
+            buttons.add(validTile2);
+        }
+        return buttons;
+    }
 }

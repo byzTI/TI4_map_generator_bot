@@ -29,13 +29,14 @@ public class TileModel implements ModelInterface, EmbeddableModel {
     private Boolean isSupernova;
     private Boolean isNebula;
     private Boolean isGravityRift;
+    private String imageURL;
     private ComponentSource source;
     private String tileBack;
 
     @Override
     @JsonIgnore
     public boolean isValid() {
-        return id != null 
+        return id != null
             && imagePath != null
             && source != null;
     }

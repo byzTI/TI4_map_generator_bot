@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Predicate;
+
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.interaction.GenericInteractionCreateEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -39,16 +40,16 @@ public class SearchMyGames extends SearchSubcommandData {
         boolean onlyMyTurn = event.getOption(Constants.IS_MY_TURN, false, OptionMapping::getAsBoolean);
         boolean includeEndedGames = event.getOption(Constants.ENDED_GAMES, false, OptionMapping::getAsBoolean);
         boolean showAverageTurnTime = event.getOption(Constants.SHOW_AVERAGE_TURN_TIME, false, OptionMapping::getAsBoolean);
-        boolean showSecondaries = event.getOption(Constants.SHOW_SECONDARIES, false, OptionMapping::getAsBoolean);
+        boolean showSecondaries = event.getOption(Constants.SHOW_SECONDARIES, true, OptionMapping::getAsBoolean);
         boolean showGameModes = event.getOption(Constants.SHOW_GAME_MODES, false, OptionMapping::getAsBoolean);
         boolean ignoreSpectate = event.getOption("ignore_spectate", true, OptionMapping::getAsBoolean);
         boolean ignoreAborted = event.getOption("ignore_aborted", true, OptionMapping::getAsBoolean);
 
         User user = event.getOption(Constants.PLAYER, event.getUser(), OptionMapping::getAsUser);
-        searchGames(user, event, onlyMyTurn, includeEndedGames, showAverageTurnTime, showSecondaries, showGameModes, ignoreSpectate, ignoreAborted);
+        searchGames(user, event, onlyMyTurn, includeEndedGames, showAverageTurnTime, showSecondaries, showGameModes, ignoreSpectate, ignoreAborted, false);
     }
 
-    public static void searchGames(User user, GenericInteractionCreateEvent event, boolean onlyMyTurn, boolean includeEndedGames, boolean showAverageTurnTime, boolean showSecondaries, boolean showGameModes, boolean ignoreSpectate, boolean ignoreAborted) {
+    public static int searchGames(User user, GenericInteractionCreateEvent event, boolean onlyMyTurn, boolean includeEndedGames, boolean showAverageTurnTime, boolean showSecondaries, boolean showGameModes, boolean ignoreSpectate, boolean ignoreAborted, boolean wantNum) {
         String userID = user.getId();
 
         Predicate<Game> ignoreSpectateFilter = ignoreSpectate ? game -> game.getRealPlayerIDs().contains(userID) : game -> game.getPlayerIDs().contains(userID);
@@ -56,7 +57,7 @@ public class SearchMyGames extends SearchSubcommandData {
         Predicate<Game> endedGamesFilter = includeEndedGames ? game -> true : game -> !game.isHasEnded() && !game.isFowMode();
         Predicate<Game> onlyEndedFoWGames = game -> !game.isFowMode() || game.isHasEnded();
         Predicate<Game> ignoreAbortedFilter = ignoreAborted ? game -> !game.isHasEnded() || game.getWinner().isPresent() : game -> true;
-        Predicate<Game> allFilterPredicates = ignoreSpectateFilter.and(onlyMyTurnFilter).and(endedGamesFilter).and(onlyEndedFoWGames);
+        Predicate<Game> allFilterPredicates = ignoreSpectateFilter.and(onlyMyTurnFilter).and(endedGamesFilter).and(onlyEndedFoWGames).and(ignoreAbortedFilter);
 
         Comparator<Game> mapSort = Comparator.comparing(Game::getGameNameForSorting);
 
@@ -66,6 +67,9 @@ public class SearchMyGames extends SearchSubcommandData {
             .toList();
 
         int index = 1;
+        if (wantNum) {
+            return games.size();
+        }
         StringBuilder sb = new StringBuilder("**__").append(user.getName()).append("'s Games__**\n");
         for (Game playerGame : games) {
             sb.append("`").append(Helper.leftpad("" + index, 2)).append(".`");
@@ -79,6 +83,7 @@ public class SearchMyGames extends SearchSubcommandData {
         if (event instanceof ButtonInteractionEvent butt) {
             MessageHelper.sendMessageToThread(butt.getChannel(), user.getName() + "'s Game List", sb.toString());
         }
+        return games.size();
 
     }
 
@@ -94,7 +99,7 @@ public class SearchMyGames extends SearchSubcommandData {
         if (showAverageTurnTime) sb.append("  [Average Turn Time: `").append(playerAverageMapTurnLength(player)).append("`]");
         if (game.getWinner().filter(winner -> winner.getUserID().equals(player.getUserID())).isPresent()) sb.append(" **👑WINNER👑**");
         if (game.getActivePlayerID() != null && game.getActivePlayerID().equals(userID) && !game.isHasEnded()) sb.append(" **[__IT IS YOUR TURN__]**");
-        if (showSecondaries) {
+        if (showSecondaries && !game.isHasEnded()) {
             List<String> secondaries = new ArrayList<>();
             for (int sc : game.getPlayedSCs()) {
                 if (!player.hasFollowedSC(sc) && !player.getSCs().contains(sc)) {

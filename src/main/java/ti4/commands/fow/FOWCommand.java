@@ -2,7 +2,6 @@ package ti4.commands.fow;
 
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
-import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction;
@@ -16,7 +15,6 @@ import ti4.message.MessageHelper;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 public class FOWCommand implements Command {
 
@@ -95,6 +93,7 @@ public class FOWCommand implements Command {
         subcommands.add(new Whisper());
         subcommands.add(new Announce());
         subcommands.add(new FOWOptions());
+        subcommands.add(new ShowGameAsPlayer());
         return subcommands;
     }
 

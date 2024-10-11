@@ -1,13 +1,13 @@
 package ti4.helpers;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import ti4.message.BotLogger;
-
 import java.awt.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import ti4.message.BotLogger;
 
 public class Storage {
 
@@ -21,6 +21,8 @@ public class Storage {
 
     private static String resourcePath = null;
     private static String storagePath = null;
+
+    private static Font EMOJI_FONT_40;
 
     private static Font TI_FONT_8;
     private static Font TI_FONT_12;
@@ -44,6 +46,12 @@ public class Storage {
     private static Font TI_FONT_90;
     private static Font TI_FONT_100;
     private static Font TI_FONT_110;
+
+    public static Font getEmojiFont() {
+        if (EMOJI_FONT_40 != null)
+            return EMOJI_FONT_40;
+        return EMOJI_FONT_40 = getEmojiFont(40f);
+    }
 
     public static Font getFont8() {
         if (TI_FONT_8 != null) {
@@ -235,6 +243,25 @@ public class Storage {
         return tiFont;
     }
 
+    private static Font getEmojiFont(float size) {
+        Font font = null;
+        String resource = getResourcePath();
+        if (resource == null) return null;
+        File file = new File(resource + "/font/NotoEmoji-Regular.ttf");
+        try (InputStream inputStream = new FileInputStream(file)) {
+            font = Font.createFont(Font.TRUETYPE_FONT, inputStream);
+            font = font.deriveFont(size);
+        } catch (Exception e) {
+            BotLogger.log("Could not load font", e);
+        }
+        return font;
+    }
+
+    @NotNull
+    public static File getAppEmojiDirectory() {
+        return new File(getResourcePath() + "/emojis/");
+    }
+
     @NotNull
     public static File getMapUndoStorage(String mapName) {
         return new File(getStoragePath() + MAPS_UNDO + mapName);
@@ -252,7 +279,11 @@ public class Storage {
 
     @NotNull
     public static File getMapImageDirectory() {
-        return new File(getStoragePath() + MAPS);
+        var file = new File(getStoragePath() + MAPS);
+        if (!file.exists()) {
+            file.mkdirs();
+        }
+        return file;
     }
 
     @NotNull

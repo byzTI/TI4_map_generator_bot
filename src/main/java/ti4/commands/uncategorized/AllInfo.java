@@ -1,6 +1,7 @@
 package ti4.commands.uncategorized;
 
 import java.util.List;
+
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -13,13 +14,12 @@ import ti4.commands.Command;
 import ti4.commands.cardsac.ACInfo;
 import ti4.commands.cardspn.PNInfo;
 import ti4.commands.cardsso.SOInfo;
-import ti4.commands.explore.RelicInfo;
 import ti4.commands.leaders.LeaderInfo;
 import ti4.commands.player.AbilityInfo;
 import ti4.commands.player.UnitInfo;
+import ti4.commands.relic.RelicInfo;
 import ti4.commands.tech.TechInfo;
 import ti4.generator.Mapper;
-import ti4.helpers.ButtonHelper;
 import ti4.helpers.Constants;
 import ti4.helpers.Helper;
 import ti4.map.Game;
@@ -68,7 +68,7 @@ public class AllInfo implements Command {
                 return false;
             }
             if (!event.getChannel().getName().startsWith(userActiveGame.getName() + "-")) {
-                MessageHelper.replyToMessage(event, "Commands can be executed only in game specific channels");
+                MessageHelper.replyToMessage(event, "Commands may be executed only in game specific channels.");
                 return false;
             }
             return true;

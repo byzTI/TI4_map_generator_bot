@@ -3,9 +3,9 @@ package ti4.commands.custom;
 import java.util.List;
 
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.interactions.commands.Command.Choice;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
-import net.dv8tion.jda.api.interactions.commands.Command.Choice;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import ti4.generator.Mapper;
 import ti4.helpers.Constants;
@@ -27,8 +27,10 @@ public class CustomizationOptions extends CustomSubcommandData {
         addOptions(new OptionData(OptionType.STRING, Constants.SPIN_MODE, "Automatically spin inner three rings at status cleanup. ON or OFF").addChoices(onOff));
         addOptions(new OptionData(OptionType.BOOLEAN, Constants.SHOW_UNIT_TAGS, "Show faction unit tags on map images"));
         addOptions(new OptionData(OptionType.BOOLEAN, Constants.LIGHT_FOG_MODE, "Retain sight on formerly seen tiles"));
-        addOptions(new OptionData(OptionType.BOOLEAN, Constants.RED_TAPE_MODE, "Reveal all objectives and diplo gets the power to pre-reveal"));
-        addOptions(new OptionData(OptionType.BOOLEAN, Constants.NOMAD_COIN, "Replace tg emojis with nomad coin emojis"));
+        addOptions(new OptionData(OptionType.BOOLEAN, Constants.RED_TAPE_MODE,
+            "Reveal all objectives and diplo gets the power to pre-reveal"));
+        addOptions(
+            new OptionData(OptionType.BOOLEAN, Constants.NOMAD_COIN, "Replace TG emojis with nomad coin emojis"));
         addOptions(new OptionData(OptionType.BOOLEAN, Constants.QUEUE_SO, "Queue SO Discards"));
         addOptions(new OptionData(OptionType.BOOLEAN, Constants.SHOW_BUBBLES, "Show the bubbles around anti-bombardment planets"));
         addOptions(new OptionData(OptionType.BOOLEAN, Constants.SHOW_GEARS, "Show the production capacity in a system"));
@@ -38,8 +40,10 @@ public class CustomizationOptions extends CustomSubcommandData {
         addOptions(new OptionData(OptionType.BOOLEAN, Constants.HOMEBREW_MODE, "Mark the game as homebrew"));
         addOptions(new OptionData(OptionType.BOOLEAN, Constants.INJECT_RULES_LINKS, "Have the bot inject helpful links to rules within it's output"));
         addOptions(new OptionData(OptionType.BOOLEAN, Constants.UNDO_BUTTON, "Offer Undo Button"));
-        addOptions(new OptionData(OptionType.INTEGER, Constants.FAST_SC_FOLLOW, "Consider People To Pass on SCs if they dont respond with X hours. Set X to 0 to turn off"));
-        addOptions(new OptionData(OptionType.STRING, Constants.UNIT_SOURCE, "Swap player's owned units to units from another source").setAutoComplete(true));
+        addOptions(new OptionData(OptionType.INTEGER, Constants.FAST_SC_FOLLOW,
+            "Consider People To Pass on SCs if they don't respond with X hours. Set X to 0 to turn off"));
+        addOptions(new OptionData(OptionType.STRING, Constants.UNIT_SOURCE,
+            "Swap player's owned units to units from another source").setAutoComplete(true));
     }
 
     @Override
@@ -124,10 +128,12 @@ public class CustomizationOptions extends CustomSubcommandData {
         if (showBa != null)
             game.setShowBanners(showBa);
 
-        String hexStyle = event.getOption(Constants.SHOW_HEX_BORDERS, null, OptionMapping::getAsString).toLowerCase();
+        String hexStyle = event.getOption(Constants.SHOW_HEX_BORDERS, null, OptionMapping::getAsString);
         if (hexStyle != null) {
+            hexStyle = hexStyle.toLowerCase();
             if (hexStyle.equals("dash") || hexStyle.equals("off") || hexStyle.equals("solid")) {
                 game.setHexBorderStyle(hexStyle);
+
             }
         }
 

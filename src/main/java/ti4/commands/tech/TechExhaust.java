@@ -20,12 +20,14 @@ import ti4.helpers.ButtonHelper;
 import ti4.helpers.ButtonHelperActionCards;
 import ti4.helpers.ButtonHelperFactionSpecific;
 import ti4.helpers.CombatTempModHelper;
+import ti4.helpers.ComponentActionHelper;
 import ti4.helpers.Constants;
 import ti4.helpers.DiceHelper.Die;
 import ti4.helpers.Emojis;
 import ti4.helpers.FoWHelper;
 import ti4.helpers.Helper;
 import ti4.helpers.Units.UnitType;
+import ti4.helpers.ignis_aurora.IgnisAuroraHelperTechs;
 import ti4.map.Game;
 import ti4.map.Leader;
 import ti4.map.Player;
@@ -45,8 +47,7 @@ public class TechExhaust extends TechAddRemove {
         checkAndApplyCombatMods(event, player, techID);
     }
 
-    public static void exhaustTechAndResolve(GenericInteractionCreateEvent event, Game game, Player player,
-        String tech) {
+    public static void exhaustTechAndResolve(GenericInteractionCreateEvent event, Game game, Player player, String tech) {
         String pos = "";
         if (tech.contains("dskortg")) {
             pos = tech.split("_")[1];
@@ -55,25 +56,32 @@ public class TechExhaust extends TechAddRemove {
         TechnologyModel techModel = Mapper.getTech(tech);
         String exhaustMessage = player.getRepresentation() + " exhausted tech " + techModel.getRepresentation(false);
         if (game.isShowFullComponentTextEmbeds()) {
-            MessageHelper.sendMessageToChannelWithEmbed(player.getCorrectChannel(), exhaustMessage,
-                techModel.getRepresentationEmbed());
+            MessageHelper.sendMessageToChannelWithEmbed(player.getCorrectChannel(), exhaustMessage, techModel.getRepresentationEmbed());
         } else {
             MessageHelper.sendMessageToChannel(player.getCorrectChannel(), exhaustMessage);
         }
+
         player.exhaustTech(tech);
+
+        // Handle Ignis Aurora Techs
+        if (tech.startsWith("baldrick_")) {
+            IgnisAuroraHelperTechs.handleExhaustIgnisAuroraTech(event, game, player, tech);
+            return;
+        }
+
         switch (tech) {
             case "bs" -> { // Bio-stims
                 ButtonHelper.sendAllTechsNTechSkipPlanetsToReady(game, event, player, false);
                 deleteTheOneButtonIfButtonEvent(event);
             }
             case "gls" -> { // Graviton
-                MessageHelper.sendMessageToChannel(player.getCorrectChannel(), player.getRepresentation() + " exhausted graviton. The auto assign hit buttons for PDS fire will now kill fighters last");
+                MessageHelper.sendMessageToChannel(event.getMessageChannel(), player.getRepresentation() + " exhausted Graviton Laser System. The auto assign hit buttons for PDS fire will now kill fighters last");
                 game.setStoredValue(player.getFaction() + "graviton", "true");
                 deleteTheOneButtonIfButtonEvent(event);
             }
 
             case "dsbenty" -> {
-                MessageHelper.sendMessageToChannel(player.getCorrectChannel(), player.getRepresentation() + " exhausted merged replicators to increase the production value of one of their units by 2, or to match the largest value on the board");
+                MessageHelper.sendMessageToChannel(player.getCorrectChannel(), player.getRepresentation() + " exhausted Merged Replicators to increase the production value of one of their units by 2, or to match the largest value on the board");
                 deleteTheOneButtonIfButtonEvent(event);
             }
             case "dsceldr" -> {
@@ -108,10 +116,10 @@ public class TechExhaust extends TechAddRemove {
             case "absol_nm" -> { // Absol's Neural Motivator
                 deleteIfButtonEvent(event);
                 Button draw2ACButton = Button
-                    .secondary(player.getFinsFactionCheckerPrefix() + "draw2ac", "Draw 2 Action Cards")
+                    .secondary(player.getFinsFactionCheckerPrefix() + "draw2 AC", "Draw 2 Action Cards")
                     .withEmoji(Emoji.fromFormatted(Emojis.ActionCard));
                 MessageHelper.sendMessageToChannelWithButton(event.getMessageChannel(), "", draw2ACButton);
-                sendNextActionButtonsIfButtonEvent(event, game, player);
+                //sendNextActionButtonsIfButtonEvent(event, game, player);
             }
             case "dskortg" -> {
                 Tile tile = null;
@@ -128,39 +136,40 @@ public class TechExhaust extends TechAddRemove {
                     RemoveCC.removeCC(event, player.getColor(), tile, game);
                 }
             }
-            case "td" -> { // Transit Diodes
+            case "td", "absol_td" -> { // Transit Diodes
                 ButtonHelper.resolveTransitDiodesStep1(game, player);
             }
             case "miltymod_hm" -> { // MiltyMod Hyper Metabolism (Gain a CC)
-                Button gainCC = Button.success(player.getFinsFactionCheckerPrefix() + "gain_CC", "Gain CC");
+                Button gainCC = Buttons.green(player.getFinsFactionCheckerPrefix() + "gain_CC", "Gain CC");
                 MessageHelper.sendMessageToChannelWithButtons(event.getMessageChannel(),
-                    player.getFactionEmojiOrColor() + " use button to gain a CC:", List.of(gainCC));
+                    player.getFactionEmojiOrColor() + " use button to gain 1 CC:", List.of(gainCC));
             }
             case "absol_hm" -> { // MiltyMod Hyper Metabolism (Gain a CC)
                 List<Button> buttons = new ArrayList<>();
-                buttons.add(Button.success(player.getFinsFactionCheckerPrefix() + "gain_CC", "Gain CC"));
+                buttons.add(Buttons.green(player.getFinsFactionCheckerPrefix() + "gain_CC", "Gain CC"));
                 if (player.getStrategicCC() > 0) {
                     for (Leader leader : player.getLeaders()) {
                         if (leader.isExhausted() && leader.getId().contains("agent")) {
-                            buttons.add(Button.primary(
+                            buttons.add(Buttons.blue(
                                 player.getFinsFactionCheckerPrefix() + "spendStratNReadyAgent_" + leader.getId(),
                                 "Ready " + leader.getId()));
                         }
                     }
                     for (String relic : player.getExhaustedRelics()) {
                         if ("titanprototype".equalsIgnoreCase("relic") || "absol_jr".equalsIgnoreCase(relic)) {
-                            buttons.add(Button.primary(
+                            buttons.add(Buttons.blue(
                                 player.getFinsFactionCheckerPrefix() + "spendStratNReadyAgent_" + relic,
                                 "Ready JR"));
                         }
                     }
                 }
                 MessageHelper.sendMessageToChannelWithButtons(event.getMessageChannel(), player.getFactionEmojiOrColor()
-                    + " use button to gain a CC or spend a strat CC to ready your agent", buttons);
+                    + " use button to gain 1 CC or spend 1 strat CC to ready your agent", buttons);
             }
-            case "aida", "sar", "htp" -> {
+            case "aida", "sar", "htp", "absol_aida" -> {
                 if (event instanceof ButtonInteractionEvent) {
                     ButtonInteractionEvent buttonEvent = (ButtonInteractionEvent) event;
+                    tech = tech.replace("absol_", "");
                     ButtonHelper.deleteTheOneButton(buttonEvent);
                     if (buttonEvent.getButton().getLabel().contains("(")) {
                         player.addSpentThing(tech + "_");
@@ -171,9 +180,9 @@ public class TechExhaust extends TechAddRemove {
                     buttonEvent.getMessage().editMessage(exhaustedMessage).queue();
                 }
             }
-            case "pi" -> { // Predictive Intelligence
+            case "pi", "absol_pi" -> { // Predictive Intelligence
                 deleteTheOneButtonIfButtonEvent(event);
-                Button deleteButton = Button.danger("FFCC_" + player.getFaction() + "_deleteButtons",
+                Button deleteButton = Buttons.red("FFCC_" + player.getFaction() + "_deleteButtons",
                     "Delete These Buttons");
                 String message = player.getRepresentation(false, true) + " use buttons to redistribute";
                 MessageHelper.sendMessageToChannelWithButtons(event.getMessageChannel(), message,
@@ -184,16 +193,15 @@ public class TechExhaust extends TechAddRemove {
             }
             case "mi" -> { // Mageon
                 deleteIfButtonEvent(event);
-                //List<Button> buttons = AgendaHelper.getPlayerOutcomeButtons(game, null, "getACFrom", null); old way
                 List<Button> buttons = new ArrayList<>();
                 for (Player p2 : game.getRealPlayers()) {
                     if (p2 == player || p2.getAc() == 0) {
                         continue;
                     }
                     if (game.isFowMode()) {
-                        buttons.add(Button.secondary(player.getFinsFactionCheckerPrefix() + "getACFrom_" + p2.getFaction(), p2.getColor()));
+                        buttons.add(Buttons.gray(player.getFinsFactionCheckerPrefix() + "getACFrom_" + p2.getFaction(), p2.getColor()));
                     } else {
-                        Button button = Button.secondary(player.getFinsFactionCheckerPrefix() + "getACFrom_" + p2.getFaction(), " ");
+                        Button button = Buttons.gray(player.getFinsFactionCheckerPrefix() + "getACFrom_" + p2.getFaction(), " ");
                         String factionEmojiString = p2.getFactionEmoji();
                         button = button.withEmoji(Emoji.fromFormatted(factionEmojiString));
                         buttons.add(button);
@@ -208,7 +216,7 @@ public class TechExhaust extends TechAddRemove {
                 List<Button> buttons = Helper.getPlanetPlaceUnitButtons(player, game, "sd",
                     "placeOneNDone_skipbuild");
                 String message = player.getRepresentation(true, true)
-                    + " select the planet you would like to place or move a spacedock to.";
+                    + " select the planet you would like to place or move a space dock to.";
                 MessageHelper.sendMessageToChannelWithButtons(event.getMessageChannel(), message, buttons);
                 sendNextActionButtonsIfButtonEvent(event, game, player);
             }
@@ -235,14 +243,14 @@ public class TechExhaust extends TechAddRemove {
             case "wg" -> { // Wormhole Generator
                 deleteIfButtonEvent(event);
                 List<Button> buttons = new ArrayList<>(ButtonHelperFactionSpecific.getCreussIFFTypeOptions());
-                String message = player.getRepresentation(true, true) + " select type of wormhole you wish to drop";
+                String message = player.getRepresentation(true, true) + " select the type of wormhole you wish to drop.";
                 MessageHelper.sendMessageToChannelWithButtons(player.getCorrectChannel(), message, buttons);
                 sendNextActionButtonsIfButtonEvent(event, game, player);
             }
             case "absol_wg" -> { // Absol's Wormhole Generator
                 deleteIfButtonEvent(event);
                 List<Button> buttons = new ArrayList<>(ButtonHelperFactionSpecific.getCreussIFFTypeOptions());
-                String message = player.getRepresentation(true, true) + " select type of wormhole you wish to drop";
+                String message = player.getRepresentation(true, true) + " select the type of wormhole you wish to drop.";
                 MessageHelper.sendMessageToChannelWithButtons(player.getCorrectChannel(),
                     message, buttons);
                 MessageHelper.sendMessageToChannelWithButtons(player.getCorrectChannel(),
@@ -267,7 +275,7 @@ public class TechExhaust extends TechAddRemove {
                     player.refreshTech("lgf");
                 }
             }
-            case "det" -> {
+            case "det", "absol_det" -> {
                 deleteIfButtonEvent(event);
                 Die d1 = new Die(5);
 
@@ -295,7 +303,7 @@ public class TechExhaust extends TechAddRemove {
                 for (Tile tile : tiles) {
                     if (!pos2.contains(tile.getPosition())) {
                         String buttonID = "produceOneUnitInTile_" + tile.getPosition() + "_sling";
-                        Button tileButton = Button.success(buttonID,
+                        Button tileButton = Buttons.green(buttonID,
                             tile.getRepresentationForButtons(game, player));
                         buttons.add(tileButton);
                         pos2.add(tile.getPosition());
@@ -337,7 +345,7 @@ public class TechExhaust extends TechAddRemove {
     private static void sendNextActionButtonsIfButtonEvent(GenericInteractionCreateEvent event, Game game,
         Player player) {
         if (event instanceof ButtonInteractionEvent) {
-            ButtonHelper.serveNextComponentActionButtons(event, game, player);
+            ComponentActionHelper.serveNextComponentActionButtons(event, game, player);
         }
     }
 

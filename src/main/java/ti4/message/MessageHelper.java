@@ -32,6 +32,7 @@ import net.dv8tion.jda.api.entities.emoji.CustomEmoji;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.entities.messages.MessagePoll.LayoutType;
 import net.dv8tion.jda.api.events.interaction.GenericInteractionCreateEvent;
+import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle;
@@ -40,6 +41,7 @@ import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 import net.dv8tion.jda.api.utils.messages.MessagePollBuilder;
 import ti4.AsyncTI4DiscordBot;
+import ti4.buttons.Buttons;
 import ti4.helpers.AliasHandler;
 import ti4.helpers.Constants;
 import ti4.helpers.DiscordWebhook;
@@ -121,7 +123,7 @@ public class MessageHelper {
 						.map(fileName -> fileName.replace(Constants.TXT, ""))
 						.map(Integer::parseInt).toList();
 					int maxNumber = numbers.isEmpty() ? 0 : numbers.stream().mapToInt(value -> value).max().orElseThrow(NoSuchElementException::new);
-					newButtons.add(Button.secondary("ultimateUndo_" + maxNumber, "UNDO"));
+					newButtons.add(Buttons.gray("ultimateUndo_" + maxNumber, "UNDO"));
 				} catch (Exception e) {
 					BotLogger.log("Error trying to make undo copy for map: " + mapName, e);
 				}
@@ -225,6 +227,7 @@ public class MessageHelper {
 		sendFileUploadToChannel(channel, fileUpload);
 	}
 
+	//.setEphemeral(true).queue();
 	public static void sendFileUploadToChannel(MessageChannel channel, FileUpload fileUpload) {
 		if (fileUpload == null) {
 			BotLogger.log("FileUpload null");
@@ -232,6 +235,14 @@ public class MessageHelper {
 		}
 		channel.sendFiles(fileUpload).queue(null,
 			error -> BotLogger.log(getRestActionFailureMessage(channel, "Failed to send File to Channel", null, error)));
+	}
+
+	public static void sendEphemeralFileInResponseToButtonPress(FileUpload fileUpload, ButtonInteractionEvent event) {
+		if (fileUpload == null) {
+			BotLogger.log("FileUpload null");
+			return;
+		}
+		event.getHook().sendMessage("Here is your requested image").addFiles(fileUpload).setEphemeral(true).queue();
 	}
 
 	public static void sendFileToChannelWithButtonsAfter(MessageChannel channel, FileUpload fileUpload, String message, List<Button> buttons) {
@@ -247,9 +258,16 @@ public class MessageHelper {
 		replyToMessage(event, fileUpload, false, null, false);
 	}
 
-	public static void replyToMessage(GenericInteractionCreateEvent event, FileUpload fileUpload,
-		boolean forceShowMap) {
-		replyToMessage(event, fileUpload, forceShowMap, null, false);
+	public static void editMessageWithButtons(ButtonInteractionEvent event, String message, List<Button> buttons) {
+		editMessageWithButtonsAndFiles(event, message, buttons, Collections.emptyList());
+	}
+
+	public static void editMessageWithButtonsAndFiles(ButtonInteractionEvent event, String message, List<Button> buttons, List<FileUpload> files) {
+		editMessageWithActionRowsAndFiles(event, message, ActionRow.partitionOf(buttons), files);
+	}
+
+	public static void editMessageWithActionRowsAndFiles(ButtonInteractionEvent event, String message, List<ActionRow> rows, List<FileUpload> files) {
+		event.getHook().editOriginal(message).setComponents(rows).setFiles(files).queue();
 	}
 
 	public static void replyToMessage(GenericInteractionCreateEvent event, FileUpload fileUpload, boolean forceShowMap,
@@ -310,6 +328,20 @@ public class MessageHelper {
 		if (channel == null) {
 			return;
 		}
+
+		if (channel instanceof ThreadChannel thread) {
+			if (thread.isArchived() && !thread.isLocked()) {
+				String txt = messageText;
+				List<Button> butts = buttons;
+				thread.getManager().setArchived(false).queue((v) -> {
+					splitAndSentWithAction(txt, channel, restAction, embeds, butts);
+				}, BotLogger::catchRestError);
+				return;
+			} else if (thread.isLocked()) {
+				BotLogger.log("WARNING: Attempting to send a message to locked thread: " + thread.getJumpUrl());
+			}
+		}
+
 		buttons = sanitizeButtons(buttons, channel);
 
 		Game game = getGameFromChannelName(channel.getName());
@@ -646,6 +678,15 @@ public class MessageHelper {
 		return ListUtils.partition(embeds, 9); //max 10, but we've had issues with 6k char limit, so max 9
 	}
 
+	public static void sendMessageToThread(MessageChannel channel, String threadName, String messageToSend) {
+		if (channel instanceof MessageChannelUnion union) {
+			sendMessageToThread(union, threadName, messageToSend);
+		} else {
+			messageToSend = "Something went wrong trying to send this to a thread! Sorry!\n" + messageToSend;
+			sendMessageToChannel(channel, messageToSend);
+		}
+	}
+
 	public static void sendMessageToThread(MessageChannelUnion channel, String threadName, String messageToSend) {
 		if (channel == null || threadName == null || messageToSend == null || threadName.isEmpty()
 			|| messageToSend.isEmpty())
@@ -738,7 +779,11 @@ public class MessageHelper {
 						.add("Button:  " + button.getId() + "\n Label:  " + button.getLabel()
 							+ "\n Error:  Emoji Not Found in Cache\n Emoji:  " + emoji.getName() + " "
 							+ emoji.getId());
-					button = Button.of(button.getStyle(), button.getId(), button.getLabel());
+					String label = button.getLabel();
+					if (label.isBlank()) {
+						label = String.format(":%s:", emoji.getName());
+					}
+					button = Button.of(button.getStyle(), button.getId(), label);
 				}
 			}
 			newButtons.add(button);

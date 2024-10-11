@@ -18,6 +18,7 @@ import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction;
 import ti4.commands.Command;
 import ti4.commands.combat.StartCombat;
+import ti4.commands.leaders.CommanderUnlockCheck;
 import ti4.commands.planet.PlanetAdd;
 import ti4.commands.uncategorized.ShowGame;
 import ti4.generator.Mapper;
@@ -28,6 +29,7 @@ import ti4.helpers.Emojis;
 import ti4.helpers.FoWHelper;
 import ti4.helpers.Helper;
 import ti4.helpers.Units.UnitKey;
+import ti4.helpers.Units.UnitType;
 import ti4.map.Game;
 import ti4.map.GameManager;
 import ti4.map.GameSaveLoadManager;
@@ -130,7 +132,9 @@ abstract public class AddRemoveUnits implements Command {
 
     public void unitParsing(GenericInteractionCreateEvent event, String color, Tile tile, String unitList, Game game) {
         unitList = unitList.replace(", ", ",").replace("-", "").replace("'", "").toLowerCase();
-
+        if (!Mapper.isValidColor(color)) {
+            return;
+        }
         if (game.getPlayerFromColorOrFaction(color) == null && !game.getPlayerIDs().contains("572698679618568193")) {
             game.setupNeutralPlayer(color);
         }
@@ -258,7 +262,7 @@ abstract public class AddRemoveUnits implements Command {
                         break;
                     }
                 }
-                if (player1 != player2 && !tile.getPosition().equalsIgnoreCase("nombox")) {
+                if (player1 != player2 && !tile.getPosition().equalsIgnoreCase("nombox") && !player1.getAllianceMembers().contains(player2.getFaction())) {
                     if ("ground".equals(combatType)) {
                         StartCombat.startGroundCombat(player1, player2, game, event, tile.getUnitHolderFromPlanet(planetName), tile);
                     } else {
@@ -302,12 +306,8 @@ abstract public class AddRemoveUnits implements Command {
                 return;
             }
             ButtonHelper.checkFleetAndCapacity(player, game, tile, event);
-            if (player.getLeaderIDs().contains("naalucommander") && !player.hasLeaderUnlocked("naalucommander")) {
-                ButtonHelper.commanderUnlockCheck(player, game, "naalu", event);
-            }
-            if (player.getLeaderIDs().contains("cabalcommander") && !player.hasLeaderUnlocked("cabalcommander")) {
-                ButtonHelper.commanderUnlockCheck(player, game, "cabal", event);
-            }
+            CommanderUnlockCheck.checkPlayer(player, game, "naalu", event);
+            CommanderUnlockCheck.checkPlayer(player, game, "cabal", event);
         }
     }
 
@@ -325,7 +325,9 @@ abstract public class AddRemoveUnits implements Command {
                 Set<String> unitColors = new HashSet<>();
                 for (UnitKey unit_ : allUnitsOnPlanet) {
                     String unitColor = unit_.getColorID();
-                    unitColors.add(unitColor);
+                    if (unit_.getUnitType() != UnitType.Fighter) {
+                        unitColors.add(unitColor);
+                    }
                 }
 
                 if (unitColors.size() == 1) {

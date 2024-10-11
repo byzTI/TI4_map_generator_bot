@@ -4,6 +4,7 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
+import ti4.commands.leaders.CommanderUnlockCheck;
 import ti4.helpers.ButtonHelper;
 import ti4.helpers.Constants;
 import ti4.helpers.Helper;
@@ -45,7 +46,7 @@ public class DrawAC extends ACCardsSubcommandData {
             return;
         }
         String message = player.getRepresentation() + " Drew " + count + " AC";
-        if (addScheming) {
+        if (addScheming && player.hasAbility("scheming")) {
             message = "Drew [" + count + "+1=" + ++count + "] AC (Scheming)";
         }
 
@@ -54,11 +55,8 @@ public class DrawAC extends ACCardsSubcommandData {
         }
         ACInfo.sendActionCardInfo(game, player);
         ButtonHelper.checkACLimit(game, null, player);
-        if (addScheming) ACInfo.sendDiscardActionCardButtons(game, player, false);
-        if (player.getLeaderIDs().contains("yssarilcommander") && !player.hasLeaderUnlocked("yssarilcommander")) {
-            ButtonHelper.commanderUnlockCheck(player, game, "yssaril", null);
-        }
-
+        if (addScheming && player.hasAbility("scheming")) ACInfo.sendDiscardActionCardButtons(game, player, false);
+        CommanderUnlockCheck.checkPlayer(player, game, "yssaril", null);
         MessageHelper.sendMessageToChannel(player.getCorrectChannel(), message);
     }
 }

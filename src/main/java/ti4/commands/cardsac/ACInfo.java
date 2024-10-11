@@ -3,17 +3,20 @@ package ti4.commands.cardsac;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
 import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.events.interaction.GenericInteractionCreateEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
-import ti4.commands.uncategorized.InfoThreadCommand;
+import ti4.buttons.Buttons;
 import ti4.commands.uncategorized.CardsInfoHelper;
+import ti4.commands.uncategorized.InfoThreadCommand;
 import ti4.generator.Mapper;
 import ti4.helpers.ButtonHelper;
 import ti4.helpers.Constants;
 import ti4.helpers.Emojis;
 import ti4.helpers.Helper;
+import ti4.listeners.annotations.ButtonHandler;
 import ti4.map.Game;
 import ti4.map.Player;
 import ti4.message.MessageHelper;
@@ -88,6 +91,7 @@ public class ACInfo extends ACCardsSubcommandData implements InfoThreadCommand {
         return sb.toString();
     }
 
+    @ButtonHandler("refreshACInfo")
     public static void sendActionCardInfo(Game game, Player player, GenericInteractionCreateEvent event) {
         String headerText = player.getRepresentation() + CardsInfoHelper.getHeaderText(event);
         MessageHelper.sendMessageToPlayerCardsInfoThread(player, game, headerText);
@@ -146,21 +150,21 @@ public class ACInfo extends ACCardsSubcommandData implements InfoThreadCommand {
                 String key = ac.getKey();
                 String ac_name = Mapper.getActionCard(key).getName();
                 if (ac_name != null) {
-                    acButtons.add(Button.danger(Constants.AC_PLAY_FROM_HAND + value, "(" + value + ") " + ac_name)
+                    acButtons.add(Buttons.red(Constants.AC_PLAY_FROM_HAND + value, "(" + value + ") " + ac_name)
                         .withEmoji(Emoji.fromFormatted(Emojis.ActionCard)));
                 }
             }
         }
         if (ButtonHelper.isPlayerElected(game, player, "censure") || ButtonHelper.isPlayerElected(game, player, "absol_censure")) {
-            acButtons.add(Button.primary("getDiscardButtonsACs", "Discard an AC (You are politically censured)"));
+            acButtons.add(Buttons.blue("getDiscardButtonsACs", "Discard an AC (You are politically censured)"));
         } else {
-            acButtons.add(Button.primary("getDiscardButtonsACs", "Discard an AC"));
+            acButtons.add(Buttons.blue("getDiscardButtonsACs", "Discard an AC"));
         }
         if (actionCards != null && !actionCards.isEmpty()
             && !ButtonHelper.isPlayerElected(game, player, "censure")
-            && (actionCards.containsKey("coup") || actionCards.containsKey("disgrace")
-                || actionCards.containsKey("investments") || actionCards.containsKey("summit"))) {
-            acButtons.add(Button.secondary("checkForAllACAssignments", "Pre assign ACs"));
+            && (actionCards.containsKey("coup") || actionCards.containsKey("disgrace") || actionCards.containsKey("special_session")
+                || actionCards.containsKey("investments") || actionCards.containsKey("last_minute_deliberation") || actionCards.containsKey("revolution") || actionCards.containsKey("deflection") || actionCards.containsKey("summit"))) {
+            acButtons.add(Buttons.gray("checkForAllACAssignments", "Pre assign ACs"));
         }
 
         return acButtons;
@@ -177,7 +181,7 @@ public class ACInfo extends ACCardsSubcommandData implements InfoThreadCommand {
                 ActionCardModel actionCard = Mapper.getActionCard(key);
                 String actionCardWindow = actionCard.getWindow();
                 if (ac_name != null && "Action".equalsIgnoreCase(actionCardWindow)) {
-                    acButtons.add(Button.danger(Constants.AC_PLAY_FROM_HAND + value, "(" + value + ") " + ac_name)
+                    acButtons.add(Buttons.red(Constants.AC_PLAY_FROM_HAND + value, "(" + value + ") " + ac_name)
                         .withEmoji(Emoji.fromFormatted(Emojis.ActionCard)));
                 }
             }
@@ -191,21 +195,27 @@ public class ACInfo extends ACCardsSubcommandData implements InfoThreadCommand {
         MessageHelper.sendMessageToChannelWithButtons(player.getCardsInfoThread(), msg, buttons);
     }
 
+    public static void sendDiscardAndDrawActionCardButtons(Game game, Player player) {
+        List<Button> buttons = getDiscardActionCardButtonsWithSuffix(game, player, "redraw");
+        String msg = player.getRepresentation(true, true) + " use buttons to discard. A new action card will be automatically drawn afterwards.";
+        MessageHelper.sendMessageToChannelWithButtons(player.getCardsInfoThread(), msg, buttons);
+    }
+
     public static List<Button> getDiscardActionCardButtons(Game game, Player player, boolean doingAction) {
+        return getDiscardActionCardButtonsWithSuffix(game, player, doingAction ? "stall" : "");
+    }
+
+    public static List<Button> getDiscardActionCardButtonsWithSuffix(Game game, Player player, String suffix) {
         List<Button> acButtons = new ArrayList<>();
         Map<String, Integer> actionCards = player.getActionCards();
-        String stall = "";
-        if (doingAction) {
-            stall = "stall";
-        }
+
         if (actionCards != null && !actionCards.isEmpty()) {
             for (Map.Entry<String, Integer> ac : actionCards.entrySet()) {
                 Integer value = ac.getValue();
                 String key = ac.getKey();
                 String ac_name = Mapper.getActionCard(key).getName();
                 if (ac_name != null) {
-                    acButtons.add(Button.primary("ac_discard_from_hand_" + value + stall, "(" + value + ") " + ac_name)
-                        .withEmoji(Emoji.fromFormatted(Emojis.ActionCard)));
+                    acButtons.add(Buttons.blue("ac_discard_from_hand_" + value + suffix, "(" + value + ") " + ac_name, Emojis.ActionCard));
                 }
             }
         }
@@ -239,7 +249,7 @@ public class ACInfo extends ACCardsSubcommandData implements InfoThreadCommand {
                 String key = ac.getKey();
                 String ac_name = Mapper.getActionCard(key).getName();
                 if (ac_name != null) {
-                    acButtons.add(Button.danger("takeAC_" + value + "_" + player.getFaction(), ac_name)
+                    acButtons.add(Buttons.red("takeAC_" + value + "_" + player.getFaction(), ac_name)
                         .withEmoji(Emoji.fromFormatted(Emojis.ActionCard)));
                 }
             }

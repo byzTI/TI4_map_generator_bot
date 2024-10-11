@@ -3,10 +3,8 @@ package ti4.commands.custom;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Objects;
-import java.util.stream.Collectors;
-import net.dv8tion.jda.api.entities.User;
+
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
-import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction;
 import ti4.commands.Command;
@@ -35,7 +33,7 @@ public class CustomCommand implements Command {
                 return false;
             }
             Game userActiveGame = gameManager.getUserActiveGame(userID);
-            if (!userActiveGame.getPlayerIDs().contains(userID) && !userActiveGame.isCommunityMode()) {
+            if (userActiveGame != null && !userActiveGame.getPlayerIDs().contains(userID) && !userActiveGame.isCommunityMode()) {
                 MessageHelper.replyToMessage(event,
                     "You're not a player of the game, please call function /join gameName");
                 return false;

@@ -33,7 +33,6 @@ import ti4.map.UnitHolder;
 import ti4.message.BotLogger;
 import ti4.message.MessageHelper;
 import ti4.model.BorderAnomalyHolder;
-import ti4.model.UnitModel;
 import ti4.model.WormholeModel;
 
 public class FoWHelper {
@@ -137,7 +136,7 @@ public class FoWHelper {
 		// Get all tiles with the player in it
 		Set<String> tilesWithPlayerUnitsPlanets = new HashSet<>();
 		for (Map.Entry<String, Tile> tileEntry : new HashMap<>(game.getTileMap()).entrySet()) {
-			if (playerIsInSystem(game, tileEntry.getValue(), player)) {
+			if (playerIsInSystem(game, tileEntry.getValue(), player, false)) {
 				tilesWithPlayerUnitsPlanets.add(tileEntry.getKey());
 			}
 		}
@@ -165,7 +164,7 @@ public class FoWHelper {
 		// Get all tiles with the player in it
 		Set<String> tilesWithPlayerUnitsPlanets = new HashSet<>();
 		for (Map.Entry<String, Tile> tileEntry : new HashMap<>(game.getTileMap()).entrySet()) {
-			if (playerIsInSystem(game, tileEntry.getValue(), player)) {
+			if (playerIsInSystem(game, tileEntry.getValue(), player, false)) {
 				tilesWithPlayerUnitsPlanets.add(tileEntry.getKey());
 			}
 		}
@@ -411,9 +410,8 @@ public class FoWHelper {
 				}
 				for (WormholeModel.Wormhole wh : WormholeModel.Wormhole.values()) {
 					if (tokenName.contains(wh.getWhString())) {
-						wormholeIDs.add(wh.getWhString());
+						//wormholeIDs.add(wh.getWhString());
 						wormholeIDs.add(wh.toString());
-
 						break;
 					}
 				}
@@ -602,7 +600,7 @@ public class FoWHelper {
 		Set<String> tilesToCheck = getAdjacentTiles(game, position, null, false);
 		Tile startingTile = game.getTileByPosition(position);
 
-		for (Player player_ : game.getPlayers().values()) {
+		for (Player player_ : game.getRealPlayers()) {
 			Set<String> tiles = new HashSet<>(tilesToCheck);
 			if (player_.hasAbility("quantum_entanglement")) {
 				tiles.addAll(getWormholeAdjacencies(game, position, player_));
@@ -616,7 +614,7 @@ public class FoWHelper {
 			for (String position_ : tiles) {
 				Tile tile = game.getTileByPosition(position_);
 				if (tile != null) {
-					if (playerIsInSystem(game, tile, player_)) {
+					if (playerIsInSystem(game, tile, player_, true)) {
 						players.add(player_);
 						break;
 					}
@@ -629,9 +627,12 @@ public class FoWHelper {
 	}
 
 	/** Check if the specified player should have vision on the system */
-	public static boolean playerIsInSystem(Game game, Tile tile, Player player) {
+	public static boolean playerIsInSystem(Game game, Tile tile, Player player, boolean forNeighbors) {
 		Set<String> unitHolderNames = tile.getUnitHolders().keySet();
-		List<String> playerPlanets = player.getPlanets();
+		List<String> playerPlanets = player.getPlanetsAllianceMode();
+		if (forNeighbors) {
+			playerPlanets = player.getPlanets();
+		}
 		if (playerPlanets.stream().anyMatch(unitHolderNames::contains)) {
 			return true;
 		} else if (tile.isMecatol() && player.hasTech("iihq")) {
@@ -653,8 +654,11 @@ public class FoWHelper {
 	}
 
 	public static boolean playerHasPlanetsInSystem(Player player, Tile tile) {
+		if (tile == null || player == null) {
+			return false;
+		}
 		for (UnitHolder uH : tile.getPlanetUnitHolders()) {
-			if (player.getPlanets().contains(uH.getName())) {
+			if (player.getPlanetsAllianceMode().contains(uH.getName())) {
 				return true;
 			}
 		}
@@ -687,9 +691,8 @@ public class FoWHelper {
 		Map<UnitKey, Integer> units = new HashMap<>(unitHolder.getUnits());
 
 		for (UnitKey unitKey : units.keySet()) {
-			if (unitKey != null && unitKey.getColorID().equals(colorID)) {
-				UnitModel model = player.getUnitFromAsyncID(unitKey.asyncID());
-				return model != null && model.getIsShip();
+			if (unitKey != null && unitKey.getColorID().equals(colorID) && player.getUnitFromAsyncID(unitKey.asyncID()) != null && player.getUnitFromAsyncID(unitKey.asyncID()).getIsShip()) {
+				return true;
 			}
 		}
 		return false;
@@ -697,7 +700,7 @@ public class FoWHelper {
 
 	public static boolean otherPlayersHaveShipsInSystem(Player player, Tile tile, Game game) {
 		for (Player p2 : game.getRealPlayersNDummies()) {
-			if (p2 == player) {
+			if (p2 == player || player.getAllianceMembers().contains(p2.getFaction())) {
 				continue;
 			}
 			if (playerHasShipsInSystem(p2, tile)) {
@@ -709,7 +712,7 @@ public class FoWHelper {
 
 	public static boolean otherPlayersHaveUnitsInSystem(Player player, Tile tile, Game game) {
 		for (Player p2 : game.getRealPlayersNDummies()) {
-			if (p2 == player) {
+			if (p2 == player || player.getAllianceMembers().contains(p2.getFaction())) {
 				continue;
 			}
 			if (playerHasUnitsInSystem(p2, tile)) {

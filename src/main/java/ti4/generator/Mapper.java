@@ -1,7 +1,5 @@
 package ti4.generator;
 
-import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -22,6 +20,9 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import ti4.ResourceHelper;
@@ -32,10 +33,35 @@ import ti4.helpers.Units;
 import ti4.helpers.Units.UnitKey;
 import ti4.map.Game;
 import ti4.message.BotLogger;
-import ti4.model.*;
-import ti4.model.Source.ComponentSource;
-import ti4.model.TechnologyModel.TechnologyType;
+import ti4.model.AbilityModel;
+import ti4.model.ActionCardModel;
+import ti4.model.AgendaModel;
+import ti4.model.AttachmentModel;
+import ti4.model.ColorModel;
+import ti4.model.ColorableModelInterface;
+import ti4.model.CombatModifierModel;
+import ti4.model.DeckModel;
+import ti4.model.DraftErrataModel;
+import ti4.model.EventModel;
+import ti4.model.ExploreModel;
+import ti4.model.FactionModel;
+import ti4.model.GenericCardModel;
 import ti4.model.GenericCardModel.CardType;
+import ti4.model.LeaderModel;
+import ti4.model.MapTemplateModel;
+import ti4.model.ModelInterface;
+import ti4.model.PlanetModel;
+import ti4.model.PromissoryNoteModel;
+import ti4.model.PublicObjectiveModel;
+import ti4.model.RelicModel;
+import ti4.model.SecretObjectiveModel;
+import ti4.model.Source.ComponentSource;
+import ti4.model.StrategyCardModel;
+import ti4.model.StrategyCardSetModel;
+import ti4.model.TechnologyModel;
+import ti4.model.TileModel;
+import ti4.model.UnitModel;
+import ti4.model.WormholeModel;
 
 public class Mapper {
     //private static final Properties colors = new Properties();
@@ -81,7 +107,6 @@ public class Mapper {
     public static void loadData() throws Exception {
         importJsonObjectsFromFolder("colors", colors, ColorModel.class);
         importJsonObjectsFromFolder("factions", factions, FactionModel.class);
-        //readData("color.properties", colors);
         readData("decals.properties", decals);
         readData("tokens.properties", tokens);
         readData("special_case.properties", special_case);
@@ -287,7 +312,7 @@ public class Mapper {
         return TileHelper.getAllTiles().values().stream()
             .filter(tileModel -> !exclusionList.contains(tileModel.getNameNullSafe()))
             .filter(tileModel -> !TileHelper.isDraftTile(tileModel))
-            .filter(tileModel -> tileModel.isEmpty())
+            .filter(TileModel::isEmpty)
             .map(TileModel::getId)
             .toList();
     }
@@ -317,7 +342,7 @@ public class Mapper {
     }
 
     public static Set<String> getWormholes(String tileID) {
-        if (TileHelper.getAllTiles().get(tileID).getWormholes() == null) {
+        if (tileID == null || TileHelper.getAllTiles().get(tileID) == null || TileHelper.getAllTiles().get(tileID).getWormholes() == null) {
             return new HashSet<>();
         }
         return TileHelper.getAllTiles().get(tileID).getWormholes().stream()
@@ -476,66 +501,35 @@ public class Mapper {
     }
 
     public static SecretObjectiveModel getSecretObjective(String id) {
-        id = id.replace("extra1", "");
-        id = id.replace("extra2", "");
+        if (id != null) {
+            id = id.replace("extra1", "");
+            id = id.replace("extra2", "");
+        }
         return secretObjectives.get(id);
     }
 
     public static boolean isValidSecretObjective(String id) {
+        if (id != null) {
+            id = id.replace("extra1", "");
+            id = id.replace("extra2", "");
+        }
         return secretObjectives.containsKey(id);
     }
 
     public static ActionCardModel getActionCard(String id) {
-        id = id.replace("extra1", "");
-        id = id.replace("extra2", "");
+        if (id != null) {
+            id = id.replace("extra1", "");
+            id = id.replace("extra2", "");
+        }
         return actionCards.get(id);
     }
 
     public static boolean isValidActionCard(String id) {
+        if (id != null) {
+            id = id.replace("extra1", "");
+            id = id.replace("extra2", "");
+        }
         return actionCards.containsKey(id);
-    }
-
-    /**
-     * @deprecated start with {@link #getPromissoryNote(String id)} instead
-     *
-     */
-    @Deprecated
-    public static String getPromissoryNoteText(String id, boolean longDisplay) {
-        if (longDisplay) {
-            return getPromissoryNoteLongText(id);
-        } else {
-            return getPromissoryNoteShortText(id);
-        }
-    }
-
-    /**
-     * @deprecated use {@link #getPromissoryNote(String id)}.getText() instead
-     *
-     */
-    @Deprecated
-    public static String getPromissoryNoteLongText(String id) {
-        return promissoryNotes.get(id).getText();
-    }
-
-    /**
-     * @deprecated use {@link #getPromissoryNote(String id)}.getShortText() instead
-     *
-     */
-    @Deprecated
-    public static String getPromissoryNoteShortText(String id) {
-        return promissoryNotes.get(id).getShortText();
-    }
-
-    /**
-     * @deprecated use {@link #getPromissoryNote(String id)}.getOwner() instead
-     *
-     */
-    @Deprecated
-    public static String getPromissoryNoteOwner(String id) {
-        if (promissoryNotes.get(id) == null) {
-            return "finNullDodger";
-        }
-        return promissoryNotes.get(id).getOwner();
     }
 
     public static PublicObjectiveModel getPublicObjective(String id) {
@@ -552,26 +546,6 @@ public class Mapper {
 
     public static EventModel getEvent(String id) {
         return events.get(id);
-    }
-
-    /**
-     * @deprecated Should use representations avaiable in {@link #ExploreModel} instead
-     */
-    @Deprecated
-    public static String getExploreRepresentation(String id) {
-        id = id.replace("extra1", "");
-        id = id.replace("extra2", "");
-        if (explore.get(id) != null) {
-            return explore.get(id).getRepresentation();
-        }
-        id = id.replace("_", "");
-
-        if (explore.get(id) != null) {
-            return explore.get(id).getRepresentation();
-        } else {
-            BotLogger.log("Cannot find explore with ID: " + id);
-            return null;
-        }
     }
 
     public static ExploreModel getExplore(String exploreId) {
@@ -602,6 +576,9 @@ public class Mapper {
         AttachmentModel model = attachments.get(id);
         if (model != null) return model;
         id = id.replace("attachment_", "").replace(".png", "");
+        if (attachments.get(id) == null) {
+            id = "lloyd_" + id;
+        }
         return attachments.get(id);
     }
 
@@ -765,10 +742,6 @@ public class Mapper {
             acNameList.put(entry.getKey(), entry.getValue().getName());
         }
         return acNameList;
-    }
-
-    public static TechnologyType getTechType(String id) {
-        return technologies.get(id).getType();
     }
 
     public static Map<String, TechnologyModel> getTechs() {

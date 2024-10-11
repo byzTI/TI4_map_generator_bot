@@ -1,5 +1,6 @@
 package ti4.map;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import lombok.Getter;
@@ -84,6 +85,7 @@ public class GameProperties {
     private String textSize = "medium";
     private String outputVerbosity = Constants.VERBOSITY_VERBOSE;
     private long autoPingSpacer;
+    private List<String> tags = new ArrayList<String>();
 
     // Game modes / homebrew flags
     private @ExportableField boolean baseGameMode; // TODO: Make this obsolete
@@ -98,21 +100,25 @@ public class GameProperties {
     private @ExportableField boolean absolMode;
     private @ExportableField boolean discordantStarsMode;
     private @ExportableField boolean miltyModMode;
+    private @ExportableField boolean promisesPromisesMode;
+    private @ExportableField boolean flagshippingMode;
     private @ExportableField boolean redTapeMode;
     private @ExportableField boolean homebrew;
     private @ExportableField boolean homebrewSCMode;
     private @ExportableField boolean spinMode;
     private @ExportableField boolean fastSCFollowMode;
     private @ExportableField boolean extraSecretMode;
+    private @ExportableField boolean cryypterMode;
     private @ExportableField boolean reverseSpeakerOrder;
 
     // Discord Snowflakes
+    private @ExportableField String guildID;
     private String speaker = "";
     private String activePlayerID;
     private String launchPostThreadID;
-    private String botMapUpdatesThreadID;
-    private String tableTalkChannelID;
-    private String mainChannelID;
+    private @ExportableField String botMapUpdatesThreadID;
+    private @ExportableField String tableTalkChannelID;
+    private @ExportableField String mainChannelID;
     private String savedChannelID;
     private String bagDraftStatusMessageID;
     private String latestAfterMsg = "";
@@ -121,6 +127,7 @@ public class GameProperties {
     private String latestUpNextMsg = "";
 
     // More complex objects below
+    private @ExportableField String mapString;
 
     // Decks
     private List<String> secretObjectives;
