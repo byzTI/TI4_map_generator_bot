@@ -81,7 +81,7 @@ public class PlayerCommand implements Command {
         subcommands.add(new SCPlay());
         subcommands.add(new SCUnplay());
         subcommands.add(new Pass());
-        subcommands.add(new AbilityInfo());
+        // subcommands.add(new AbilityInfo());
         subcommands.add(new TurnEnd());
         subcommands.add(new TurnStart());
         subcommands.add(new SCPick());
@@ -94,13 +94,14 @@ public class PlayerCommand implements Command {
         subcommands.add(new ChangeColor());
         subcommands.add(new CorrectFaction());
         subcommands.add(new ChangeUnitDecal());
-        subcommands.add(new UnitInfo());
+        // subcommands.add(new UnitInfo());
         subcommands.add(new AddAllianceMember());
         subcommands.add(new RemoveAllianceMember());
         subcommands.add(new AddTeamMate());
         subcommands.add(new RemoveTeamMate());
         subcommands.add(new SetStatsAnchor());
         subcommands.add(new CCsButton());
+        subcommands.add(new ShowNeighbours());
         return subcommands;
     }
 
