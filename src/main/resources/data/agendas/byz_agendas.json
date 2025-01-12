@@ -14,8 +14,8 @@
         "category": "agenda",
         "type": "Directive",
         "target": "For/Against",
-        "text1": "For: Each player must destroy all but 2 of their dreadnoughts and all but 2 of their carriers.",
-        "text2": "Against: Each player must destroy 2 PDS outside their home system, if able.",
+        "text1": "For: Each player must destroy all but 2 of their dreadnoughts and all but 4 of their cruisers.",
+        "text2": "Against: Each player must destroy all but 2 of their carriers.",
         "source": "byz_agendas"
     },
     {
@@ -67,7 +67,7 @@
         "target": "For/Against",
         "text1": "For: Each player may add one PDS from their reinforcements to a planet in their home system. Each player can have any number of PDS units on planets they control.",
         "text2": "Against: All players must destroy all PDS units in their home system.",
-        "mapText": "Each player can have any number of PDS units on planets they control.",
+        "mapText": "At the start of the next Strategy Phase, each player must remove one PDS unit controlled by the player to their right from the board, if able.",
         "source": "byz_agendas"
     },
     {
@@ -86,7 +86,7 @@
         "category": "agenda",
         "type": "Law",
         "target": "Elect Player",
-        "text1": "For: All players gain the War Sun technology. All War Suns lose SUSTAIN DAMAGE.",
+        "text1": "The elected player gains this card. After the owner of this card replenishes commodities, they gain 1 trade good for each player that is their neighbor. The owner of this card may discard this card when they replenish commodities to gain 5 trade goods.",
         "mapText": "After the owner of this card replenishes commodities, they gain 1 trade good for each player that is their neighbor. The owner of this card may discard this card when they replenish commodities to gain 5 trade goods.",
         "source": "byz_agendas"
     },
@@ -147,7 +147,7 @@
         "type": "Law",
         "target": "For/Against (When this agenda is revealed, if no player owns a War Sun technology, discard this card and reveal another agenda from the top of the deck.)",
         "text1": "For: All players gain the War Sun technology. All War Suns lose SUSTAIN DAMAGE.",
-        "text2": "Against: Each player that owns a War Sun technology may produce one War Sun from a space dock in their home system, if able.",
+        "text2": "Against: Each player that owns a War Sun technology may produce one War Sun in any system that contains one of their space docks.",
         "mapText": "All War Suns lose SUSTAIN DAMAGE.",
         "source": "byz_agendas"
     },
@@ -157,7 +157,7 @@
         "category": "agenda",
         "type": "Directive",
         "target": "For/Against",
-        "text1": "For: Each player places 1 mech from their reinforcements on any planet they control.",
+        "text1": "For:  Each player may remove up to 4 of their mechs from the game board and place them on 1 or more planets they control. Then, each player may place 1 mech from their reinforcements on any planet they control.",
         "text2": "Against: Each player destroys all of their mechs.",
         "source": "byz_agendas"
     },
@@ -208,8 +208,8 @@
         "category": "agenda",
         "type": "Law",
         "target": "Elect Player",
-        "text1": "Once per combat, after 1 of the elected player's units is destroyed, the active player may gain one Trade Good from the supply.",
-        "mapText": "Once per combat, after 1 of the elected player's units is destroyed, the active player may gain one Trade Good from the supply.",
+        "text1": "The elected player gains this card. Once per combat, after 1 of the elected player's units is destroyed, the active player may gain one Trade Good from the supply if they are not the elected player.",
+        "mapText": "Once per combat, after 1 of the elected player's units is destroyed, the active player may gain one Trade Good from the supply if they are not the elected player.",
         "source": "byz_agendas"
     },
     {
@@ -218,8 +218,8 @@
         "category": "agenda",
         "type": "Law",
         "target": "Elect Player",
-        "text1": "The elected player gains this card and 1 victory point. A player gains this card and 1 victory point when they take a planet from the owner of this card. Then, the previous owner of this card loses one victory point.",
-        "mapText": "A player gains this card and 1 victory point when they take a planet from the owner of this card. Then, the previous owner of this card loses one victory point.",
+        "text1": "The elected player gains this card and 1 victory point. A player gains this card and 1 victory point when they take a planet from the owner of this card. If the owner of this card loses this card, they lose 1 victory point.",
+        "mapText": "A player gains this card and 1 victory point when they take a planet from the owner of this card. If the owner of this card loses this card, they lose 1 victory point.",
         "source": "byz_agendas"
     },
     {
@@ -250,8 +250,8 @@
         "category": "agenda",
         "type": "Law",
         "target": "Elect Player",
-        "text1": "The elected player gains this card and 1 victory point. A player gains this card and 1 victory point when they win a combat against the owner of this card. Then, the previous owner of this card loses 1 victory point.",
-        "mapText": "A player gains this card and 1 victory point when they win a combat against the owner of this card. Then, the previous owner of this card loses 1 victory point.",
+        "text1": "The elected player gains this card and 1 victory point. A player gains this card and 1 victory point when they win a combat against the owner of this card. If the owner of this card loses this card, they lose 1 victory point.",
+        "mapText": "A player gains this card and 1 victory point when they win a combat against the owner of this card. If the owner of this card loses this card, they lose 1 victory point.",
         "source": "byz_agendas"
     },
     {
@@ -259,7 +259,7 @@
         "name": "Imperium Rex",
         "category": "agenda",
         "type": "Law",
-        "target": "For/Against (When this card is drawn, if it is round 1 or 2, discard this card and reveal another agenda from the top of the deck.)",
+        "target": "For/Against (When this card is drawn, if no player is within 5 victory points of winning, discard this card and reveal another agenda from the top of the deck.)",
         "text1": "For: The game no longer ends when one player reaches a number of victory points. Instead, the game ends when players would return strategy cards in the upcoming round. Whoever has the most points wins the game, with ties determined by initiative order.",
         "text2": "Against: Each player loses one victory point.",
         "mapText": "The game no longer ends when one player reaches a number of victory points. Instead, the game ends when players would return strategy cards in the upcoming round. Whoever has the most points wins the game, with ties determined by initiative order.",
@@ -271,8 +271,8 @@
         "category": "agenda",
         "type": "Law",
         "target": "Elect Player",
-        "text1": "The elected player’s may not receive commodities or trade goods from other players in a transaction.",
-        "mapText": "The elected player’s may not receive commodities or trade goods from other players in a transaction.",
+        "text1": "The elected player may not receive commodities or trade goods from other players in a transaction.",
+        "mapText": "The elected player may not receive commodities or trade goods from other players in a transaction.",
         "source": "byz_agendas"
     },
     {
@@ -291,8 +291,8 @@
         "category": "agenda",
         "type": "Law",
         "target": "Elect Planet",
-        "text1": "Attach this card to the elected planet's card. The planet's owner gains 1 victory point. Units on this planet cannot use PRODUCTION. When a player gains control of this planet, they gain 1 victory point. When a player loses control of this planet, they lose 1 victory point.",
-        "mapText": "Units on this planet cannot use PRODUCTION. When a player gains control of this planet, they gain 1 victory point. When a player loses control of this planet, they lose 1 victory point.",
+        "text1": "Attach this card to the elected planet. The planet's owner gains 1 victory point. Units on this planet cannot use PRODUCTION. When a player gains control of this planet, they gain 1 victory point. When a player loses control of this planet or its attachment, they lose 1 victory point.",
+        "mapText": "Units on this planet cannot use PRODUCTION. When a player gains control of this planet, they gain 1 victory point. When a player loses control of this planet or its attachment, they lose 1 victory point.",
         "source": "byz_agendas"
     },
     {
